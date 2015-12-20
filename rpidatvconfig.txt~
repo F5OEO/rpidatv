@@ -1,0 +1,13 @@
+modeinput=CAMH264
+symbolrate=250
+fec=7
+freqoutput=437.5
+rfpower=7
+modeoutput=QPSKRF
+tsvideofile=/home/pi/RpiDATVRelease/mire250.TS
+call=F5OEO
+paternfile=/home/pi/RpiDATV_Dev/mire.jpg
+udpinaddr=230.0.0.2
+pidvideo=512
+pidpmt=100
+serviceid=1
