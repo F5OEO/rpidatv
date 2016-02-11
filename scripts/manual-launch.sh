@@ -1,10 +1,7 @@
-PATHRPI=/home/pi/RpiDATV
+PATHSCRIPT=/home/pi/rpidatv/scripts
 
-
-
-$PATHRPI"/a.sh"
-
-
-read -p "To exit : Press a key or CTL-C" touche
+$PATHSCRIPT"/a.sh"
+read -p "To exit : Press a key or CTL-C" 
+touche
 
 

@@ -413,13 +413,13 @@ do_transmit()
 	#whiptail --title "TRANSMITING" --msgbox "$INFO" 8 78
 	sudo killall ffmpeg >/dev/null 2>/dev/null
 	sudo killall h264 >/dev/null 2>/dev/null
-	sudo killall RpiDATV >/dev/null 2>/dev/null
+	sudo killall rpidatv >/dev/null 2>/dev/null
 	sudo killall cat >/dev/null 2>/dev/null
 	sudo killall hello_encode.bin >/dev/null 2>/dev/null
 	sudo killall h264yuv >/dev/null 2>/dev/null
 	sudo killall raspivid >/dev/null 2>/dev/null
 	sleep 0.5
-	$PATHRPI"/a.sh" >/dev/null 2>/dev/null &
+	$PATHSCRIPT"/a.sh" >/dev/null 2>/dev/null &
 	sleep 0.5
 	#$SCRIPTPATH"/a.sh" &
 	#exit 0
@@ -485,7 +485,7 @@ do_status
                 status=1
 		sudo killall ffmpeg >/dev/null 2>/dev/null
 		sudo killall h264 >/dev/null 2>/dev/null
-		sudo killall RpiDATV >/dev/null 2>/dev/null
+		sudo killall rpidatv >/dev/null 2>/dev/null
 		sudo killall cat >/dev/null 2>/dev/null
 		sudo killall hello_encode.bin >/dev/null 2>/dev/null
 		sudo killall h264yuv >/dev/null 2>/dev/null

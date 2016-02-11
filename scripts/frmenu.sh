@@ -1,9 +1,9 @@
 #!/bin/bash
-PATHRPI=/home/pi/RpiDATV
-CONFIGFILE=$PATHRPI"/rpidatvconfig.txt"
+PATHSCRIPT=/home/pi/rpidatv/scripts
+CONFIGFILE=$PATHSCRIPT"/rpidatvconfig.txt"
 
-source $PATHRPI"/langfr.sh"
-source $PATHRPI"/menu.sh"    
+source $PATHSCRIPT"/langfr.sh"
+source $PATHSCRIPT"/menu.sh"    
 
 
 

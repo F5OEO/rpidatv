@@ -103,5 +103,5 @@ if [ -f /etc/bash_completion ] && ! shopt -oq posix; then
 fi
 
 if [ $(tty) == /dev/tty1 ]; then
-   ./RpiDATV/frmenu.sh
+   ./rpidatv/scripts/frmenu.sh
 fi

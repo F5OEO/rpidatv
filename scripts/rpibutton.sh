@@ -1,5 +1,5 @@
-PATHRPI=/home/pi/RpiDATV
-CONFIGFILE=$PATHRPI"/rpidatvconfig.txt"
+PATHSCRIPT=/home/pi/rpidatv
+CONFIGFILE=$PATHSCRIPT"/rpidatvconfig.txt"
 
 
 ############### PIN DEFINITION ###########"
