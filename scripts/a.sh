@@ -192,6 +192,8 @@ if [ "$AUDIO_CARD" == 0 ]; then
 #sudo nice -n -30 $PATHRPI"/h264" videoes $BITRATE_VIDEO $VIDEO_WIDTH $VIDEO_HEIGHT &
 VIDEO_FPS=25
 sudo modprobe bcm2835-v4l2
+#OVERLAY ENABLE ! BE SURE NOT TO BE ON RF MODE !!!!
+v4l2-ctl --overlay=1
 v4l2-ctl --set-fmt-video=width=$VIDEO_WIDTH,height=$VIDEO_HEIGHT,pixelformat=4
 v4l2-ctl --set-parm=$VIDEO_FPS
 v4l2-ctl --set-ctrl video_bitrate=$BITRATE_VIDEO
@@ -211,13 +213,14 @@ sudo nice -n -30 $PATHRPI"/ffmpeg"  -loglevel $MODE_DEBUG  -analyzeduration 100 
 else
 echo cam with audio
 FPS=25
-sudo nice -n -30 $PATHRPI"/h264" videoes $BITRATE_VIDEO $VIDEO_WIDTH $VIDEO_HEIGHT &
+#sudo nice -n -30 $PATHRPI"/h264" videoes $BITRATE_VIDEO $VIDEO_WIDTH $VIDEO_HEIGHT &
 sudo modprobe bcm2835-v4l2
-#v4l2-ctl --set-fmt-video=width=$VIDEO_WIDTH,height=$VIDEO_HEIGHT,pixelformat=4
-#v4l2-ctl --set-parm=$FPS
-#v4l2-ctl --set-ctrl video_bitrate=$BITRATE_VIDEO
-#v4l2-ctl --set-ctrl repeat_sequence_header=1
-#sudo nice -n -30 cat /dev/video0 > videoes &
+v4l2-ctl --overlay=1
+v4l2-ctl --set-fmt-video=width=$VIDEO_WIDTH,height=$VIDEO_HEIGHT,pixelformat=4
+v4l2-ctl --set-parm=$FPS
+v4l2-ctl --set-ctrl video_bitrate=$BITRATE_VIDEO
+v4l2-ctl --set-ctrl repeat_sequence_header=1
+sudo nice -n -30 cat /dev/video0 > videoes &
 
 sudo $PATHRPI"/rpidatv" videots $SYMBOLRATE_K $FECNUM 0 $FREQUENCY_OUT $GAIN $DIGITHIN_MODE &
 sudo nice -n -30 arecord -f S16_LE -r 48000 -c 1 -M -D hw:1 | sudo nice -n -30 $PATHRPI"/ffmpeg"  -loglevel $MODE_DEBUG -itsoffset -00:00:0.8 -analyzeduration 0 -probesize 2048  -fpsprobesize 0 -ac 1 -thread_queue_size 512  -i -  -analyzeduration 0 -probesize 2048 -r 25 -fpsprobesize 0  -i videoes -max_delay 0  -f h264 -r $VIDEO_FPS  -vcodec copy -blocksize 1504 -strict experimental -async 2 -acodec mp2 -ab 64K -ar 48k -ac 1  -flags -global_header -f mpegts -blocksize 1504 -mpegts_original_network_id 1 -mpegts_transport_stream_id 1 -mpegts_service_id $SERVICEID -mpegts_pmt_start_pid $PIDPMT -mpegts_start_pid $PIDVIDEO -metadata service_provider=$CALL -metadata service_name=$CHANNEL -bufsize 1880 -muxrate $BITRATE_TS -y $OUTPUT &
@@ -237,7 +240,7 @@ sudo $PATHRPI"/rpidatv" videots $SYMBOLRATE_K $FECNUM 0 $FREQUENCY_OUT $GAIN $DI
 sudo modprobe bcm2835-v4l2
 v4l2-ctl --set-fmt-video=width=$VIDEO_WIDTH,height=$VIDEO_HEIGHT,pixelformat=0
 v4l2-ctl --set-parm=$VIDEO_FPS
-#v4l2-ctl --overlay=1
+v4l2-ctl --overlay=1
 let DELAY=(BITRATE_VIDEO*8)/10
 sudo nice -n -30 arecord -f S16_LE -r 48000 -c 1 -M -D hw:1 |sudo nice -n -30 $PATHRPI"/ffmpeg" -loglevel $MODE_DEBUG -itsoffset -00:00:0.8 -analyzeduration 0 -probesize 2048  -fpsprobesize 0 -ac 1 -thread_queue_size 512 -i -  -f v4l2 -framerate $VIDEO_FPS -video_size "$VIDEO_WIDTH"x"$VIDEO_HEIGHT" -i /dev/video0 -fflags nobuffer -vcodec mpeg2video -s "$VIDEO_WIDTH"x"$VIDEO_HEIGHT" -b:v $BITRATE_VIDEO -minrate:v $BITRATE_VIDEO -maxrate:v  $BITRATE_VIDEO -f mpegts  -blocksize 1880 -strict experimental  -acodec mp2 -ab 64K -ar 48k -ac 1 -mpegts_original_network_id 1 -mpegts_transport_stream_id 1 -mpegts_service_id $SERVICEID -mpegts_pmt_start_pid $PIDPMT -mpegts_start_pid $PIDVIDEO -metadata service_provider=$CALL -metadata service_name=$CHANNEL -muxrate $BITRATE_TS -y $OUTPUT &
 else
@@ -248,7 +251,7 @@ sudo $PATHRPI"/rpidatv" videots $SYMBOLRATE_K $FECNUM 0 $FREQUENCY_OUT $GAIN $DI
 sudo modprobe bcm2835-v4l2
 v4l2-ctl --set-fmt-video=width=352,height=288,pixelformat=0
 v4l2-ctl --set-parm=15
-#v4l2-ctl --overlay=1
+v4l2-ctl --overlay=1
 
 #echo ezcap
 #v4l2-ctl -d /dev/video1 -i 1 -s 9 --set-fmt-video=width=720,height=576,pixelformat=0
