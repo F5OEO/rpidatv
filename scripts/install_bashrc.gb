@@ -102,6 +102,6 @@ if [ -f /etc/bash_completion ] && ! shopt -oq posix; then
     . /etc/bash_completion
 fi
 
-if [ $(tty) == /dev/tty1 ]; then
+
    ./rpidatv/scripts/gbmenu.sh
-fi
+
