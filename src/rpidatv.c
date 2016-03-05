@@ -59,6 +59,7 @@ extern void energy (uchar* input,uchar *output) ;
 extern void reed (uchar *input188) ;
 extern uchar*	interleave 	(uchar* packetin) ; 
 
+#define PROGRAM_VERSION "1.3.0"
 
 //Minimum Time in us to sleep
 #define KERNEL_GRANULARITY 20000 
@@ -83,7 +84,7 @@ uint32_t TabIQ[4]={0xCCCCCCCC,0x66666666,0x99999999,0x33333333};//0,-pi/2,pi/2,p
 uint32_t TabIQTest[4]={0xCCCCCCCC,0xCCCCCCCC,0xCCCCCCCC,0xCCCCCCCC};//0,-pi/2,pi/2,pi
 uint32_t TabIQTestI[4]={0x00110011,0x11111111,0x11111111,0x11111111};
 uint32_t TabIQTestQ[4]={0x01010101,0x00000000,0x00000000,0x00000000};
-					  
+int PinOutput[2]={18,19}; //Output signal I/Q on GPIO pin number 					  
 
 //uint32_t TabIQ[4]={0x00000000,0xFFFFFFFF,0x00000000,0xFFFFFFFF};
 int SymbolRate=0;
@@ -814,6 +815,32 @@ void *FillBigBuffer (void * arg)
   }
   pthread_exit (0);
 }
+void print_usage()
+{
+
+fprintf(stderr,\
+"\nrpidatv -%s\n\
+Usage:\nrpidatv -i File Input -s Symbolrate -c Fec [-o OutputMode] [-f frequency output]  [-l] [-p Power] [-h] \n\
+-i            path to Transport File Input \n\
+-s            SymbolRate in KS (125-4000) \n\
+-c            Fec : 1/2 or 3/4 or 5/6 or 7/8 \n\
+-o            OutputMode\n\
+	      {RF(Modulate QSK in RF need -f option to set frequency)}\n\
+              {IQ(Output QPSK I/Q}\n\
+              {PARALLEL(Output parallel (DTX1,MINIMOD..)}\n\
+       	      {IQWITHCLK(Output I/Q with CLK (F5LGJ)}\n\
+	      {DIGITHIN (Output I/Q for Digithin)}\n\
+-f 	      Frequency to output in RF Mode in MHZ\n\
+-l            loop file input\n\
+-p 	      Power on output 1..7\n\
+-x 	      GPIO Pin output for I or RF {12,18,40}\n\
+-y	      GPIO Pin output for Q {13,19,41,45}\n\
+-h            help (print this help).\n\
+Example : sudo ./rpidatv -i sample.ts -s 250 -c 1/2 -o RF -f 437.5 -l\n\
+\n",\
+PROGRAM_VERSION);
+
+} /* end function print_usage */
 
 int
 main(int argc, char **argv)
@@ -842,69 +869,88 @@ main(int argc, char **argv)
 
 // Nearly there.. open the .ts file specified on the cmdline
 	fdts = 0;
-
-	if (argc > 2) {
-        	fdts = open(argv[1], 'r');
-		FileName=(char*)argv[1];
-		
-		//(void)pthread_join (th1, &ret);
-		//To be placed elsewhere to allows Testmode
-		/*if (fdts < 0)
-			fatal("Failed to tsFile\n"); */ 
-
-		SymbolRate=atoi(argv[2]);
-	}
-	if(argc>3)
+	int a;
+	int anyargs = 0;
+	while(1)
 	{
-		FEC=atoi(argv[3]);
-		
-	}
-	if(argc>4)
-		Loop=atoi(argv[4]);
-
-	if(argc>5)
-	{
-		TuneFrequency=atof(argv[5]);
-		if(TuneFrequency<=10)
-		{
-		    if(TuneFrequency==2)
-		    {
-		    	ModeIQ=2;
-		    	printf("with Mode DTX1\n");
-		    }
-		    if(TuneFrequency==0)
-		    {
-		    	ModeIQ=1;
-		    	printf("with Mode IQ\n");
-		    }
-		
-		}
-		else
-		{
-		   TuneFrequency=atof(argv[5])*1000000;
-		   ModeIQ=0;
-		   printf("with Mode Direct RF\n");
-		}
-	}
-	if(argc>6)
-	{
-		
-		OutputPower=atoi(argv[6]);
-		printf("Power =%d ",OutputPower);
-	}
-	if(argc>7)
-	{	
-		 printf(" Digithin Card ");
-		DigithinMode=atoi(argv[7]);
-	}
-	if(argc<=2)
-	{
-		printf("\nUsage : sudo ./UglyDATV TransportStreamFile SymbolRate(in KSymbol) FEC : 1=1/2 2=2/3 3=3/4 5=5/6 7=7/8 [Loop={1,0}] [Frequence in MHZ](if 0 OutputMode=IQ) [Power:0..7] [Digithin=1 or 0]\n");
-		fatal("Example : sudo ./UglyDATV tsfile.ts 1000 7 1 437.5 -> file tsfifo.iq is sent at 1MSymbol at FEC 7/8 with Loop at 437.5Mhz\n");
-		
-	}
+	a = getopt(argc, argv, "i:s:c:hlf:m:p:x:y:");
 	
-	
+	if(a == -1) 
+	{
+		if(anyargs) break;
+		else a='h'; //print usage and exit
+	}
+	anyargs = 1;	
+
+	switch(a)
+		{
+		case 'i': // InputFile
+			FileName=optarg;
+			fdts = open(FileName, 'r');
+			break;
+		case 's': // SymbolRate
+			SymbolRate = atoi(optarg);
+			break;
+		case 'c': // FEC
+			if(strcmp("1/2",optarg)==0) FEC=1;
+			if(strcmp("2/3",optarg)==0) FEC=2;	
+			if(strcmp("3/4",optarg)==0) FEC=3;
+			if(strcmp("5/6",optarg)==0) FEC=5;
+			if(strcmp("7/8",optarg)==0) FEC=7;
+			
+			break;
+		case 'h': // help
+			print_usage();
+			terminate(0);
+			break;
+		case 'l': // loop mode
+			Loop = 1;
+			break;
+		case 'f': // Frequency (Mode RF)
+			TuneFrequency = atof(optarg)*1000000;
+			break;
+		case 'm': // Output mode
+			if(strcmp("IQ",optarg)==0) ModeIQ=1;
+			if(strcmp("RF",optarg)==0) ModeIQ=0;;	
+			if(strcmp("PARALLEL",optarg)==0) ModeIQ=2;
+			if(strcmp("IQWITHCLK",optarg)==0) ModeIQ=1;
+			if(strcmp("DIGITHIN",optarg)==0) {ModeIQ=1;DigithinMode=1;};
+			
+			break;
+		case 'p': // Power
+			OutputPower= atoi(optarg);
+			break;
+		case 'x': // Pin mapping GPIO I or RF
+			PinOutput[0]=atoi(optarg);
+			break;
+		case 'y': // Pin mapping GPIO Q
+			PinOutput[1]=atoi(optarg);
+			break;
+
+		case -1:
+        	break;
+		case '?':
+			if (isprint(optopt) )
+ 				{
+ 				fprintf(stderr, "rpidatv: unknown option `-%c'.\n", optopt);
+ 				}
+			else
+				{
+				fprintf(stderr, "rpidatv: unknown option character `\\x%x'.\n", optopt);
+				}
+			print_usage();
+
+			exit(1);
+			break;			
+		default:
+			print_usage();
+			exit(1);
+			break;
+		}/* end switch a */
+	}/* end while getopt() */
+
+
+
 	/*   SEARCH FOR NEAR FREQUENCY */
 	
 	
