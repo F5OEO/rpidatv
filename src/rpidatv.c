@@ -229,8 +229,10 @@ int InitUgly()
 			
 			printf("Tuning on %lf MHZ (harmonic %d)\n",1e-6*(double)PLLFREQ_PWM*(double)harmonic/(4.0*(FreqDivider+(double) FreqFractionnal/4096.0)),harmonic);
 
-gpioSetMode(18, 2); /* set to ALT5, PWM1 : RF */
-
+			//gpioSetMode(18, 2); /* set to ALT5, PWM1 : RF */
+			if(PinOutput[0]==18) gpioSetMode(18, 2); //ALT 5
+			if(PinOutput[0]==12) gpioSetMode(12, 4); //ALT 0
+			if(PinOutput[0]==40) gpioSetMode(40, 2); //ALT 0
 
 pwm_reg[PWM_CTL] = 0;
 if(FreqFractionnal==0)
@@ -355,15 +357,27 @@ if(FreqFractionnal==0)
 
 int InitIQ(int DigithinMode)
 {
-	gpioSetMode(18, 2); /* set to ALT5, PWM1 : RF */
-	gpioSetMode(19, 2); /* set to ALT5, PWM2 digilite B+*/
+	//PIN FOR I
+	if(PinOutput[0]==18) gpioSetMode(18, 2); //ALT 5
+	if(PinOutput[0]==12) gpioSetMode(12, 4); //ALT 0
+	if(PinOutput[0]==40) gpioSetMode(40, 4); //ALT 0
+
+	//PIN FOR Q
+	if(PinOutput[0]==13) gpioSetMode(13, 4); //ALT 0
+	if(PinOutput[0]==19) gpioSetMode(19, 2); //ALT 5
+	if(PinOutput[0]==41) gpioSetMode(41, 4); //ALT 0
+	if(PinOutput[0]==45) gpioSetMode(45, 4); //ALT 0
+
+	/*  CAM-GPIO IS ON 41 on B+ : DON'T USE*/	
 	
+	// REMOVE AUTODETECTION PIN FROM PI MODEL - USE PIN MAPPING
+	/*
 	if (model<3) //ONLY ON B : FOR SOLDERING on PCB near audio output, ON B+ IT CRASH CAM
 	{
-		gpioSetMode(40, 4); /* set to ALT0, PWM1 DIGILITE Model B*/
-		gpioSetMode(41, 4); /* set to ALT0, PWM2 DIGILITE Model B !!! CAM-GPIO IS ON 41 on B+ */	
+		gpioSetMode(40, 4); // set to ALT0, PWM1 DIGILITE Model B
+		gpioSetMode(41, 4); // set to ALT0, PWM2 DIGILITE Model B !!! CAM-GPIO IS ON 41 on B+ 	
 	}
-	
+	*/
 	//unsigned int SRClock=PLLFREQ_PCM/(SymbolRate*1000);
 	
 	unsigned int SRClock=PLLFREQ_PCM/(1000*SymbolRate);
