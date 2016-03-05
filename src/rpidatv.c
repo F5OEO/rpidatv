@@ -363,10 +363,10 @@ int InitIQ(int DigithinMode)
 	if(PinOutput[0]==40) gpioSetMode(40, 4); //ALT 0
 
 	//PIN FOR Q
-	if(PinOutput[0]==13) gpioSetMode(13, 4); //ALT 0
-	if(PinOutput[0]==19) gpioSetMode(19, 2); //ALT 5
-	if(PinOutput[0]==41) gpioSetMode(41, 4); //ALT 0
-	if(PinOutput[0]==45) gpioSetMode(45, 4); //ALT 0
+	if(PinOutput[1]==13) gpioSetMode(13, 4); //ALT 0
+	if(PinOutput[1]==19) gpioSetMode(19, 2); //ALT 5
+	if(PinOutput[1]==41) gpioSetMode(41, 4); //ALT 0
+	if(PinOutput[1]==45) gpioSetMode(45, 4); //ALT 0
 
 	/*  CAM-GPIO IS ON 41 on B+ : DON'T USE*/	
 	
