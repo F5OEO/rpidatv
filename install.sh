@@ -10,7 +10,7 @@ cd rtl-sdr/ && mkdir build && cd build
 cmake ../ -DINSTALL_UDEV_RULES=ON
 make && sudo make install && sudo ldconfig
 sudo bash -c 'echo -e "\n# for RTL-SDR:\nblacklist dvb_usb_rtl28xxu\n" >> /etc/modprobe.d/blacklist.conf'
-cd ../
+cd ../../
 
 # LeanDVB install
 
