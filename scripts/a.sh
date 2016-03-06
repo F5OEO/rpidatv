@@ -61,13 +61,8 @@ PIDPMT=$(get_config_var pidpmt $CONFIGFILE)
 SERVICEID=$(get_config_var serviceid $CONFIGFILE)
 #v4l2-ctl --overlay=0
 
-#PIDVIDEO=512
-#PIDPMT=100
-#SERVICEID=2
-
-
-
-
+PIN_I=12
+PIN_Q=13
 
 detect_audio
 
@@ -212,7 +207,7 @@ sudo nice -n -30 cat /dev/video0 > videoes &
 #./tsudpsend videots 230.0.0.2 10000 $BITRATE_TS &
 #$PATHRPI"/mnc" -l -p 10000 230.0.0.2 > netfifo &
 
-sudo $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c $FECNUM"/"$FECDEN -f $FREQUENCY_OUT -p $GAIN -m $MODE &
+sudo $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c $FECNUM"/"$FECDEN -f $FREQUENCY_OUT -p $GAIN -m $MODE -x $PIN_I -y $PIN_Q &
 #sudo $PATHRPI"/tsudpsend" videots 230.0.0.1 10000 $BITRATE_TS 7 &
 #sudo nice -n -30 $PATHRPI"/ffmpeg"  -loglevel $MODE_DEBUG  -analyzeduration 100 -probesize 2048 -ac 1 -thread_queue_size 512 -f lavfi -i "sine=frequency=500:beep_factor=4:sample_rate=48000:duration=3600" -r 25 -async 25 -fpsprobesize 0 -analyzeduration 0 -thread_queue_size 512 -i videoes  -f h264 -r $VIDEO_FPS -vcodec copy -minrate:v $BITRATE_VIDEO -maxrate:v  $BITRATE_VIDEO -blocksize 1880 -strict experimental  -acodec mp2 -ab 64K -ar 48k -ac 1 -f mpegts -blocksize 1880 -mpegts_original_network_id 1 -mpegts_transport_stream_id 1 -mpegts_service_id $SERVICEID -mpegts_pmt_start_pid $PIDPMT -mpegts_start_pid $PIDVIDEO -metadata service_provider=$CALL -metadata service_name=$CHANNEL -bufsize 1880 -muxrate $BITRATE_TS -y $OUTPUT &
 sudo nice -n -30 $PATHRPI"/ffmpeg"  -loglevel $MODE_DEBUG  -analyzeduration 100  -r 25 -async 25 -fpsprobesize 0 -analyzeduration 0 -thread_queue_size 512 -i videoes  -f h264 -r $VIDEO_FPS -vcodec copy -minrate:v $BITRATE_VIDEO -maxrate:v  $BITRATE_VIDEO -blocksize 1880 -strict experimental  -f mpegts -blocksize 1880 -mpegts_original_network_id 1 -mpegts_transport_stream_id 1 -mpegts_service_id $SERVICEID -mpegts_pmt_start_pid $PIDPMT -mpegts_start_pid $PIDVIDEO -metadata service_provider=$CALL -metadata service_name=$CHANNEL -bufsize 1880 -muxrate $BITRATE_TS -y $OUTPUT &
@@ -229,7 +224,7 @@ v4l2-ctl --set-ctrl repeat_sequence_header=1
 sudo nice -n -30 cat /dev/video0 > videoes &
 
 #sudo $PATHRPI"/rpidatv" videots $SYMBOLRATE_K $FECNUM 0 $FREQUENCY_OUT $GAIN $DIGITHIN_MODE &
-sudo $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c $FECNUM"/"$FECDEN -f $FREQUENCY_OUT -p $GAIN -m $MODE &
+sudo $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c $FECNUM"/"$FECDEN -f $FREQUENCY_OUT -p $GAIN -m $MODE -x $PIN_I -y $PIN_Q &
 sudo nice -n -30 arecord -f S16_LE -r 48000 -c 1 -M -D hw:1 | sudo nice -n -30 $PATHRPI"/ffmpeg"  -loglevel $MODE_DEBUG -itsoffset -00:00:0.8 -analyzeduration 0 -probesize 2048  -fpsprobesize 0 -ac 1 -thread_queue_size 512  -i -  -analyzeduration 0 -probesize 2048 -r 25 -fpsprobesize 0  -i videoes -max_delay 0  -f h264 -r $VIDEO_FPS  -vcodec copy -blocksize 1504 -strict experimental -async 2 -acodec mp2 -ab 64K -ar 48k -ac 1  -flags -global_header -f mpegts -blocksize 1504 -mpegts_original_network_id 1 -mpegts_transport_stream_id 1 -mpegts_service_id $SERVICEID -mpegts_pmt_start_pid $PIDPMT -mpegts_start_pid $PIDVIDEO -metadata service_provider=$CALL -metadata service_name=$CHANNEL -bufsize 1880 -muxrate $BITRATE_TS -y $OUTPUT &
 fi
 ;;
@@ -255,7 +250,7 @@ else
 #buffer -s 1880 -b 100 < videots >netfifo &
 
 #sudo $PATHRPI"/rpidatv" videots $SYMBOLRATE_K $FECNUM 0 $FREQUENCY_OUT $GAIN $DIGITHIN_MODE &
-sudo $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c $FECNUM"/"$FECDEN -f $FREQUENCY_OUT -p $GAIN -m $MODE &
+sudo $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c $FECNUM"/"$FECDEN -f $FREQUENCY_OUT -p $GAIN -m $MODE -x $PIN_I -y $PIN_Q &
 sudo modprobe bcm2835-v4l2
 v4l2-ctl --set-fmt-video=width=352,height=288,pixelformat=0
 v4l2-ctl --set-parm=15
@@ -284,7 +279,7 @@ FPS=0.5
 #buffer -s 188 -m 188000 < videots >netfifo &
 let BITRATE_TS=SYMBOLRATE*2*188*FECNUM/204/FECDEN 
 #sudo $PATHRPI"/rpidatv" videots $SYMBOLRATE_K $FECNUM 0 $FREQUENCY_OUT $GAIN $DIGITHIN_MODE &
-sudo $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c $FECNUM"/"$FECDEN -f $FREQUENCY_OUT -p $GAIN -m $MODE &
+sudo $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c $FECNUM"/"$FECDEN -f $FREQUENCY_OUT -p $GAIN -m $MODE -x $PIN_I -y $PIN_Q &
 #sudo nice -n -30 $PATHRPI"/ffmpeg" -loglevel $MODE_DEBUG  -probesize 2048 -re -fflags flush_packets -f image2 -r $FPS -video_size "$VIDEO_WIDTH"x"$VIDEO_HEIGHT" -loop 1  -i $PATERNFILE -vf scale="$VIDEO_WIDTH":"$VIDEO_HEIGHT"  -vcodec mpeg2video -r $FPS -s "$VIDEO_WIDTH"x"$VIDEO_HEIGHT" -b:v $BITRATE_VIDEO -minrate:v $BITRATE_VIDEO -maxrate:v  $BITRATE_VIDEO -f mpegts -mpegts_original_network_id 1 -mpegts_transport_stream_id 1 -mpegts_service_id 100 -mpegts_pmt_start_pid $PIDPMT -mpegts_start_pid $PIDVIDEO -metadata service_provider=$CALL -metadata service_name=$CHANNEL  -muxrate $BITRATE_TS -y $OUTPUT &
 
 
@@ -308,7 +303,7 @@ sudo nice -n -30 $PATHRPI"/ffmpeg" -loglevel $MODE_DEBUG  -probesize 2048 -itsof
 sudo nice -n -30 $PATHRPI"/ffmpeg" -loglevel $MODE_DEBUG -i $PATERNFILE -vf scale=352:288 -pix_fmt yuv420p -y patern.yuv
 $PATHRPI"/h264yuv" videoes patern.yuv  &
 #sudo sudo $PATHRPI"/rpidatv" videots $SYMBOLRATE_K $FECNUM 0 $FREQUENCY_OUT $GAIN $DIGITHIN_MODE &
-sudo $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c $FECNUM"/"$FECDEN -f $FREQUENCY_OUT -p $GAIN -m $MODE &
+sudo $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c $FECNUM"/"$FECDEN -f $FREQUENCY_OUT -p $GAIN -m $MODE -x $PIN_I -y $PIN_Q &
 sudo nice -n -30 $PATHRPI"/ffmpeg" -loglevel $MODE_DEBUG  -analyzeduration 0 -probesize 2048 -r 25 -async 25 -fpsprobesize 0  -i videoes -max_delay 0 -fflags nobuffer -f h264 -r $VIDEO_FPS -vcodec copy -blocksize 1504  -f mpegts -max_delay $DELAY -blocksize 1504 -mpegts_original_network_id 1 -mpegts_transport_stream_id 1 -mpegts_service_id $SERVICEID -mpegts_pmt_start_pid $PIDPMT -mpegts_start_pid $PIDVIDEO -metadata service_provider=$CALL -metadata service_name=$CHANNEL -bufsize 1880 -muxrate $BITRATE_TS -y $OUTPUT &
 ;;
 
@@ -326,7 +321,7 @@ sudo nice -n -30 $PATHRPI"/ffmpeg" -loglevel $MODE_DEBUG -probesize 2048  -ac 1 
 # *********************************** TRANSPORT STREAM INPUT THROUGH IP ******************************************
 "IPTSIN")
 #sudo $PATHRPI"/rpidatv" videots $SYMBOLRATE_K $FECNUM 0 $FREQUENCY_OUT $GAIN $DIGITHIN_MODE &
-sudo $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c $FECNUM"/"$FECDEN -f $FREQUENCY_OUT -p $GAIN -m $MODE &
+sudo $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c $FECNUM"/"$FECDEN -f $FREQUENCY_OUT -p $GAIN -m $MODE -x $PIN_I -y $PIN_Q &
 PORT=10000
 $PATHRPI"/mnc" -l -i eth0 -p $PORT $UDPINADDR > videots &
 ;;
@@ -335,20 +330,20 @@ $PATHRPI"/mnc" -l -i eth0 -p $PORT $UDPINADDR > videots &
 "FILETS")
 	
 	#sudo $PATHRPI"/rpidatv" $TSVIDEOFILE $SYMBOLRATE_K $FECNUM 1 $FREQUENCY_OUT $GAIN $DIGITHIN_MODE &
-sudo $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c $FECNUM"/"$FECDEN -f $FREQUENCY_OUT -p $GAIN -m $MODE &
+sudo $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c $FECNUM"/"$FECDEN -f $FREQUENCY_OUT -p $GAIN -m $MODE -x $PIN_I -y $PIN_Q &
 ;;
 
 # *********************************** CARRIER  ******************************************
 "CARRIER")
 echo ====================== CARRIER ==========================
 #sudo $PATHRPI"/rpidatv" $TSVIDEOFILE $SYMBOLRATE_K 0 1 $FREQUENCY_OUT $GAIN $DIGITHIN_MODE &
-sudo $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c $FECNUM"/"$FECDEN -f $FREQUENCY_OUT -p $GAIN -m $MODE &
+sudo $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c $FECNUM"/"$FECDEN -f $FREQUENCY_OUT -p $GAIN -m $MODE -x $PIN_I -y $PIN_Q &
 ;;
 
 # *********************************** TESTMODE  ******************************************
 "TESTMODE")
 #sudo $PATHRPI"/rpidatv" $TSVIDEOFILE $SYMBOLRATE_K -$FECNUM 1 $FREQUENCY_OUT $GAIN $DIGITHIN_MODE &
-sudo $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c $FECNUM"/"$FECDEN -f $FREQUENCY_OUT -p $GAIN -m $MODE &
+sudo $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c $FECNUM"/"$FECDEN -f $FREQUENCY_OUT -p $GAIN -m $MODE -x $PIN_I -y $PIN_Q &
 ;;
 
 # *********************************** BATC  ******************************************
