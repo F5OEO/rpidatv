@@ -3,7 +3,7 @@
 **rpidatv** is a digital television transmitter for Raspberry Pi (B,B+ and PI2) which output directly to GPIO. 
 *(Created by Evariste Courjaud F5OEO. Code is GPL)*
 
-<h1> Installation </h1>
+<h1> rpidatv Transmitter installation </h1>
 sudo apt-get update && 
 sudo apt-get install rpi-update && 
 sudo rpi-update && 
@@ -12,6 +12,12 @@ sudo apt-get install git &&
 git clone git://github.com/f5oeo/rpidatv && 
 cd rpidatv/src && 
 make -j 4
+
+<h1> leandvb rtlsdr receiver installation </h1>
+./install.sh   
+This install leandvb : a simple dvb-s receiver with rtl-sdr usb dongle
+([header P1](http://www.pabr.org/radio/leandvb/leandvb.en.html))    
+You can run the receiver : ./leandvb/receivedatv.sh
 
 <h1>Hardware</h1>
 Plug a wire on GPIO 12, means Pin 32 of the GPIO header ([header P1](http://elinux.org/RPi_Low-level_peripherals#General_Purpose_Input.2FOutput_.28GPIO.29)): this act as the antenna. Length depend on transmit frequency, but with few centimeters it works for local testing.
