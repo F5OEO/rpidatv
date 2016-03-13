@@ -16,7 +16,7 @@ make -j 4
 <h1> leandvb rtlsdr receiver installation </h1>
 ./install.sh   
 This install leandvb : a simple dvb-s receiver with rtl-sdr usb dongle
-([header P1](http://www.pabr.org/radio/leandvb/leandvb.en.html))    
+([leandvb dvb-s receiver](http://www.pabr.org/radio/leandvb/leandvb.en.html))    
 You can run the receiver : ./leandvb/receivedatv.sh
 
 <h1>Hardware</h1>
