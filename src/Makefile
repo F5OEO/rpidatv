@@ -1,4 +1,4 @@
-all:	rpidatv muxests
+all:	rpidatv 
 
 #CFLAGS	= -Wall -g -O2 -D DIGITHIN
 CFLAGS	= -Wall -g -O2 -Wno-unused-variable -Wno-unused-function 
