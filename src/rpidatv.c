@@ -231,8 +231,8 @@ int InitUgly()
 
 			//gpioSetMode(18, 2); /* set to ALT5, PWM1 : RF */
 			if(PinOutput[0]==18) gpioSetMode(18, 2); //ALT 5
-			if(PinOutput[0]==12) gpioSetMode(12, 4); //ALT 0
-			if(PinOutput[0]==40) gpioSetMode(40, 2); //ALT 0
+			if(PinOutput[0]==12) {gpioSetMode(12, 4);printf("\n Using GPIO 12");} //ALT 0
+			if(PinOutput[0]==40) gpioSetMode(40, 4); //ALT 0
 
 pwm_reg[PWM_CTL] = 0;
 if(FreqFractionnal==0)
@@ -280,13 +280,21 @@ if(FreqFractionnal==0)
 		clk_reg[PCMCLK_CNTL] = 0x5A000000|PLL_PWM;		// Source=PLLD (500MHz) //Seems Both should be on same PLL
 		udelay(1000);
 		
-		clk_reg[PCMCLK_DIV] = 0x5A000000 | (4<<12);	// Set pcm div to 2, giving 250MHz step
-		
-		udelay(100);
+		if(SymbolRate>=250)
+			clk_reg[PCMCLK_DIV] = 0x5A000000 | (4<<12);	// Set pcm div to 2, giving 250MHz step
+		else
+		{
+			clk_reg[PCMCLK_DIV] = 0x5A000000 | (8<<12);	// Set pcm div to 2, giving 250MHz step
+			printf("Low SymbolRate\n");
+		}
 		
 		pcm_reg[PCM_TXC_A] = 0<<31 | 1<<30 | 0<<20 | 0<<16; // 1 channel, 8 bits
 		udelay(100);
-		int NbStep = PLLFREQ_PCM/(2*SymbolRate*1000) -1;
+		int NbStep;
+		if(SymbolRate>=250)
+		   NbStep= PLLFREQ_PCM/(2*SymbolRate*1000) -1;
+		else
+		   NbStep= PLLFREQ_PCM/(4*SymbolRate*1000) -1;
 		printf("Nb PCM STEP (<1000):%d\n",NbStep);
 		pcm_reg[PCM_MODE_A] = NbStep<<10; // SHOULD NOT EXCEED 1000 !!!
 		udelay(100);
