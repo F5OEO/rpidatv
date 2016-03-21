@@ -1168,7 +1168,7 @@ if(ModeIQ==2)
 	pthread_attr_destroy (&attr);
 	
 	printf("Init Filling Memory buffer %d\n",BufferAvailable());
-	while(BufferAvailable()<TSRate) // 1 SECOND BUFFERING DEPEND ON SYMBOLRATE
+	while(BufferAvailable()<(TSRate/10)) // 1/10 SECOND BUFFERING DEPEND ON SYMBOLRATE
 	{
 		printf(".");
 		 usleep(500);
