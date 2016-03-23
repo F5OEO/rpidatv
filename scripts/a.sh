@@ -203,7 +203,7 @@ sudo modprobe bcm2835-v4l2
 VIDEO_WIDTH=720
 VIDEO_HEIGHT=576
 #OVERLAY ENABLE ! BE SURE NOT TO BE ON RF MODE !!!!
-v4l2-ctl --overlay=1
+#v4l2-ctl --overlay=1
 v4l2-ctl --set-fmt-video=width=$VIDEO_WIDTH,height=$VIDEO_HEIGHT,pixelformat=4
 #SET FRAMERATE -- OK --
 v4l2-ctl -p $VIDEO_FPS
@@ -230,7 +230,7 @@ sudo nice -n -30 $PATHRPI"/ffmpeg"  -loglevel $MODE_DEBUG  -analyzeduration 100 
 else
 echo cam with audio
 sudo modprobe bcm2835-v4l2
-v4l2-ctl --overlay=1
+#v4l2-ctl --overlay=1
 v4l2-ctl --set-fmt-video=width=$VIDEO_WIDTH,height=$VIDEO_HEIGHT,pixelformat=4
 v4l2-ctl -p $VIDEO_FPS
 v4l2-ctl --set-ctrl video_bitrate=$BITRATE_VIDEO
@@ -258,7 +258,7 @@ if [ "$AUDIO_CARD" == 1 ]; then
 sudo modprobe bcm2835-v4l2
 v4l2-ctl --set-fmt-video=width=$VIDEO_WIDTH,height=$VIDEO_HEIGHT,pixelformat=0
 v4l2-ctl -p $VIDEO_FPS
-v4l2-ctl --overlay=1
+#v4l2-ctl --overlay=1
 let DELAY=(BITRATE_VIDEO*8)/10
 sleep 1
 
@@ -273,7 +273,7 @@ else
 sudo modprobe bcm2835-v4l2
 v4l2-ctl --set-fmt-video=width=$VIDEO_WIDTH,height=$VIDEO_HEIGHT,pixelformat=0
 v4l2-ctl -p $VIDEO_FPS
-v4l2-ctl --overlay=1
+#v4l2-ctl --overlay=1
 sleep 1
 
 #echo ezcap
