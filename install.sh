@@ -19,10 +19,11 @@ cd ../../
 
 # LeanDVB install
 
-sudo apt-get install g++ libx11-dev buffer
+sudo apt-get install g++ libx11-dev buffer mplayer
 cd leandvb/
 wget http://www.pabr.org/radio/leandvb/leandvb.cc
 g++ -O3 -DGUI leandvb.cc -lX11 -o leandvb
+sudo cp leandvb /usr/local/bin/
 cd ../
 
 
