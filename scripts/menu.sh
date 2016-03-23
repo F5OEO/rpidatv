@@ -407,7 +407,10 @@ menuchoice=$(whiptail --title "$StrOutputTitle" --menu "$StrOutputContext" 16 78
 do_transmit() 
 {
 		
-	$PATHSCRIPT"/a.sh" >/dev/null 2>/dev/null &
+	#$PATHSCRIPT"/a.sh" >/dev/null 2>/dev/null &
+	$PATHSCRIPT"/a.sh" &
+	do_status
+	do_stop_transmit
 	
 }
 
@@ -440,9 +443,48 @@ do_status()
 	do_display_off
 }
 
+do_receive_status()
+{
+	whiptail --title "RECEIVE" --msgbox "$INFO" 8 78
+	sudo killall mplayer
+	sudo killall leandvb
+
+}
+
+do_receive()
+{
+	FREQ=$(get_config_var freqoutput $CONFIGFILE)
+	SYMBOLRATEK=$(get_config_var symbolrate $CONFIGFILE)
+	let RECEIVESYMBOLRATE=SYMBOLRATEK*1000
+	let FREQHZ=FREQ*1000000
+	echo receive on $RECEIVESYMBOLRATE at Frequency $FREQHZ
+	mkfifo fifots
+	sudo rtl_sdr -p 80 -g 30 -f $FREQHZ -s 1024000 - | leandvb --agc --sr $RECEIVESYMBOLRATE --anf 1 -f 1024000 |buffer > fifots &
+	sudo SDL_VIDEODRIVER=fbcon SDL_FBDEV=/dev/fb0 mplayer -ao /dev/null -vo sdl  fifots &
+
+	do_receive_status
+}
+
+OnStartup()
+{
+	CALL=$(get_config_var call $CONFIGFILE)
+MODE_INPUT=$(get_config_var modeinput $CONFIGFILE)
+MODE_OUTPUT=$(get_config_var modeoutput $CONFIGFILE)
+SYMBOLRATEK=$(get_config_var symbolrate $CONFIGFILE)
+FEC=$(get_config_var fec $CONFIGFILE)
+PATHTS=$(get_config_var pathmedia $CONFIGFILE)
+FREQ_OUTPUT=$(get_config_var freqoutput $CONFIGFILE)
+GAIN_OUTPUT=$(get_config_var rfpower $CONFIGFILE)
+let FECNUM=FEC
+let FECDEN=FEC+1
+INFO=$CALL":"$MODE_INPUT"-->"$MODE_OUTPUT"("$SYMBOLRATEK"KSymbol FEC "$FECNUM"/"$FECDEN") sur "$FREQ_OUTPUT"Mhz Gain "$GAIN_OUTPUT
+
+	do_transmit
+}
+
 #********************************************* MAIN MENU **************************************************
 status="0"
-
+OnStartup
 #$PATHRPI"/rpibutton.sh" &
 sleep 0.2
 
@@ -462,20 +504,24 @@ INFO=$CALL":"$MODE_INPUT"-->"$MODE_OUTPUT"("$SYMBOLRATEK"KSymbol FEC "$FECNUM"/"
 
 
 
-do_transmit
-do_status
+#do_transmit
+#do_status
 #do_display_on
 #"1 Transmission" "Demarre la transmission"\
  menuchoice=$(whiptail --title "$StrMainMenuTitle" --menu "$INFO" 16 82 5 \
+	"0 Transmit" "Go transmit" \
         "1 Source" "$StrMainMenuSource" \
 	"2 Sortie" "$StrMainMenuOutput" \
 	"3 Station" "$StrMainMenuCall" \
+	"4 Receive" "Receive via rtlsdr" \
 	3>&2 2>&1 1>&3)
       
         case "$menuchoice" in
+	    0\ *) do_transmit   ;;	
             1\ *) do_input_setup   ;;
 	    2\ *) do_output_setup ;;
    	    3\ *) do_station_setup ;;
+	    4\ *) do_receive ;;	
             *)
 		
 		 whiptail --title "$StrMainMenuExitTitle" --msgbox "$StrMainMenuExitContext" 8 78
