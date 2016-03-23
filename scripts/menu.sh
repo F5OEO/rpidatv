@@ -406,46 +406,43 @@ menuchoice=$(whiptail --title "$StrOutputTitle" --menu "$StrOutputContext" 16 78
 
 do_transmit() 
 {
-	#SCRIPT=$(readlink -f $0)
-	# Absolute path this script is in. /home/user/bin
-	#SCRIPTPATH=`dirname $SCRIPT`
-
-	#whiptail --title "TRANSMITING" --msgbox "$INFO" 8 78
-	sudo killall ffmpeg >/dev/null 2>/dev/null
-	sudo killall h264 >/dev/null 2>/dev/null
-	sudo killall rpidatv >/dev/null 2>/dev/null
-	sudo killall cat >/dev/null 2>/dev/null
-	sudo killall hello_encode.bin >/dev/null 2>/dev/null
-	sudo killall h264yuv >/dev/null 2>/dev/null
-	sudo killall raspivid >/dev/null 2>/dev/null
-	sleep 0.5
+		
 	$PATHSCRIPT"/a.sh" >/dev/null 2>/dev/null &
-	sleep 0.5
-	#$SCRIPTPATH"/a.sh" &
-	#exit 0
+	
 }
 
-
-do_status()
+do_stop_transmit()
 {
-	whiptail --title "$StrStatusTitle" --msgbox "$INFO" 8 78	 
+	sudo killall rpidatv >/dev/null 2>/dev/null
+	sudo killall ffmpeg >/dev/null 2>/dev/null
+
 }
 
 do_display_on()
 {
-	tvservice -p
-	sudo chvt 2
-	sudo chvt 1
+	#tvservice -p
+	#sudo chvt 2
+	#sudo chvt 1
+	v4l2-ctl --overlay=1
 }
 
 do_display_off()
 {
-	tvservice -o
+	v4l2-ctl --overlay=0
+	#tvservice -o
+}
+
+do_status()
+{
+	do_display_on
+	whiptail --title "$StrStatusTitle" --msgbox "$INFO" 8 78
+	do_stop_transmit
+	do_display_off
 }
 
 #********************************************* MAIN MENU **************************************************
 status="0"
-#do_display_off
+
 #$PATHRPI"/rpibutton.sh" &
 sleep 0.2
 
@@ -483,13 +480,7 @@ do_status
 		
 		 whiptail --title "$StrMainMenuExitTitle" --msgbox "$StrMainMenuExitContext" 8 78
                 status=1
-		sudo killall ffmpeg >/dev/null 2>/dev/null
-		sudo killall h264 >/dev/null 2>/dev/null
-		sudo killall rpidatv >/dev/null 2>/dev/null
-		sudo killall cat >/dev/null 2>/dev/null
-		sudo killall hello_encode.bin >/dev/null 2>/dev/null
-		sudo killall h264yuv >/dev/null 2>/dev/null
-		sudo killall raspivid >/dev/null 2>/dev/null
+		
 		kill -1 $(pidof -x frmenu.sh) >/dev/null 2>/dev/null
 		kill -1 $(pidof -x gbmenu.sh) >/dev/null 2>/dev/null 
 		sleep 1
