@@ -280,21 +280,24 @@ if(FreqFractionnal==0)
 		clk_reg[PCMCLK_CNTL] = 0x5A000000|PLL_PWM;		// Source=PLLD (500MHz) //Seems Both should be on same PLL
 		udelay(1000);
 		
+		int NbStep;
 		if(SymbolRate>=250)
+		{
 			clk_reg[PCMCLK_DIV] = 0x5A000000 | (4<<12);	// Set pcm div to 2, giving 250MHz step
+			NbStep= PLLFREQ_PCM/(2*SymbolRate*1000) -1;
+		}
 		else
 		{
-			clk_reg[PCMCLK_DIV] = 0x5A000000 | (8<<12);	// Set pcm div to 2, giving 250MHz step
+			int prescale=4*(250/SymbolRate);
+			clk_reg[PCMCLK_DIV] = 0x5A000000 | ((prescale*2)<<12);	// Set pcm div to 2, giving 250MHz step
+			NbStep= PLLFREQ_PCM/(prescale*SymbolRate*1000) -1;
 			printf("Low SymbolRate\n");
 		}
 		
 		pcm_reg[PCM_TXC_A] = 0<<31 | 1<<30 | 0<<20 | 0<<16; // 1 channel, 8 bits
 		udelay(100);
-		int NbStep;
-		if(SymbolRate>=250)
-		   NbStep= PLLFREQ_PCM/(2*SymbolRate*1000) -1;
-		else
-		   NbStep= PLLFREQ_PCM/(4*SymbolRate*1000) -1;
+		
+		
 		printf("Nb PCM STEP (<1000):%d\n",NbStep);
 		pcm_reg[PCM_MODE_A] = NbStep<<10; // SHOULD NOT EXCEED 1000 !!!
 		udelay(100);
