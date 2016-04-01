@@ -26,4 +26,20 @@ g++ -O3 -DGUI leandvb.cc -lX11 -o leandvb
 sudo cp leandvb /usr/local/bin/
 cd ../
 
+# TouchScreen GUI
+# FBCP : Duplicate Framebuffer 0 -> 1
+
+git clone https://github.com/tasanakorn/rpi-fbcp
+cd rpi-fbcp/
+mkdir build
+cd build/
+cmake ..
+make
+sudo install fbcp /usr/local/bin/fbcp
+cd ../../
+
+sudo apt-get install libjpeg8-dev indent libfreetype6-dev ttf-dejavu-core mplayer
+cd src/gui/
+make
+sudo make install
 
