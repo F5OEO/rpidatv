@@ -80,7 +80,7 @@ GetConfigParam(char *PathConfigFile,char *Param, char *Value)
 	{
 		while ((read = getline(&line, &len, fp)) != -1)
 		{
-		      	printf("%s", line);
+		      	//printf("%s", line);
 			if(strncmp (line,Param,strlen(Param)) == 0)
 			{
 				strcpy(Value,line+strlen(Param)+1);
@@ -113,7 +113,7 @@ SetConfigParam(char *PathConfigFile,char *Param,char *Value)
 	{
 		while ((read = getline(&line, &len, fp)) != -1)
 		{
-		      	printf("%s", line);
+		      	//printf("%s", line);
 			if(strncmp (line,Param,strlen(Param)) == 0)
 			{
 				fprintf(fw,"%s=%s\n",Param,Value);
@@ -144,7 +144,11 @@ int IsButtonPushed(int NbButton,int x,int y)
 	int  scaledX, scaledY;
 	scaledX = x/scaleXvalue;
         scaledY = hscreen-y/scaleYvalue;
-	//printf("x=%d y=%d\n",scaledX,scaledY);
+
+//	scaledX = wscreen-y/scaleXvalue; FOR INVERSED TOUCSCREEN (AIW)
+//	scaledY = hscreen-x/scaleYvalue;
+
+	//printf("x=%d y=%d scaledx %d scaledy %d\n",x,y,scaledX,scaledY);
 	int margin=20;
 	if((scaledX<=(ButtonArray[NbButton].x+ButtonArray[NbButton].w-margin))&&(scaledX>=ButtonArray[NbButton].x+margin) &&
 	(scaledY<=(ButtonArray[NbButton].y+ButtonArray[NbButton].h-margin))&&(scaledY>=ButtonArray[NbButton].y+margin)
@@ -406,7 +410,8 @@ SelectPTT(int NoButton,int Status)
 TransmitStart()
 {
 	printf("Transmit Start\n");
-	#define PATH_SCRIPT_A "sudo /home/pi/rpidatv/scripts/a.sh"
+	
+	#define PATH_SCRIPT_A "sudo /home/pi/rpidatv/scripts/a.sh >/dev/null 2>/dev/null"
 	if((strcmp(ModeInput,TabModeInput[0])==0)||(strcmp(ModeInput,TabModeInput[1])==0)) //CAM
 	{
 		printf("DISPLAY OFF \n");
@@ -451,7 +456,7 @@ int rawX, rawY, rawPressure,i;
     for (;;) {
 	//Start(w,h);
 	if (getTouchSample(&rawX, &rawY, &rawPressure)==0) continue;
-	printf("x=%x y=%x\n",rawX,rawY);
+	printf("x=%d y=%d\n",rawX,rawY);
 	if(IsDisplayOn==0)
 	{
 				
@@ -576,9 +581,9 @@ int main(int argc, char **argv) {
 	int screenYmax, screenYmin;
 	getTouchScreenDetails(&screenXmin,&screenXmax,&screenYmin,&screenYmax);
 	scaleXvalue = ((float)screenXmax-screenXmin) / wscreen;
-	printf ("X Scale Factor = %f\n", scaleXvalue);
+	//printf ("X Scale Factor = %f\n", scaleXvalue);
 	scaleYvalue = ((float)screenYmax-screenYmin) / hscreen;
-	printf ("Y Scale Factor = %f\n", scaleYvalue);
+	//printf ("Y Scale Factor = %f\n", scaleYvalue);
 
 	int wbuttonsize=wscreen/5;	
 	int hbuttonsize=hscreen/5;
@@ -588,74 +593,74 @@ int main(int argc, char **argv) {
 	color_t Col;
 	Col.r=0;Col.g=0;Col.b=128;
 	AddButtonStatus(button,"SR125",&Col);
-	Col.r=0;Col.g=255;Col.b=0;
+	Col.r=0;Col.g=128;Col.b=0;
 	AddButtonStatus(button,"SR125",&Col);
 
 	button=AddButton(1*wbuttonsize+20,hbuttonsize*0+20,wbuttonsize*0.9,hbuttonsize*0.9);
 	Col.r=0;Col.g=0;Col.b=128;
 	AddButtonStatus(button,"SR250",&Col);
-	Col.r=0;Col.g=255;Col.b=0;
+	Col.r=0;Col.g=128;Col.b=0;
 	AddButtonStatus(button,"SR250",&Col);
 
 	button=AddButton(2*wbuttonsize+20,hbuttonsize*0+20,wbuttonsize*0.9,hbuttonsize*0.9);
 	Col.r=0;Col.g=0;Col.b=128;
 	AddButtonStatus(button,"SR333",&Col);
-	Col.r=0;Col.g=255;Col.b=0;
+	Col.r=0;Col.g=128;Col.b=0;
 	AddButtonStatus(button,"SR333",&Col);
 
 	button=AddButton(3*wbuttonsize+20,hbuttonsize*0+20,wbuttonsize*0.9,hbuttonsize*0.9);
 	Col.r=0;Col.g=0;Col.b=128;
 	AddButtonStatus(button,"SR500",&Col);
-	Col.r=0;Col.g=255;Col.b=0;
+	Col.r=0;Col.g=128;Col.b=0;
 	AddButtonStatus(button,"SR500",&Col);
 
 	button=AddButton(4*wbuttonsize+20,hbuttonsize*0+20,wbuttonsize*0.9,hbuttonsize*0.9);
 	Col.r=0;Col.g=0;Col.b=128;
 	AddButtonStatus(button,"SR1000",&Col);
-	Col.r=0;Col.g=255;Col.b=0;
+	Col.r=0;Col.g=128;Col.b=0;
 	AddButtonStatus(button,"SR1000",&Col);
 // FEC	
 	button=AddButton(0*wbuttonsize+20,hbuttonsize*1+20,wbuttonsize*0.9,hbuttonsize*0.9);
 	Col.r=0;Col.g=0;Col.b=128;
 	AddButtonStatus(button,"FEC 1/2",&Col);
-	Col.r=0;Col.g=255;Col.b=0;
+	Col.r=0;Col.g=128;Col.b=0;
 	AddButtonStatus(button,"FEC 1/2",&Col);
 	
 	button=AddButton(1*wbuttonsize+20,hbuttonsize*1+20,wbuttonsize*0.9,hbuttonsize*0.9);
 	Col.r=0;Col.g=0;Col.b=128;
 	AddButtonStatus(button,"FEC 2/3",&Col);
-	Col.r=0;Col.g=255;Col.b=0;
+	Col.r=0;Col.g=128;Col.b=0;
 	AddButtonStatus(button,"FEC 2/3",&Col);
 	
 button=AddButton(2*wbuttonsize+20,hbuttonsize*1+20,wbuttonsize*0.9,hbuttonsize*0.9);
 	Col.r=0;Col.g=0;Col.b=128;
 	AddButtonStatus(button,"FEC 3/4",&Col);
-	Col.r=0;Col.g=255;Col.b=0;
+	Col.r=0;Col.g=128;Col.b=0;
 	AddButtonStatus(button,"FEC 3/4",&Col);
 	
 button=AddButton(3*wbuttonsize+20,hbuttonsize*1+20,wbuttonsize*0.9,hbuttonsize*0.9);
 	Col.r=0;Col.g=0;Col.b=128;
 	AddButtonStatus(button,"FEC 5/6",&Col);
-	Col.r=0;Col.g=255;Col.b=0;
+	Col.r=0;Col.g=128;Col.b=0;
 	AddButtonStatus(button,"FEC 5/6",&Col);
 
 button=AddButton(4*wbuttonsize+20,hbuttonsize*1+20,wbuttonsize*0.9,hbuttonsize*0.9);
 	Col.r=0;Col.g=0;Col.b=128;
 	AddButtonStatus(button,"FEC 7/8",&Col);
-	Col.r=0;Col.g=255;Col.b=0;
+	Col.r=0;Col.g=128;Col.b=0;
 	AddButtonStatus(button,"FEC 7/8",&Col);
 
 //SOURCE
 button=AddButton(0*wbuttonsize+20,hbuttonsize*2+20,wbuttonsize*0.9,hbuttonsize*0.9);
 	Col.r=0;Col.g=0;Col.b=128;	
 	AddButtonStatus(button,"CAM MPEG2",&Col);
-	Col.r=0;Col.g=255;Col.b=0;
+	Col.r=0;Col.g=128;Col.b=0;
 	AddButtonStatus(button,"CAM MPEG2",&Col);
 	
 	button=AddButton(1*wbuttonsize+20,hbuttonsize*2+20,wbuttonsize*0.9,hbuttonsize*0.9);
 	Col.r=0;Col.g=0;Col.b=128;	
 	AddButtonStatus(button,"CAM H264",&Col);
-	Col.r=0;Col.g=255;Col.b=0;
+	Col.r=0;Col.g=128;Col.b=0;
 	AddButtonStatus(button,"CAM H264",&Col);	
 
 char PictureName[255];
@@ -691,7 +696,7 @@ button=AddButton(0*wbuttonsize+20,hbuttonsize*3+20,wbuttonsize*1.2,hbuttonsize*1
 button=AddButton(1*wbuttonsize*3+20,hbuttonsize*3+20,wbuttonsize*1.2,hbuttonsize*1.2);
 	Col.r=0;Col.g=0;Col.b=128;
 	AddButtonStatus(button,"RX   ",&Col);
-	Col.r=0;Col.g=255;Col.b=0;
+	Col.r=0;Col.g=128;Col.b=0;
 	AddButtonStatus(button,"RX ON",&Col);		
 	
 	Start(wscreen,hscreen);
