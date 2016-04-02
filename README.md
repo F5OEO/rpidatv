@@ -33,7 +33,7 @@ rpidatv -i File Input -s Symbolrate -c Fec [-o OutputMode] [-f frequency output]
 	-s            SymbolRate in KS (125-4000)    
 	-c            Fec : 1/2 or 3/4 or 5/6 or 7/8    
 	-o            OutputMode   
-		{RF(Modulate QSK in RF need -f option to set frequency)}   
+		{RF(Modulate QPSK in RF need -f option to set frequency)}   
 		{IQ(Output QPSK I/Q}   
 		{PARALLEL(Output parallel (DTX1,MINIMOD..)}   
 	{IQWITHCLK(Output I/Q with CLK (F5LGJ)}   
