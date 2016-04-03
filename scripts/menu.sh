@@ -408,8 +408,8 @@ do_transmit()
 {
 		
 	#$PATHSCRIPT"/a.sh" >/dev/null 2>/dev/null &
-	$PATHSCRIPT"/a.sh" &
 	do_status
+	$PATHSCRIPT"/a.sh" &
 	do_stop_transmit
 	
 }
@@ -477,7 +477,7 @@ FREQ_OUTPUT=$(get_config_var freqoutput $CONFIGFILE)
 GAIN_OUTPUT=$(get_config_var rfpower $CONFIGFILE)
 let FECNUM=FEC
 let FECDEN=FEC+1
-INFO=$CALL":"$MODE_INPUT"-->"$MODE_OUTPUT"("$SYMBOLRATEK"KSymbol FEC "$FECNUM"/"$FECDEN") sur "$FREQ_OUTPUT"Mhz Gain "$GAIN_OUTPUT
+INFO=$CALL":"$MODE_INPUT"-->"$MODE_OUTPUT"("$SYMBOLRATEK" KSymbol/s, FEC "$FECNUM"/"$FECDEN") on "$FREQ_OUTPUT" MHz, gain "$GAIN_OUTPUT
 
 # We must let the user set things up before transmitting anything.
 #do_transmit
@@ -501,7 +501,7 @@ FREQ_OUTPUT=$(get_config_var freqoutput $CONFIGFILE)
 GAIN_OUTPUT=$(get_config_var rfpower $CONFIGFILE)
 let FECNUM=FEC
 let FECDEN=FEC+1
-INFO=$CALL":"$MODE_INPUT"-->"$MODE_OUTPUT"("$SYMBOLRATEK"KSymbol FEC "$FECNUM"/"$FECDEN") sur "$FREQ_OUTPUT"Mhz Gain "$GAIN_OUTPUT
+INFO=$CALL":"$MODE_INPUT"-->"$MODE_OUTPUT"("$SYMBOLRATEK" KSymbol/s, FEC "$FECNUM"/"$FECDEN") on "$FREQ_OUTPUT" MHz, gain "$GAIN_OUTPUT
 
 
 
