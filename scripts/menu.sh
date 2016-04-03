@@ -512,7 +512,7 @@ INFO=$CALL":"$MODE_INPUT"-->"$MODE_OUTPUT"("$SYMBOLRATEK"KSymbol FEC "$FECNUM"/"
  menuchoice=$(whiptail --title "$StrMainMenuTitle" --menu "$INFO" 16 82 5 \
 	"0 Transmit" "Go transmit" \
         "1 Source" "$StrMainMenuSource" \
-	"2 Sortie" "$StrMainMenuOutput" \
+	"2 Setup" "$StrMainMenuOutput" \
 	"3 Station" "$StrMainMenuCall" \
 	"4 Receive" "Receive via rtlsdr" \
 	3>&2 2>&1 1>&3)
