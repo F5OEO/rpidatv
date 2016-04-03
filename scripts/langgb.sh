@@ -1,45 +1,45 @@
 
 ######## INPUT MENU #####################
-StrInputSetupTitle="Input choice"
+StrInputSetupTitle="Setup Menu"
 StrInputSetupDescription="Press down/up arrows to move, space to select"
 StrInputSetupCAMH264="H264 Camera"
-StrInputSetupCAMMPEG_2="MPEG-2 Camera(for old set top box)"
+StrInputSetupCAMMPEG_2="MPEG-2 Camera (for old set-top boxes)"
 StrInputSetupFILETS="Transport stream file (.ts)"
-StrInputSetupPATERNAUDIO="JPEG picture patern(no audio)"
-StrInputSetupCARRIER="Only Carrier"
-StrInputSetupTESTMODE="Testmode carrier"
+StrInputSetupPATERNAUDIO="JPEG picture pattern (without audio)"
+StrInputSetupCARRIER="Only carrier"
+StrInputSetupTESTMODE="Test mode carrier"
 StrInputSetupIPTSIN="Transport stream from network"
-StrInputSetupFILETSName="TS file is now"
-StrInputSetupPATERNAUDIOName="JPEG picture is now"
-StrInputSetupIPTSINName="IP address to receive (port 10000)"
-StrInputSetupIPTSINTitle="Setup IP address"
+StrInputSetupFILETSName="TS file is used now"
+StrInputSetupPATERNAUDIOName="JPEG picture is used now"
+StrInputSetupIPTSINName="The IP address used to receive (port 10000)"
+StrInputSetupIPTSINTitle="Set the IP address"
 
 ######## CALL MENU ###################"
-StrCallContext="CALL Setup"
-StrCallTitle="CALL"
+StrCallContext="Callsign Setup"
+StrCallTitle="Callsign"
 
 ######## OUTPUT MENU #####################
-StrOutputSetupTitle="Output type"
+StrOutputSetupTitle="Output Menu"
 StrOutputSetupContext="Press down/up arrows to move, space to select"
 StrOutputSetupIQ="IQ output for external modulator"
-StrOutputSetupRF="QPSK direct in RF"
+StrOutputSetupRF="Direct QPSK modulated RF"
 StrOutputSetupBATC="Stream to BATC"
 StrOutputSetupDigithin="Digithin card"
 StrOutputSetupDTX1="DTX1"
 StrOutputSetupDATVExpress="DatvExpress"
 
-StrOutputRFFreqContext="Output frequency(MHZ)"
+StrOutputRFFreqContext="Output frequency (MHz)"
 StrOutputRFFreqTitle="RF Frequency"
 
-StrOutputRFGainContext="RF Gain(0=-3.4dbm 7=10.6dbm"
+StrOutputRFGainContext="RF Gain (0=-3.4dbm, 7=10.6dbm)"
 StrOutputRFGainTitle="RF Gain"
 
 StrOutputBATCContext="BATC Stream name"
 StrOutputBATCTitle="BATC Setup"
 
 ######### SYMBOLRATE AND FEC ##########
-StrOutputSymbolrateContext="Symbol Rate (KSymbols/s):125-2000"
-StrOutputSymbolrateTitle="Symbol Rate"
+StrOutputSymbolrateContext="Symbol rate (KSymbol/s): 125-2000"
+StrOutputSymbolrateTitle="Symbol rate"
 
 StrOutputFECTitle="FEC Setup"
 StrOutputFECContext="Press down/up arrows to move, space to select"
@@ -58,15 +58,15 @@ StrStatusTitle="Transmitting"
 StrMainMenuTitle="RpiDATV GUI Version 1.2 (F5OEO Evariste)"
 StrMainMenuSource="Source select"
 StrMainMenuOutput="Output select"
-StrMainMenuCall="Station call setup"
+StrMainMenuCall="Station callsign setup"
 
 StrMainMenuExitTitle="Exit"
-StrMainMenuExitContext="Thanks to use RpiDATV... 73's de F5OEO(evaristec@gmail.com)"
+StrMainMenuExitContext="Thanks for using RpiDATV... 73's de F5OEO (evaristec@gmail.com)"
 
 ########## FILE #################
 
 FileMenuTitle="! ERROR !"
-FileMenuContext="Error setting path to image file"
+FileMenuContext="Error setting the image file path."
 
 
 

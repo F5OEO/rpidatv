@@ -62,8 +62,10 @@ PIDPMT=$(get_config_var pidpmt $CONFIGFILE)
 SERVICEID=$(get_config_var serviceid $CONFIGFILE)
 #v4l2-ctl --overlay=0
 
-PIN_I=12
-PIN_Q=13
+
+# For compatibility with old Pi models which haven't got GPIO 12 and 13 on the header
+PIN_I=18
+PIN_Q=19
 
 detect_audio
 

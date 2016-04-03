@@ -850,7 +850,7 @@ Usage:\nrpidatv -i File Input -s Symbolrate -c Fec [-o OutputMode] [-f frequency
 -s            SymbolRate in KS (125-4000) \n\
 -c            Fec : 1/2 or 3/4 or 5/6 or 7/8 \n\
 -o            OutputMode\n\
-	      {RF(Modulate QSK in RF need -f option to set frequency)}\n\
+	      {RF(Modulate QPSK in RF need -f option to set frequency)}\n\
               {IQ(Output QPSK I/Q}\n\
               {PARALLEL(Output parallel (DTX1,MINIMOD..)}\n\
        	      {IQWITHCLK(Output I/Q with CLK (F5LGJ)}\n\
@@ -1280,9 +1280,9 @@ for (;;)
 			}
 			clock_gettime(CLOCK_REALTIME, &gettime_now);
 			start_time = gettime_now.tv_nsec;
-			static int TotalByteRead;
-				
-			TotalByteRead=0;
+
+			//static int TotalByteRead;
+			//TotalByteRead=0;
 		
 			//printf("Process LOCK\n");
 			#ifdef WITH_MEMORY_BUFFER

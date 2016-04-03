@@ -408,8 +408,8 @@ do_transmit()
 {
 		
 	#$PATHSCRIPT"/a.sh" >/dev/null 2>/dev/null &
-	$PATHSCRIPT"/a.sh" &
 	do_status
+	$PATHSCRIPT"/a.sh" &
 	do_stop_transmit
 	
 }
@@ -467,7 +467,7 @@ do_receive()
 
 OnStartup()
 {
-	CALL=$(get_config_var call $CONFIGFILE)
+CALL=$(get_config_var call $CONFIGFILE)
 MODE_INPUT=$(get_config_var modeinput $CONFIGFILE)
 MODE_OUTPUT=$(get_config_var modeoutput $CONFIGFILE)
 SYMBOLRATEK=$(get_config_var symbolrate $CONFIGFILE)
@@ -477,9 +477,10 @@ FREQ_OUTPUT=$(get_config_var freqoutput $CONFIGFILE)
 GAIN_OUTPUT=$(get_config_var rfpower $CONFIGFILE)
 let FECNUM=FEC
 let FECDEN=FEC+1
-INFO=$CALL":"$MODE_INPUT"-->"$MODE_OUTPUT"("$SYMBOLRATEK"KSymbol FEC "$FECNUM"/"$FECDEN") sur "$FREQ_OUTPUT"Mhz Gain "$GAIN_OUTPUT
+INFO=$CALL":"$MODE_INPUT"-->"$MODE_OUTPUT"("$SYMBOLRATEK" KSymbol/s, FEC "$FECNUM"/"$FECDEN") on "$FREQ_OUTPUT" MHz, gain "$GAIN_OUTPUT
 
-	do_transmit
+# We must let the user set things up before transmitting anything.
+#do_transmit
 }
 
 #********************************************* MAIN MENU **************************************************
@@ -500,7 +501,7 @@ FREQ_OUTPUT=$(get_config_var freqoutput $CONFIGFILE)
 GAIN_OUTPUT=$(get_config_var rfpower $CONFIGFILE)
 let FECNUM=FEC
 let FECDEN=FEC+1
-INFO=$CALL":"$MODE_INPUT"-->"$MODE_OUTPUT"("$SYMBOLRATEK"KSymbol FEC "$FECNUM"/"$FECDEN") sur "$FREQ_OUTPUT"Mhz Gain "$GAIN_OUTPUT
+INFO=$CALL":"$MODE_INPUT"-->"$MODE_OUTPUT"("$SYMBOLRATEK" KSymbol/s, FEC "$FECNUM"/"$FECDEN") on "$FREQ_OUTPUT" MHz, gain "$GAIN_OUTPUT
 
 
 
@@ -511,7 +512,7 @@ INFO=$CALL":"$MODE_INPUT"-->"$MODE_OUTPUT"("$SYMBOLRATEK"KSymbol FEC "$FECNUM"/"
  menuchoice=$(whiptail --title "$StrMainMenuTitle" --menu "$INFO" 16 82 5 \
 	"0 Transmit" "Go transmit" \
         "1 Source" "$StrMainMenuSource" \
-	"2 Sortie" "$StrMainMenuOutput" \
+	"2 Setup" "$StrMainMenuOutput" \
 	"3 Station" "$StrMainMenuCall" \
 	"4 Receive" "Receive via rtlsdr" \
 	3>&2 2>&1 1>&3)
