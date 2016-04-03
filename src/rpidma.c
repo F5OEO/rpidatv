@@ -40,7 +40,7 @@ char InitDma(void *FunctionTerminate)
 	//printf("bus_addr = %x\n", mbox.bus_addr);
 	mbox.virt_addr = mapmem(BUS_TO_PHYS(mbox.bus_addr), NUM_PAGES* PAGE_SIZE);
 	//printf("virt_addr %p\n", mbox.virt_addr);
-	virtbase = (uint32_t *)mbox.virt_addr;
+	virtbase = (uint8_t *)mbox.virt_addr;
 	//printf("virtbase %p\n", virtbase);
 	return(1);
 	
