@@ -1280,9 +1280,9 @@ for (;;)
 			}
 			clock_gettime(CLOCK_REALTIME, &gettime_now);
 			start_time = gettime_now.tv_nsec;
-			static int TotalByteRead;
-				
-			TotalByteRead=0;
+
+			//static int TotalByteRead;
+			//TotalByteRead=0;
 		
 			//printf("Process LOCK\n");
 			#ifdef WITH_MEMORY_BUFFER
