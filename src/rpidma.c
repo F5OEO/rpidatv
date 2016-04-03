@@ -62,7 +62,7 @@ mem_phys_to_virt(volatile uint32_t phys)
 	
 	//MBOX METHOD
 	uint32_t offset=phys-mbox.bus_addr;
-	uint32_t result=(uint8_t *)mbox.virt_addr+offset;
+	uint32_t result=(uint32_t)mbox.virt_addr + (uint32_t)offset;
 	//printf("MemtoVirt:Offset=%lx phys=%lx -> %lx\n",offset,phys,result);
 	return result;
 }
