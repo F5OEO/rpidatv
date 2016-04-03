@@ -467,7 +467,7 @@ do_receive()
 
 OnStartup()
 {
-	CALL=$(get_config_var call $CONFIGFILE)
+CALL=$(get_config_var call $CONFIGFILE)
 MODE_INPUT=$(get_config_var modeinput $CONFIGFILE)
 MODE_OUTPUT=$(get_config_var modeoutput $CONFIGFILE)
 SYMBOLRATEK=$(get_config_var symbolrate $CONFIGFILE)
@@ -479,7 +479,8 @@ let FECNUM=FEC
 let FECDEN=FEC+1
 INFO=$CALL":"$MODE_INPUT"-->"$MODE_OUTPUT"("$SYMBOLRATEK"KSymbol FEC "$FECNUM"/"$FECDEN") sur "$FREQ_OUTPUT"Mhz Gain "$GAIN_OUTPUT
 
-	do_transmit
+# We must let the user set things up before transmitting anything.
+#do_transmit
 }
 
 #********************************************* MAIN MENU **************************************************
