@@ -17,7 +17,7 @@ make -j 4
 ./install.sh   
 This install leandvb : a simple dvb-s receiver with rtl-sdr usb dongle
 ([leandvb dvb-s receiver](http://www.pabr.org/radio/leandvb/leandvb.en.html))    
-You can run the receiver : ./leandvb/receivedatv.sh
+You can run the receiver : ./scripts/leandvb2video.sh
 
 <h1>Hardware</h1>
 Plug a wire on GPIO 12, means Pin 32 of the GPIO header ([header P1](http://elinux.org/RPi_Low-level_peripherals#General_Purpose_Input.2FOutput_.28GPIO.29)): this act as the antenna. Length depend on transmit frequency, but with few centimeters it works for local testing.
@@ -32,7 +32,7 @@ rpidatv -i File Input -s Symbolrate -c Fec [-o OutputMode] [-f frequency output]
 	-i            path to Transport File Input    
 	-s            SymbolRate in KS (125-4000)    
 	-c            Fec : 1/2 or 3/4 or 5/6 or 7/8    
-	-o            OutputMode   
+	-m            OutputMode   
 		{RF(Modulate QSK in RF need -f option to set frequency)}   
 		{IQ(Output QPSK I/Q}   
 		{PARALLEL(Output parallel (DTX1,MINIMOD..)}   
