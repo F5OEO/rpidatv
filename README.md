@@ -4,6 +4,7 @@
 *(Created by Evariste Courjaud F5OEO. Code is GPL)*
 
 <h1> rpidatv Transmitter installation </h1>
+```
 sudo apt-get update && 
 sudo apt-get install rpi-update && 
 sudo rpi-update && 
@@ -12,12 +13,13 @@ sudo apt-get install git &&
 git clone git://github.com/f5oeo/rpidatv && 
 cd rpidatv/src && 
 make -j 4
+```
 
 <h1> leandvb rtlsdr receiver installation </h1>
-./install.sh   
+`./install.sh`   
 This install leandvb : a simple dvb-s receiver with rtl-sdr usb dongle
 ([leandvb dvb-s receiver](http://www.pabr.org/radio/leandvb/leandvb.en.html))    
-You can run the receiver : ./scripts/leandvb2video.sh
+You can run the receiver : `./scripts/leandvb2video.sh`
 
 <h1>Hardware</h1>
 Plug a wire on GPIO 12, means Pin 32 of the GPIO header ([header P1](http://elinux.org/RPi_Low-level_peripherals#General_Purpose_Input.2FOutput_.28GPIO.29)): this act as the antenna. Length depend on transmit frequency, but with few centimeters it works for local testing.
@@ -26,6 +28,7 @@ Plug a wire on GPIO 12, means Pin 32 of the GPIO header ([header P1](http://elin
 <h2> General </h2>
 rpidatv is located in /bin folder
 
+```
 rpidatv -1.3.0
 Usage:
 rpidatv -i File Input -s Symbolrate -c Fec [-o OutputMode] [-f frequency output]  [-l] [-p Power] [-h]   
@@ -44,12 +47,12 @@ rpidatv -i File Input -s Symbolrate -c Fec [-o OutputMode] [-f frequency output]
 	-x 	      GPIO Pin output for I or RF {12,18,40}   
 	-y	      GPIO Pin output for Q {13,19,41,45}   
 	-h            help (print this help).   
-
-Example : sudo ./rpidatv -i sample.ts -s 250 -c 1/2 -o RF -f 437.5 -l   
+```
+Example : `sudo ./rpidatv -i sample.ts -s 250 -c 1/2 -o RF -f 437.5 -l`   
 
 <h2> Minimal graphical menu </h2>
 You can launch a graphical menu located in /scripts folder   
-./frmenu.sh for french language   
-./gbmenu.sh for english language   
+`./frmenu.sh` for french language   
+`./gbmenu.sh` for english language   
 
 
