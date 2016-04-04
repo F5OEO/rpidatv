@@ -1,3 +1,5 @@
+#! /bin/bash
+
 
 PATHRPI="/home/pi/rpidatv/bin"
 PATHSCRIPT="/home/pi/rpidatv/scripts"
