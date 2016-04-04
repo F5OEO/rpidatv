@@ -407,8 +407,8 @@ menuchoice=$(whiptail --title "$StrOutputTitle" --menu "$StrOutputContext" 16 78
 do_transmit() 
 {
 		
-	#$PATHSCRIPT"/a.sh" >/dev/null 2>/dev/null &
-	$PATHSCRIPT"/a.sh" &
+	$PATHSCRIPT"/a.sh" >/dev/null 2>/dev/null &
+	#$PATHSCRIPT"/a.sh" &
 	do_status
 	do_stop_transmit
 	
