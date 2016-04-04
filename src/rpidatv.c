@@ -849,7 +849,7 @@ Usage:\nrpidatv -i File Input -s Symbolrate -c Fec [-o OutputMode] [-f frequency
 -i            path to Transport File Input \n\
 -s            SymbolRate in KS (125-4000) \n\
 -c            Fec : 1/2 or 3/4 or 5/6 or 7/8 \n\
--o            OutputMode\n\
+-m            OutputMode\n\
 	      {RF(Modulate QSK in RF need -f option to set frequency)}\n\
               {IQ(Output QPSK I/Q}\n\
               {PARALLEL(Output parallel (DTX1,MINIMOD..)}\n\
