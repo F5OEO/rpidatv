@@ -9,23 +9,23 @@ fi
 
 do_english()
 {
-	sudo cp /home/pi/rpidatv/scripts/keygb /etc/default/keyboard
+	sudo cp %installdir/scripts/keygb /etc/default/keyboard
 	sudo raspi-config --expand-rootfs
 	disable_InitSetup
-	sudo cp /home/pi/rpidatv/scripts/install_inittab /etc/inittab
-	cp /home/pi/rpidatv/scripts/install_bashrc.gb /home/pi/.bashrc
-	mv /home/pi/rpidatv/scripts/rpibutton.sh /home/pi/rpidatv/scripts/rpidisablebutton.sh
+	sudo cp %installdir/scripts/install_inittab /etc/inittab
+	cp %installdir/scripts/install_bashrc.gb /home/pi/.bashrc
+	mv %installdir/scripts/rpibutton.sh %installdir/scripts/rpidisablebutton.sh
 	sync
 	sudo reboot
 }
 
 do_french()
 {
-	sudo cp /home/pi/rpidatv/scripts/keyfr /etc/default/keyboard
+	sudo cp %installdir/scripts/keyfr /etc/default/keyboard
 	sudo raspi-config --expand-rootfs
 	disable_InitSetup
-	sudo cp /home/pi/rpidatv/scripts/install_inittab /etc/inittab
-	cp /home/pi/rpidatv/scripts/install_bashrc.fr /home/pi/.bashrc
+	sudo cp %installdir/scripts/install_inittab /etc/inittab
+	cp %installdir/scripts/install_bashrc.fr /home/pi/.bashrc
 	sync
 	sudo reboot
 }

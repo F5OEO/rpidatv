@@ -1,0 +1,31 @@
+#!/usr/bin/env python
+import os
+import os.path
+
+TEMPLATE_EXT = ".template"
+
+def process_template(name, filtered_name, directory):
+	if os.path.isfile(filtered_name):
+		os.remove(filtered_name)
+
+	source = open(name, "r")
+	data = source.read()
+	source.close()
+
+	data = data.replace("%installdir", directory)
+
+	destination = open(filtered_name, "w")
+	destination.write(data)
+	destination.flush()
+	destination.close()
+
+if __name__ == "__main__":
+	current_dir = os.path.dirname(os.path.realpath(__file__))
+
+	for dirpath, directories, file_names in os.walk(current_dir):
+		for file_name in file_names:
+			if file_name.endswith(TEMPLATE_EXT):
+				file_name = os.path.join(dirpath, file_name)
+				filtered_name = file_name[:-len(TEMPLATE_EXT)]
+				process_template(file_name, filtered_name, current_dir)
+				print "Processing template %s -> %s" % (file_name, filtered_name)
