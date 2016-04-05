@@ -1,8 +1,8 @@
 #! /bin/bash
 
 
-PATHRPI="/home/pi/rpidatv/bin"
-PATHSCRIPT="/home/pi/rpidatv/scripts"
+PATHRPI="%installdir/bin"
+PATHSCRIPT="%installdir/scripts"
 CONFIGFILE=$PATHSCRIPT"/rpidatvconfig.txt"
 
 get_config_var() {
@@ -68,8 +68,10 @@ PIDPMT=$(get_config_var pidpmt $CONFIGFILE)
 SERVICEID=$(get_config_var serviceid $CONFIGFILE)
 #v4l2-ctl --overlay=0
 
-PIN_I=12
-PIN_Q=13
+
+# For compatibility with old Pi models which haven't got GPIO 12 and 13 on the header
+PIN_I=18
+PIN_Q=19
 
 detect_audio
 
@@ -220,7 +222,7 @@ sleep 1
 #sudo nice -n -30 cat /dev/video0 > videoes &
 
 ########### TEST UV4L ############################
-#uv4l --driver raspicam --auto-video_nr --encoding h264 --width $VIDEO_WIDTH --height $VIDEO_HEIGHT --framerate 25 --bitrate $BITRATE_VIDEO --inline-headers --text-overlay --text-filename /home/pi/rpidatv/text.json 
+#uv4l --driver raspicam --auto-video_nr --encoding h264 --width $VIDEO_WIDTH --height $VIDEO_HEIGHT --framerate 25 --bitrate $BITRATE_VIDEO --inline-headers --text-overlay --text-filename %installdir/text.json 
 #cat /dev/video0 > videoes &
 
 #./tsudpsend videots 230.0.0.2 10000 $BITRATE_TS &

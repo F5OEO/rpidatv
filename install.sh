@@ -39,7 +39,15 @@ sudo install fbcp /usr/local/bin/fbcp
 cd ../../
 
 sudo apt-get install libjpeg8-dev indent libfreetype6-dev ttf-dejavu-core mplayer
+
+echo "Building [1/2]..."
+
 cd src/gui/
 make
 sudo make install
 
+cd ../..
+
+echo "Building [2/2]..."
+
+./build.sh

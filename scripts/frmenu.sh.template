@@ -1,8 +1,8 @@
 #!/bin/bash
-PATHSCRIPT=/home/pi/rpidatv/scripts
+PATHSCRIPT=%installdir/scripts
 CONFIGFILE=$PATHSCRIPT"/rpidatvconfig.txt"
 
-source $PATHSCRIPT"/langgb.sh"
+source $PATHSCRIPT"/langfr.sh"
 source $PATHSCRIPT"/menu.sh"    
 
 

@@ -1,4 +1,4 @@
-PATHSCRIPT=/home/pi/rpidatv/scripts
+PATHSCRIPT=%installdir/scripts
 
 $PATHSCRIPT"/a.sh"
 read -p "To exit : Press a key or CTL-C" 
