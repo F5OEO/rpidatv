@@ -21,11 +21,12 @@ def process_template(name, filtered_name, directory):
 
 if __name__ == "__main__":
 	current_dir = os.path.dirname(os.path.realpath(__file__))
+	base_dir = os.path.normpath(os.path.join(current_dir, ".."))
 
 	for dirpath, directories, file_names in os.walk(current_dir):
 		for file_name in file_names:
 			if file_name.endswith(TEMPLATE_EXT):
 				file_name = os.path.join(dirpath, file_name)
 				filtered_name = file_name[:-len(TEMPLATE_EXT)]
-				process_template(file_name, filtered_name, current_dir)
+				process_template(file_name, filtered_name, base_dir)
 				print "Processing template %s -> %s" % (file_name, filtered_name)
