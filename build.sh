@@ -9,7 +9,7 @@ sudo rpi-update
 cd src
 make -j 4
 cd ../scripts
-./process-templates.py
+./process-templates
 cd ..
 
 echo "Done."
