@@ -10,6 +10,7 @@ cd src
 make -j 4
 cd ../scripts
 ./process-templates
+rm process-templates
 rm *.template
 chmod +x *.sh
 cd ..
