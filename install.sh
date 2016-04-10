@@ -1,13 +1,3 @@
-#fbcp install for frame buffer copy on tft screen
-git clone https://github.com/tasanakorn/rpi-fbcp
-cd rpi-fbcp/
-mkdir build
-cd build/
-cmake ..
-make
-sudo install fbcp /usr/local/bin/fbcp
-cd ../../
-
 # Rtlsdr install
 sudo apt-get install cmake libusb-1.0-0-dev 
 git clone https://github.com/keenerd/rtl-sdr
