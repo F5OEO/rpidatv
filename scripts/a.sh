@@ -350,7 +350,7 @@ $PATHRPI"/mnc" -l -i eth0 -p $PORT $UDPINADDR > videots &
 "FILETS")
 	
 
-sudo $PATHRPI"/rpidatv" -i $TSVIDEOFILE -s $SYMBOLRATE_K -c $FECNUM"/"$FECDEN -f $FREQUENCY_OUT -p $GAIN -m $MODE -x $PIN_I -y $PIN_Q &
+sudo $PATHRPI"/rpidatv" -i $TSVIDEOFILE -l -s $SYMBOLRATE_K -c $FECNUM"/"$FECDEN -f $FREQUENCY_OUT -p $GAIN -m $MODE -x $PIN_I -y $PIN_Q &
 ;;
 
 # *********************************** CARRIER  ******************************************
