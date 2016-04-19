@@ -1,12 +1,4 @@
-#fbcp install for frame buffer copy on tft screen
-git clone https://github.com/tasanakorn/rpi-fbcp
-cd rpi-fbcp/
-mkdir build
-cd build/
-cmake ..
-make
-sudo install fbcp /usr/local/bin/fbcp
-cd ../../
+
 
 # Rtlsdr install
 sudo apt-get install cmake libusb-1.0-0-dev 
@@ -38,7 +30,7 @@ make
 sudo install fbcp /usr/local/bin/fbcp
 cd ../../
 
-sudo apt-get install libjpeg8-dev indent libfreetype6-dev ttf-dejavu-core mplayer
+sudo apt-get install libjpeg8-dev indent libfreetype6-dev ttf-dejavu-core mplayer bc 
 cd src/gui/
 make
 sudo make install
