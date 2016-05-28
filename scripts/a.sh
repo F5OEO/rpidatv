@@ -30,8 +30,8 @@ sudo killall h264yuv >/dev/null 2>/dev/null
 sudo killall raspivid >/dev/null 2>/dev/null
 sudo killall express_server >/dev/null 2>/dev/null
 #---- Launch FBCP ----
-sudo killall fbcp 
-fbcp &
+#sudo killall fbcp 
+#fbcp &
 # ---------------
 #sudo killall uv4l
 
