@@ -239,9 +239,11 @@ GetNextPicture(char *PictureName)
   
 }
 
-int openTouchScreen()
+int openTouchScreen(int NoDevice)
 {
-        if ((fd = open("/dev/input/event0", O_RDONLY)) < 0)
+	char sDevice[255];
+	sprintf(sDevice,"/dev/input/event%d",NoDevice);
+        if ((fd = open(sDevice, O_RDONLY)) < 0)
 	 {
                 return 1;
         }
@@ -569,13 +571,17 @@ int rawX, rawY, rawPressure,i;
 int main(int argc, char **argv) {
 	int n;
 	char *progname = argv[0];
+	int NoDeviceEvent=0;
 	saveterm();
 	init(&wscreen, &hscreen);
 	rawterm();
 
-	
-
-	if (openTouchScreen() == 1)
+	if(argc>1)
+	 {
+		NoDeviceEvent=atoi(argv[1]);
+		printf("Device Event = %d\n",NoDeviceEvent);
+	}
+	if (openTouchScreen(NoDeviceEvent) == 1)
 		perror("error opening touch screen");
 	int screenXmax, screenXmin;
 	int screenYmax, screenYmin;

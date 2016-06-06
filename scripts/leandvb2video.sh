@@ -20,10 +20,10 @@ EOF
 
 SYMBOLRATEK=$(get_config_var symbolrate $CONFIGFILE)
 FREQ_OUTPUT=$(get_config_var freqoutput $CONFIGFILE)
-
+FreqHz=$(echo "($FREQ_OUTPUT*1000000)/1" | bc )
 let SYMBOLRATE=SYMBOLRATEK*1000
-let FreqHz=FREQ_OUTPUT*1000000
-
+#let FreqHz=FREQ_OUTPUT*1000000
+echo Freq = $FreqHz
 
 if [ "$SYMBOLRATEK" -lt 250 ]; then
 SR_RTLSDR=250000
