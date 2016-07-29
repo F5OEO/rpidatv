@@ -693,8 +693,8 @@ int InitDTX1()
 }
 
 
-#define BIG_BUFFER_SIZE 1880000
-#define BURST_MEM_SIZE 1880
+#define BIG_BUFFER_SIZE 18800
+#define BURST_MEM_SIZE 188
 typedef struct circular_buffer
 {
   unsigned char *buffer;
@@ -819,7 +819,7 @@ void *FillBigBuffer (void * arg)
 
 	while(((BIG_BUFFER_SIZE-BufferAvailable())<=BURST_MEM_SIZE))
 	{
-		usleep(10000);
+		usleep(1000);
 		
 	}
 	
@@ -828,6 +828,7 @@ void *FillBigBuffer (void * arg)
 		pthread_mutex_lock(&my_circular_buffer.lock);
 		
 		 store_in_buffer_1880(buff188);
+		//printf("#");
 		/*
 		for(NbWrite=0;NbWrite<1880;NbWrite++)
 		{
@@ -1146,7 +1147,7 @@ printf("%ld:%ld : Fulling buffer \n",gettime_now.tv_sec,gettime_now.tv_nsec);
 
 
 static uint32_t MaxToGetBuffer=0; // Time of the circular buffer : depend on SIZE and SymbolRate
-uint32_t TSRate=SymbolRate*FEC*188/(4*204*(FEC+1L));
+uint64_t TSRate=SymbolRate*FEC*188*1000.0/(4*204*(FEC+1L));
 if(ModeIQ==0)
 	MaxToGetBuffer=((NUM_SAMPLES-(204*2*4))*1000)/(SymbolRate*2); // ONLY UGLY
 if(ModeIQ==1)
@@ -1160,20 +1161,21 @@ if(ModeIQ==2)
 #ifdef WITH_MEMORY_BUFFER
 // ------------------- START THE BUFFER FILLING THREAD ---------------
 {
-	uint32_t TSRate=SymbolRate*FEC*188*1000/(4*204*(FEC+1L));
+	//uint64_t TSRate=SymbolRate*FEC*188*1000.0/(4*204*(FEC+1L));
 	pthread_attr_t attr;
 	pthread_mutex_init (&my_circular_buffer.lock, NULL);
-	printf("TSrate in byte =%d\n",TSRate); 		
+	printf("TSrate in byte =%llu\n",TSRate); 		
 	pthread_attr_init (&attr);
 	//pthread_attr_setdetachstate (&attr, PTHREAD_CREATE_DETACHED);
 	//pthread_create (&th1,&attr, &FillBigBuffer,NULL);
 	pthread_create (&th1,NULL, &FillBigBuffer,NULL);
 	pthread_attr_destroy (&attr);
 	
-	printf("Init Filling Memory buffer %d\n",BufferAvailable());
-	while(BufferAvailable()<(TSRate/10)) // 1/10 SECOND BUFFERING DEPEND ON SYMBOLRATE
+	
+	while(BufferAvailable()<(TSRate/10)&&(BufferAvailable()<(BIG_BUFFER_SIZE*8/10))) // 1/10 SECOND BUFFERING DEPEND ON SYMBOLRATE OR 80% BUFFERSIZE
 	{
-		printf(".");
+		printf("Init Filling Memory buffer %d\n",BufferAvailable());
+		//printf(".");
 		 usleep(500);
 	}
 	/*
@@ -1219,7 +1221,7 @@ for (;;)
 			
 			if(Init==0)
 			{
-				TimeToSleep=((NUM_SAMPLES-free_slots-204*2*4)*1000)/((float)SymbolRate*2);//-22000; // 22ms de Switch process
+				//TimeToSleep=((NUM_SAMPLES-free_slots-204*2*4)*1000)/((float)SymbolRate*2);//-22000; // 22ms de Switch process
 				//TimeToSleep=15000+KERNEL_GRANULARITY;
 				//TimeToSleep=25000;
 			}
@@ -1264,7 +1266,7 @@ for (;;)
 			
 			if(StatusCompteur%50==0)
 			{ 
-				printf("Memavailable %d/%d FreeSlot=%d/%d Bitrate : %f\n",BufferAvailable(),BIG_BUFFER_SIZE,free_slots_now,NUM_SAMPLES,(1000000.0*(free_slots_now-free_slots))/(float)time_difference);
+				//printf("Memavailable %d/%d FreeSlot=%d/%d Bitrate : %f\n",BufferAvailable(),BIG_BUFFER_SIZE,free_slots_now,NUM_SAMPLES,(1000000.0*(free_slots_now-free_slots))/(float)time_difference);
 			}
 			StatusCompteur++;
 			//printf(" DiffTime = %ld FreeSlot=%d Bitrate : %f\n",time_difference,free_slots_now-free_slots,(1000000.0*(free_slots_now-free_slots))/(float)time_difference);		
@@ -1452,7 +1454,7 @@ for (;;)
 						
 				TimeToSleep=((NUM_SAMPLES-free_slots-204*2*4)*1000*16)/((float)SymbolRate*2); // 22ms de Switch process
 
-				printf("FreeSlots = %d Time to sleep=%d\n",free_slots,TimeToSleep);
+				//printf("FreeSlots = %d Time to sleep=%d\n",free_slots,TimeToSleep);
 
 				clock_gettime(CLOCK_REALTIME, &gettime_now);
 				start_time = gettime_now.tv_nsec;		
