@@ -48,7 +48,7 @@ rpidatv -i File Input -s Symbolrate -c Fec [-o OutputMode] [-f frequency output]
 	-y	      GPIO Pin output for Q {13,19,41,45}   
 	-h            help (print this help).   
 ```
-Example : `sudo ./rpidatv -i sample.ts -s 250 -c 1/2 -o RF -f 437.5 -l`   
+Example : `sudo ./rpidatv -i sample.ts -s 250 -c 1/2 -m RF -f 437.5 -l`   
 
 <h2> Minimal graphical menu </h2>
 You can launch a graphical menu located in /scripts folder   
