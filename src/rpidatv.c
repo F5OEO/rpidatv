@@ -59,7 +59,7 @@ extern void energy (uchar* input,uchar *output) ;
 extern void reed (uchar *input188) ;
 extern uchar*	interleave 	(uchar* packetin) ; 
 
-#define PROGRAM_VERSION "1.3.0"
+#define PROGRAM_VERSION "2.0.0"
 
 //Minimum Time in us to sleep
 #define KERNEL_GRANULARITY 20000 
@@ -71,11 +71,16 @@ extern uchar*	interleave 	(uchar* packetin) ;
 
 
 
-#define PLLFREQ_PCM		500000000	// PLLD is running at 500MHz
+#define PLLFREQ_PCM		1000000000	// PLLD is running at 500MHz
 #define PLL_PCM 		0x6
 
-#define PLLFREQ_PWM             1000000000	//PLLC = 1GHZ
-#define PLL_PWM			0x5
+//#define PLLFREQ_PWM             1000000000	//PLLC = 1GHZ , 1.2GHZ ON PIZERO ! But Unstable -> Go back to PLL_D
+//#define PLL_PWM			0x5
+
+#define PLLFREQ_PWM             1000000000	//PLLC = 1GHZ , 1.2GHZ ON PIZERO ! But Unstable -> Go back to PLL_D
+#define PLL_PWM			0x6
+
+
 #define CARRIERFREQ		100000000	// Carrier frequency is 100MHz
 
 
@@ -196,53 +201,46 @@ void shift(char* window, int len) {
 }
 
 */
-
-//************************************ INIT MODE UGLY ***********************************************
-
-int InitUgly()
-{
-	char MASH=1;
+void SetUglyFrequency(double Frequency)
+{	
 	 int harmonic;
 	 double FreqFound;
-	//unsigned char FoundDivider=0; 
-	//double DeltaFreqMin = TuneFrequency;
-	//double FreqMin=0;
 	uint16_t FreqFractionnal=0; 
 			
 			
 			for(harmonic=1;(harmonic<41);harmonic+=2)
 			{
-				//printf("->%lf harmonic %d\n",(TuneFrequency/(double)harmonic),harmonic);
-				if((TuneFrequency/(double)harmonic)<=(double)PLLFREQ_PWM/8.0) break;
+				//printf("->%lf harmonic %d\n",(Frequency/(double)harmonic),harmonic);
+				if((Frequency/(double)harmonic)<=(double)PLLFREQ_PWM/8.0) break;
 			}
 			
 			harmonic-=2;
 			//do
 			{
 			harmonic+=2;
-			FreqFound = (double) (TuneFrequency*4.0/(double)harmonic);
+			FreqFound = (double) (Frequency*4.0/(double)harmonic);
 			FreqDivider=(int) ((double)PLLFREQ_PWM/FreqFound);
 			FreqFractionnal=4096.0 * (((double)PLLFREQ_PWM/FreqFound)-FreqDivider);
 			//printf("Ecart = %lf\n", (PLLFREQ/(double)FreqDivider)-(PLLFREQ/(double)(FreqDivider+1.0)));
 			}
 			//while((PLLFREQ/(double)FreqDivider)-(PLLFREQ/(double)(FreqDivider+1.0))>25e6); // To Avoir 25MHZ of MASH : seems not a limit, removed
-			
-			printf("Tuning on %lf MHZ (harmonic %d)\n",1e-6*(double)PLLFREQ_PWM*(double)harmonic/(4.0*(FreqDivider+(double) FreqFractionnal/4096.0)),harmonic);
+			clk_reg[PWMCLK_DIV] = 0x5A000000 | (FreqDivider<<12) | FreqFractionnal;
+			printf("Tuning on %lf MHZ (harmonic %d):DIV%d/FRAC%d\n",1e-6*(double)PLLFREQ_PWM*(double)harmonic/(4.0*(FreqDivider+(double) FreqFractionnal/4096.0)),harmonic,FreqDivider,FreqFractionnal);
 
+}
+//************************************ INIT MODE UGLY ***********************************************
+
+int InitUgly()
+{
+	char MASH=1;
+		SetUglyFrequency(TuneFrequency);
 			//gpioSetMode(18, 2); /* set to ALT5, PWM1 : RF */
-			if(PinOutput[0]==18) gpioSetMode(18, 2); //ALT 5
+			if(PinOutput[0]==18) {gpioSetMode(18, 2);printf("\n Using GPIO 18");}; //ALT 5
 			if(PinOutput[0]==12) {gpioSetMode(12, 4);printf("\n Using GPIO 12");} //ALT 0
 			if(PinOutput[0]==40) gpioSetMode(40, 4); //ALT 0
 
 pwm_reg[PWM_CTL] = 0;
-if(FreqFractionnal==0)
-		{
-			
-			clk_reg[PWMCLK_CNTL] = 0x5A000000 | (0 << 9) |PLL_PWM ;              // Source=PLLD and disable // MASH Could be used eventually
-			//clk_reg[PWMCLK_CNTL] = 0x5A000005 | (0 << 9) ;              // Source=PLLD and disable // MASH Could be used eventually
-		
-		}
-		else
+//ALWAYS USE MASH
 		{
 			//printf("MASH ENABLE\n");
 			clk_reg[PWMCLK_CNTL] = 0x5A000000 | (MASH << 9)|PLL_PWM ; //1<<9
@@ -251,19 +249,8 @@ if(FreqFractionnal==0)
 	
 		udelay(300);
 	
-		if(FreqFractionnal==0)
-			clk_reg[PWMCLK_DIV] = 0x5A000000 | (FreqDivider<<12);    // Without Fractionnal
-		else
-		{
-			
-			clk_reg[PWMCLK_DIV] = 0x5A000000 | (FreqDivider<<12) | FreqFractionnal;
-			//printf("Set DIV with Frac %d\n",FreqFractionnal);
-		}
-		udelay(300);
-		if(FreqFractionnal==0)
-			clk_reg[PWMCLK_CNTL] = 0x5A000010 | (0 << 9) | PLL_PWM;              // Source=PLLD and enable
-		else
-			clk_reg[PWMCLK_CNTL]= 0x5A000010 | (MASH << 9) | PLL_PWM;
+		
+		clk_reg[PWMCLK_CNTL]= 0x5A000010 | (MASH << 9) | PLL_PWM;
 
 		pwm_reg[PWM_RNG1] = 32;// 32 Mandatory for Serial Mode without gap
 	udelay(100);
@@ -283,14 +270,14 @@ if(FreqFractionnal==0)
 		int NbStep;
 		if(SymbolRate>=250)
 		{
-			clk_reg[PCMCLK_DIV] = 0x5A000000 | (4<<12);	// Set pcm div to 2, giving 250MHz step
-			NbStep= PLLFREQ_PCM/(2*SymbolRate*1000) -1;
+			clk_reg[PCMCLK_DIV] = 0x5A000000 | (8<<12);	// Set pcm div to 2, giving 250MHz step
+			NbStep= PLLFREQ_PCM/(8*SymbolRate*1000) -1;
 		}
 		else
 		{
 			int prescale=4*(250/SymbolRate);
-			clk_reg[PCMCLK_DIV] = 0x5A000000 | ((prescale*2)<<12);	// Set pcm div to 2, giving 250MHz step
-			NbStep= PLLFREQ_PCM/(prescale*SymbolRate*1000) -1;
+			clk_reg[PCMCLK_DIV] = 0x5A000000 | ((prescale*2*2)<<12);	// Set pcm div to 2, giving 250MHz step
+			NbStep= PLLFREQ_PCM/(4*prescale*SymbolRate*1000) -1;
 			printf("Low SymbolRate\n");
 		}
 		
@@ -923,7 +910,7 @@ main(int argc, char **argv)
 			if(strcmp("3/4",optarg)==0) FEC=3;
 			if(strcmp("5/6",optarg)==0) FEC=5;
 			if(strcmp("7/8",optarg)==0) FEC=7;
-			
+			if(strcmp("0",optarg)==0) FEC=0;//CARRIER MODE
 			break;
 		case 'h': // help
 			print_usage();
@@ -1221,7 +1208,7 @@ for (;;)
 			
 			if(Init==0)
 			{
-				//TimeToSleep=((NUM_SAMPLES-free_slots-204*2*4)*1000)/((float)SymbolRate*2);//-22000; // 22ms de Switch process
+				TimeToSleep=((NUM_SAMPLES-free_slots-204*2*4)*1000)/((float)SymbolRate*2);//-22000; // 22ms de Switch process
 				//TimeToSleep=15000+KERNEL_GRANULARITY;
 				//TimeToSleep=25000;
 			}
@@ -1264,8 +1251,12 @@ for (;;)
 			time_difference = gettime_now.tv_nsec - start_time;
 			if(time_difference<0) time_difference+=1E9;
 			
-			if(StatusCompteur%50==0)
+			if(StatusCompteur%10==0)
 			{ 
+				
+				//SetUglyFrequency(TuneFrequency);
+				//TuneFrequency+=5000.0;
+				
 				//printf("Memavailable %d/%d FreeSlot=%d/%d Bitrate : %f\n",BufferAvailable(),BIG_BUFFER_SIZE,free_slots_now,NUM_SAMPLES,(1000000.0*(free_slots_now-free_slots))/(float)time_difference);
 			}
 			StatusCompteur++;
@@ -1282,9 +1273,7 @@ for (;;)
 			}
 			clock_gettime(CLOCK_REALTIME, &gettime_now);
 			start_time = gettime_now.tv_nsec;
-			static int TotalByteRead;
-				
-			TotalByteRead=0;
+			
 		
 			//printf("Process LOCK\n");
 			#ifdef WITH_MEMORY_BUFFER
