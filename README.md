@@ -1,6 +1,6 @@
 ![rpidatv banner](/doc/img/spectreiq.jpg)
 
-**rpidatv** is a digital television transmitter for Raspberry Pi (B,B+ and PI2) which output directly to GPIO. 
+**rpidatv** is a digital television transmitter for Raspberry Pi (B,B+,PI2,PI3,Pizero) which output directly to GPIO. 
 *(Created by Evariste Courjaud F5OEO. Code is GPL)*
 
 <h1> rpidatv Transmitter installation </h1>
@@ -13,6 +13,7 @@ sudo apt-get install git &&
 git clone git://github.com/f5oeo/rpidatv && 
 cd rpidatv/src && 
 make -j 4
+sudo make install
 ```
 
 <h1> leandvb rtlsdr receiver installation </h1>
