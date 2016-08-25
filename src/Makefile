@@ -17,6 +17,7 @@ muxests : muxests.c
 install:
 	cp rpidatv ../bin/
 	cp dt-blob.bin /boot/
+	$(info !!! You should reboot if it is the first installation !!!)
 clean:
 
 	rm -f rpidatv rpidatv.o fec100.o dvbsenco8.o mailbox.o rpigpio.o rpidma.o
