@@ -1,4 +1,6 @@
 
+cd src/ make && sudo make install
+cd ../
 
 # Rtlsdr install
 sudo apt-get install cmake libusb-1.0-0-dev 
