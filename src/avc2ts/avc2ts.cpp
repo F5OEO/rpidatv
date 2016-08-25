@@ -1,3 +1,8 @@
+//Original credits to Artem Zuikov 
+//clone from https://github.com/4ertus2/rpi-cctv
+// Adding other functionnalities F5OEO Evariste - evaristec@gmail.com
+
+
 #ifndef OMX_SKIP64BIT
 #define OMX_SKIP64BIT
 #endif
@@ -31,7 +36,9 @@ extern "C" {
 #include <arpa/inet.h>
 #include <netinet/in.h>
 
-#define PROGRAM_VERSION "1.3.0"
+
+
+#define PROGRAM_VERSION "1.0.0"
 
 // Problem with delay increasing : https://www.raspberrypi.org/forums/viewtopic.php?f=43&t=133446
 // Introductio to IL Component : http://fr.slideshare.net/pchethan/understanding-open-max-il-18376762
@@ -1746,7 +1753,7 @@ void print_usage()
 
 fprintf(stderr,\
 "\navc2ts -%s\n\
-Usage:\nrpi-omax -o OutputFile -b BitrateVideo -m BitrateMux -x VideoWidth  -y VideoHeight -f Framerate -n MulticastGroup [-d PTS/PCR][-v][-h] \n\
+Usage:\nrpi-avc2ts  -o OutputFile -b BitrateVideo -m BitrateMux -x VideoWidth  -y VideoHeight -f Framerate -n MulticastGroup [-d PTS/PCR][-v][-h] \n\
 -o            path to Transport File Output \n\
 -b            VideoBitrate in bit/s \n\
 -m            Multiplex Bitrate (should be around 1.4 VideoBitrate)\n\
@@ -1758,7 +1765,7 @@ Usage:\nrpi-omax -o OutputFile -b BitrateVideo -m BitrateMux -x VideoWidth  -y V
 -v	      Enable Motion vectors\n\
 -i	      IDR Period\n\
 -h            help (print this help).\n\
-Example : ./avc2ts -o result.ts -b 1000000 -m 1400000 -x 640 -y 480 -f 25 -n 230.0.0.1:1000\n\
+Example : ./rpi-avc2ts -o result.ts -b 1000000 -m 1400000 -x 640 -y 480 -f 25 -n 230.0.0.1:1000\n\
 \n",\
 PROGRAM_VERSION);
 
