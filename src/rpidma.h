@@ -46,7 +46,7 @@ int NUM_SAMPLES;
 #define DMA_DEBUG		(0x20/4)
 
 #define BUS_TO_PHYS(x) ((x)&~0xC0000000)
-
+//#define BUS_TO_PHYS(x) ((x)&~0x40000000) 
 #define PAGE_SIZE	4096
 #define PAGE_SHIFT	12
 #define NUM_PAGES	((sizeof(struct control_data_s) + PAGE_SIZE - 1) >> PAGE_SHIFT)
