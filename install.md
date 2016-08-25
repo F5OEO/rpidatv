@@ -7,6 +7,7 @@ sudo apt-get install git
 
 git clone git://github.com/f5oeo/rpidatv
 
-cd rpidatv
+cd rpidatv/src/
+make && sudo make install 
 
 
