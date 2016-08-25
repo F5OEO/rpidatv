@@ -17,7 +17,7 @@ all: avc2ts
 	$(CC) $(CFLAGS) -c $<
 
 avc2ts: $(OFILES)
-	$(CC) $(LDFLAGS) $(LIBS) -o avc2ts  $(OFILES)
+	$(CC) $(LDFLAGS) $(LIBS) -o rpi-avc2ts  $(OFILES)
 
 
 clean:
