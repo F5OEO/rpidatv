@@ -124,6 +124,10 @@ terminate(int dummy)
 	 pthread_join(th1, NULL);
 	#endif
 	close(fdts);
+	// SET PTT OFF
+	
+	gpio_reg[0x28/4]=1<<21; // Set PTT OFF
+
 	if (dma_reg) {
 		dma_reg[DMA_CS+DMA_CHANNEL*0x40] = BCM2708_DMA_INT | BCM2708_DMA_END;
 		udelay(100);
@@ -233,6 +237,11 @@ void SetUglyFrequency(double Frequency)
 int InitUgly()
 {
 	char MASH=1;
+
+	// SET PTT 
+	gpioSetMode(21,1); // GPIO 21 - PIN 40 is output for PTT
+	gpio_reg[0x1C/4]=1<<21; // Set PTT ON
+
 		SetUglyFrequency(TuneFrequency);
 			//gpioSetMode(18, 2); /* set to ALT5, PWM1 : RF */
 			if(PinOutput[0]==18) {gpioSetMode(18, 2);printf("\n Using GPIO 18");}; //ALT 5
@@ -378,6 +387,10 @@ int InitIQ(int DigithinMode)
 	*/
 	//unsigned int SRClock=PLLFREQ_PCM/(SymbolRate*1000);
 	
+	// SET PTT 
+	gpioSetMode(21,1); // GPIO 21 - PIN 40 is output for PTT
+	gpio_reg[0x1C/4]=1<<21; // Set PTT ON
+
 	unsigned int SRClock=PLLFREQ_PCM/(1000*SymbolRate);
 	//unsigned int SRClockPCM=(PLLFREQ_PCM/(SymbolRate*1000*64))*64;
 	
