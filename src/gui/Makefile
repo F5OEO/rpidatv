@@ -44,7 +44,7 @@ rpidatvtouch: rpidatvtouch.c
 install:
 	install -m 755 -p font2openvg /usr/bin/
 	#install -m 755 -p rpidatvgui /usr/local/bin/
-	cp rpidatv ../../bin/
+	cp rpidatvgui ../../bin/
 	install -m 755 -p libshapes.so /usr/lib/libshapes.so.1.0.0
 	strip --strip-unneeded /usr/lib/libshapes.so.1.0.0
 	ln -f -s /usr/lib/libshapes.so.1.0.0 /usr/lib/libshapes.so
