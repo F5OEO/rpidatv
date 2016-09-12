@@ -571,9 +571,10 @@ chdisplay=$(whiptail --title "$StrDisplaySetupTitle" --radiolist \
 if [ $? -eq 0 ]; then		
 		
 		case "$chdisplay" in
-		    Tontec35) ;;	
+		    Tontec35) sudo bash -c 'echo -e "\ndtparam=spi=on\ndtoverlay=mz61581\n" >> /boot/config.txt' ;;	
 		    HDMITouch) ;;
-	            RpiLCD) ;;
+	            RpiLCD) sudo bash -c 'echo -e "\ndtparam=spi=on\ndtoverlay=waveshare35a\ndtoverlay=ads7846,cs=1,penirq=17,penirq_pull=2,speed=1000000,keep_vref_on=1,swapxy=1,pmax=255,xohms=60,xmin=200,xmax=3900,ymin=200,ymax=3900\n" >> /boot/config.txt' ;;
+
 			
 		esac
 		set_config_var display "$chdisplay" $CONFIGFILE
