@@ -17,12 +17,14 @@ all: avc2ts
 	$(CC) $(CFLAGS) -c $<
 
 avc2ts: $(OFILES)
-	$(CC) $(LDFLAGS) $(LIBS) -o rpi-avc2ts  $(OFILES)
+	$(CC) $(LDFLAGS) $(LIBS) -o avc2ts  $(OFILES)
 	$(info !!! Be sure to git clone https://github.com/kierank/libmpegts and install it !!!)
 
 clean:
 	rm -f *.o avc2ts
 	
+install:
+	cp avc2ts ../../bin/
 
 dist: clean
 	
