@@ -201,6 +201,13 @@ CALL=$(whiptail --inputbox "$StrCallContext" 8 78 $CALL --title "$StrCallTitle" 
 if [ $? -eq 0 ]; then
 set_config_var call "$CALL" $CONFIGFILE
 fi
+
+CALL=$(get_config_var locator $CONFIGFILE)
+CALL=$(whiptail --inputbox "$StrLocatorContext" 8 78 $CALL --title "$StrLocatorTitle" 3>&1 1>&2 2>&3)
+if [ $? -eq 0 ]; then
+set_config_var locator "$CALL" $CONFIGFILE
+fi
+
 }
 
 
@@ -390,16 +397,34 @@ if [ $? -eq 0 ]; then
 fi				
 }
 
+do_PID_setup()
+{
+PID=$(get_config_var pidstart $CONFIGFILE)
+PID=$(whiptail --inputbox "$StrPIDSetupContext" 8 78 $PID --title "$StrPIDSetupTitle" 3>&1 1>&2 2>&3)
+if [ $? -eq 0 ]; then
+set_config_var pidstart "$PID" $CONFIGFILE
+set_config_var pidpmt "$PID" $CONFIGFILE
+#PID Video is PMT+1
+let PID=PID+1
+set_config_var pidvideo "$PID" $CONFIGFILE
+#PID Audiop is PMT+1
+let PID=PID+1
+set_config_var pidaudio "$PID" $CONFIGFILE
+fi
+}
+
 do_output_setup() {
 menuchoice=$(whiptail --title "$StrOutputTitle" --menu "$StrOutputContext" 16 78 5 \
         "1 SymbolRate" "$StrOutputSR"  \
         "2 FEC" "$StrOutputFEC" \
 	"3 Output mode" "$StrOutputMode" \
+	"4 PID" "$StrPIDSetup" \
 	3>&2 2>&1 1>&3)
 	case "$menuchoice" in
             1\ *) do_symbolrate_setup ;;
             2\ *) do_fec_setup   ;;
 	    3\ *) do_output_setup_mode ;;
+	    4\ *) do_PID_setup ;;	
         esac
 }
 
@@ -465,6 +490,119 @@ do_receive()
 	do_receive_status
 }
 
+do_autostart_setup()
+{
+MODE_STARTUP=$(get_config_var startup $CONFIGFILE)
+case "$MODE_STARTUP" in
+	Console) 
+	Radio1=ON
+	Radio2=OFF
+	Radio3=OFF
+	;;
+	Display)
+	Radio1=OFF
+	Radio2=ON
+	Radio3=OFF
+	;;
+	Button)
+	Radio1=OFF
+	Radio2=OFF
+	Radio3=ON
+	;;
+	*)
+	Radio1=ON
+	Radio2=OFF
+	Radio3=OFF
+	
+esac
+
+chstartup=$(whiptail --title "$StrAutostartSetupTitle" --radiolist \
+		"$StrAutostartSetupContext" 20 78 8 \
+		"Console" "$AutostartSetupConsole" $Radio1 \
+		"Display" "$AutostartSetupDisplay" $Radio2 \
+		"Button" "$AutostartSetupButton" $Radio3 \
+		 3>&2 2>&1 1>&3)
+
+if [ $? -eq 0 ]; then		
+		
+		case "$chstartup" in
+		    Console) cp ./install_bashrc /home/pi/.bashrc >/dev/null 2>/dev/null;;	
+		    Display) cp ./install_display.fr /home/pi/.bashrc >/dev/null 2>/dev/null;;
+	            Button) cp ./install_button /home/pi/.bashrc >/dev/null 2>/dev/null;;
+			
+		esac
+		set_config_var startup "$chstartup" $CONFIGFILE
+fi
+}
+
+do_display_setup()
+{
+MODE_DISPLAY=$(get_config_var display $CONFIGFILE)
+case "$MODE_DISPLAY" in
+	Tontec35) 
+	Radio1=ON
+	Radio2=OFF
+	Radio3=OFF
+	;;
+	HDMITouch)
+	Radio1=OFF
+	Radio2=ON
+	Radio3=OFF
+	;;
+	RpiLCD)
+	Radio1=OFF
+	Radio2=OFF
+	Radio3=ON
+	;;
+	*)
+	Radio1=ON
+	Radio2=OFF
+	Radio3=OFF
+	
+esac
+
+chdisplay=$(whiptail --title "$StrDisplaySetupTitle" --radiolist \
+		"$StrDisplaySetupContext" 20 78 8 \
+		"Tontec35" "$DisplaySetupTontec" $Radio1 \
+		"HDMITouch" "$DisplaySetupHDMI" $Radio2 \
+		"RpiLCD" "$DisplaySetupRpiLCD" $Radio3 \
+		 3>&2 2>&1 1>&3)
+
+if [ $? -eq 0 ]; then		
+		
+		case "$chdisplay" in
+		    Tontec35) ;;	
+		    HDMITouch) ;;
+	            RpiLCD) ;;
+			
+		esac
+		set_config_var display "$chdisplay" $CONFIGFILE
+fi
+}
+
+do_IP_setup()
+{
+STATICIP=$(get_config_var staticip $CONFIGFILE)
+STATICIP=$(whiptail --inputbox "$StrIPSetupContext" 8 78 $STATICIP --title "$StrIPSetupTitle" 3>&1 1>&2 2>&3)
+if [ $? -eq 0 ]; then
+set_config_var staticip "$STATICIP" $CONFIGFILE
+fi
+}
+
+do_system_setup()
+{
+menuchoice=$(whiptail --title "$StrSystemTitle" --menu "$StrSystemContext" 16 78 5 \
+        "1 Autostart" "$StrAutostartMenu"  \
+        "2 Display" "$StrDisplayMenu" \
+	"3 IP" "$StrIPMenu" \
+	3>&2 2>&1 1>&3)
+	case "$menuchoice" in
+            1\ *) do_autostart_setup ;;
+            2\ *) do_display_setup   ;;
+	    3\ *) do_IP_setup ;;
+        esac
+}
+
 OnStartup()
 {
 	CALL=$(get_config_var call $CONFIGFILE)
@@ -508,12 +646,13 @@ INFO=$CALL":"$MODE_INPUT"-->"$MODE_OUTPUT"("$SYMBOLRATEK"KSymbol FEC "$FECNUM"/"
 #do_status
 #do_display_on
 #"1 Transmission" "Demarre la transmission"\
- menuchoice=$(whiptail --title "$StrMainMenuTitle" --menu "$INFO" 16 82 5 \
+ menuchoice=$(whiptail --title "$StrMainMenuTitle" --menu "$INFO" 16 82 6 \
 	"0 Transmit" "Go transmit" \
         "1 Source" "$StrMainMenuSource" \
 	"2 Sortie" "$StrMainMenuOutput" \
 	"3 Station" "$StrMainMenuCall" \
 	"4 Receive" "Receive via rtlsdr" \
+	"5 System" "$StrMainMenuSystem" \
 	3>&2 2>&1 1>&3)
       
         case "$menuchoice" in
@@ -522,6 +661,7 @@ INFO=$CALL":"$MODE_INPUT"-->"$MODE_OUTPUT"("$SYMBOLRATEK"KSymbol FEC "$FECNUM"/"
 	    2\ *) do_output_setup ;;
    	    3\ *) do_station_setup ;;
 	    4\ *) do_receive ;;	
+	    5\ *) do_system_setup ;;	
             *)
 		
 		 whiptail --title "$StrMainMenuExitTitle" --msgbox "$StrMainMenuExitContext" 8 78

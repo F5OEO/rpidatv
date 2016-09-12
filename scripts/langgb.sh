@@ -18,6 +18,9 @@ StrInputSetupIPTSINTitle="Setup IP address"
 StrCallContext="CALL Setup"
 StrCallTitle="CALL"
 
+StrLocatorContext="Locator Setup"
+StrLocatorTitle="Locator"
+
 ######## OUTPUT MENU #####################
 StrOutputSetupTitle="Output type"
 StrOutputSetupContext="Press down/up arrows to move, space to select"
@@ -51,15 +54,42 @@ StrOutputSR="Symbol Rate Setup"
 StrOutputFEC="FEC Setup"
 StrOutputMode="Output Mode"
 
+StrPIDSetup="PID setup"
+StrPIDSetupTitle="PID setup"
+StrPIDSetupContext="PID PMT (512 for example)"
+
+
 ######### STATUS ##########
 StrStatusTitle="Transmitting"
 
+######### SYSTEM SETUP #######
+StrSystemTitle="System setup"
+StrSystemContext="Choice:"
+StrAutostartMenu="Automatic startup"
+StrDisplayMenu="Display type"
+StrIPMenu="IP Address"
+
+StrAutostartSetupTitle="Autostart setup"
+StrAutostartSetupContext="Choice:"
+AutostartSetupConsole="Console menu"
+AutostartSetupDisplay="Display with touchscreen"
+AutostartSetupButton="Push buttons"
+
+StrDisplaySetupTitle="Touchscreen setup"
+StrDisplaySetupContext="Choice:"
+DisplaySetupTontec="Tontec 3,5 inches"
+DisplaySetupHDMI="HDMI touchscreen"
+DisplaySetupRpiLCD="Rpi LCD"
+
+StrIPSetupTitle="Setup a static IP"
+StrIPSetupContext="Example: 192.168.1.60"
+
 ######## MAIN MENU #########
-StrMainMenuTitle="RpiDATV GUI Version 1.2 (F5OEO Evariste)"
+StrMainMenuTitle="RpiDATV GUI Version 2.0 (F5OEO Evariste)"
 StrMainMenuSource="Source select"
 StrMainMenuOutput="Output select"
 StrMainMenuCall="Station call setup"
-
+StrMainMenuSystem="System setup"
 StrMainMenuExitTitle="Exit"
 StrMainMenuExitContext="Thanks to use RpiDATV... 73's de F5OEO(evaristec@gmail.com)"
 
