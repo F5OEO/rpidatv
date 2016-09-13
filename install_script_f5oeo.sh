@@ -79,6 +79,30 @@ make
 cp leandvb ../../../../bin/
 
 
+#install tstools
+cd /home/pi/rpidatv/src
+wget https://github.com/F5OEO/tstools/archive/master.zip
+unzip master.zip
+mv tstools-master tstools
+rm master.zip
+
+cd tstools
+make
+cp bin/ts2es ../../bin/
+
+#install H264 Decoder : hello_video
+#compile ilcomponet first
+/opt/vc/src/hello_pi/rebuild.sh
+
+cd /home/pi/rpidatv/src/hello_video
+make
+cp hello_video.bin ../../bin/
+
+
+
+
+
+
 # TouchScreen GUI
 # FBCP : Duplicate Framebuffer 0 -> 1
 cd /home/pi/
