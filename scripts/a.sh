@@ -204,16 +204,16 @@ case "$MODE_INPUT" in
 #============================================ H264 INPUT MODE =========================================================
 "CAMH264")
 	sudo modprobe -r bcm2835_v4l2
- 	$PATHRPI"/mnc" -l  -p 10000 230.0.0.1 > videots &
+ 	#$PATHRPI"/mnc" -l -i loopback -p 10000 230.0.0.1 > videots &
 	sudo $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c $FECNUM"/"$FECDEN -f $FREQUENCY_OUT -p $GAIN -m $MODE -x $PIN_I -y $PIN_Q &
 
 	if [ "$AUDIO_CARD" == 0 ]; then
 	# ******************************* H264 VIDEO ONLY ************************************
-	$PATHRPI"/avc2ts" -b $BITRATE_VIDEO -m $BITRATE_TS -x $VIDEO_WIDTH -y $VIDEO_HEIGHT -f $VIDEO_FPS -i 100 -n 230.0.0.1:10000 &
+	$PATHRPI"/avc2ts" -b $BITRATE_VIDEO -m $BITRATE_TS -x $VIDEO_WIDTH -y $VIDEO_HEIGHT -f $VIDEO_FPS -i 100 -o videots &
 	
 	else
 	# ******************************* H264 VIDEO WITH AUDIO (TODO) ************************************
-	$PATHRPI"/avc2ts" -b $BITRATE_VIDEO -m $BITRATE_TS -x $VIDEO_WIDTH -y $VIDEO_HEIGHT -f $VIDEO_FPS -i 100 -n 230.0.0.1:10000 &
+	$PATHRPI"/avc2ts" -b $BITRATE_VIDEO -m $BITRATE_TS -x $VIDEO_WIDTH -y $VIDEO_HEIGHT -f $VIDEO_FPS -i 100 -o videots &
 	
 	fi
 	;;
