@@ -1,5 +1,5 @@
 #! /bin/bash
-PATHBIN="/home/pi/rpidatv/"
+PATHBIN="/home/pi/rpidatv/bin/"
 PATHSCRIPT="/home/pi/rpidatv/scripts"
 CONFIGFILE=$PATHSCRIPT"/rpidatvconfig.txt"
 
@@ -36,9 +36,14 @@ else
 SR_RTLSDR=1024000
 fi
 
+sudo killall hello_video.bin
 sudo killall leandvb
+sudo killall ts2es
 mkfifo fifo.264
 
-sudo rtl_sdr -p 82 -g 30 -f $FreqHz -s $SR_RTLSDR - 2>/dev/null | $PATHBIN"leandvb"  --cr $FECNUM"/"$FECDEN --sr $SYMBOLRATE -f $SR_RTLSDR 2>/dev/null |buffer| $PATHBIN"ts2es" -video -stdin fifo.264 &
-$PATHBIN"hello_video.bin" fifo.264 &
+sudo rtl_sdr -p 20 -g 30 -f $FreqHz -s $SR_RTLSDR - 2>/dev/null | $PATHBIN"leandvb"  --cr $FECNUM"/"$FECDEN --sr $SYMBOLRATE -f $SR_RTLSDR 2>/dev/null |buffer| $PATHBIN"ts2es" -video -stdin fifo.264 &
+#sudo rtl_sdr -p 20 -g 40 -f $FreqHz -s $SR_RTLSDR - 2>/dev/null | $PATHBIN"leandvb"  -- --gui -d --cr $FECNUM"/"$FECDEN --sr $SYMBOLRATE -f $SR_RTLSDR  |buffer| $PATHBIN"ts2es" -video -stdin fifo.264 &
+#sudo rtl_sdr  -p 20 -g 30 -f 650000000 -s 1024000 - 2>/dev/null | $PATHBIN"leandvb"  --filter --gui -d --cr 7/8 --sr 250000 -f 1024000 | $PATHBIN"ts2es" -video -stdin fifo.264 &
+#sudo rtl_sdr -p 20 -g 30 -f 650000000 -s 1024000 - 2>/dev/null | $PATHBIN"leandvb"  --filter --gui -d --cr 7/8 --sr 250000 -f 1024000 > file.ts
+$PATHBIN"hello_video.bin" fifo.264 
 
