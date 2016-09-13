@@ -484,9 +484,9 @@ do_receive()
 	let FREQHZ=FREQ*1000000
 	echo receive on $RECEIVESYMBOLRATE at Frequency $FREQHZ
 	mkfifo fifots
-	sudo rtl_sdr -p 80 -g 30 -f $FREQHZ -s 1024000 - | leandvb --agc --sr $RECEIVESYMBOLRATE --anf 1 -f 1024000 |buffer > fifots &
-	sudo SDL_VIDEODRIVER=fbcon SDL_FBDEV=/dev/fb0 mplayer -ao /dev/null -vo sdl  fifots &
-
+	#sudo rtl_sdr -p 80 -g 30 -f $FREQHZ -s 1024000 - | leandvb --agc --sr $RECEIVESYMBOLRATE --anf 1 -f 1024000 |buffer > fifots &
+	#sudo SDL_VIDEODRIVER=fbcon SDL_FBDEV=/dev/fb0 mplayer -ao /dev/null -vo sdl  fifots &
+	$PATHSCRIPT"/leandvb2video.sh" >/dev/null 2>/dev/null &
 	do_receive_status
 }
 
