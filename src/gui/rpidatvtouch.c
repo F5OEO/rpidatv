@@ -31,7 +31,7 @@
 #define PATH_CONFIG "/home/pi/rpidatv/scripts/rpidatvconfig.txt"
 char ImageFolder[]="/home/pi/rpidatv/image/";
 
-int fd;
+int fd=0;
 int wscreen, hscreen;
 float scaleXvalue, scaleYvalue; // Coeff ratio from Screen/TouchArea
 
@@ -243,7 +243,8 @@ int openTouchScreen(int NoDevice)
 {
 	char sDevice[255];
 	sprintf(sDevice,"/dev/input/event%d",NoDevice);
-        if ((fd = open(sDevice, O_RDONLY)) < 0)
+	if(fd!=0) close(fd);
+        if ((fd = open(sDevice, O_RDONLY)) > 0)
 	 {
                 return 1;
         }
@@ -251,8 +252,28 @@ int openTouchScreen(int NoDevice)
 		return 0;
 }
 
+/*
+Input device name: "ADS7846 Touchscreen"
+Supported events:
+  Event type 0 (Sync)
+  Event type 1 (Key)
+    Event code 330 (Touch)
+  Event type 3 (Absolute)
+    Event code 0 (X)
+     Value      0
+     Min        0
+     Max     4095
+    Event code 1 (Y)
+     Value      0
+     Min        0
+     Max     4095
+    Event code 24 (Pressure)
+     Value      0
+     Min        0
+     Max      255
+*/
 
-void getTouchScreenDetails(int *screenXmin,int *screenXmax,int *screenYmin,int *screenYmax)
+int getTouchScreenDetails(int *screenXmin,int *screenXmax,int *screenYmin,int *screenYmax)
 {
 	unsigned short id[4];
         unsigned long bit[EV_MAX][NBITS(KEY_MAX)];
@@ -267,6 +288,7 @@ void getTouchScreenDetails(int *screenXmin,int *screenXmax,int *screenYmin,int *
         printf("Supported events:\n");
 
         int i,j,k;
+	int IsAtouchDevice=0;
         for (i = 0; i < EV_MAX; i++)
                 if (test_bit(i, bit[0])) {
                         printf("  Event type %d (%s)\n", i, events[i] ? events[i] : "?");
@@ -275,6 +297,7 @@ void getTouchScreenDetails(int *screenXmin,int *screenXmax,int *screenYmin,int *
                         for (j = 0; j < KEY_MAX; j++){
                                 if (test_bit(j, bit[i])) {
                                         printf("    Event code %d (%s)\n", j, names[i] ? (names[i][j] ? names[i][j] : "?") : "?");
+	if(j==330) IsAtouchDevice=1;
                                         if (i == EV_ABS) {
                                                 ioctl(fd, EVIOCGABS(j), abs);
                                                 for (k = 0; k < 5; k++)
@@ -294,6 +317,8 @@ void getTouchScreenDetails(int *screenXmin,int *screenXmax,int *screenYmin,int *
                                         }
                                 }
                         }
+	
+return IsAtouchDevice;
 }
 
 
@@ -575,17 +600,21 @@ int main(int argc, char **argv) {
 	saveterm();
 	init(&wscreen, &hscreen);
 	rawterm();
-
-	if(argc>1)
-	 {
-		NoDeviceEvent=atoi(argv[1]);
-		printf("Device Event = %d\n",NoDeviceEvent);
-	}
-	if (openTouchScreen(NoDeviceEvent) == 1)
-		perror("error opening touch screen");
 	int screenXmax, screenXmin;
 	int screenYmax, screenYmin;
-	getTouchScreenDetails(&screenXmin,&screenXmax,&screenYmin,&screenYmax);
+	
+	for(NoDeviceEvent=0;NoDeviceEvent<5;NoDeviceEvent++)
+	{
+		if (openTouchScreen(NoDeviceEvent) == 1)
+		{
+			if(getTouchScreenDetails(&screenXmin,&screenXmax,&screenYmin,&screenYmax)==1) break;
+		}
+	}
+	if(NoDeviceEvent==5) 
+	{
+		perror("No Touchscreen found");
+		exit(1);
+	}
 	scaleXvalue = ((float)screenXmax-screenXmin) / wscreen;
 	//printf ("X Scale Factor = %f\n", scaleXvalue);
 	scaleYvalue = ((float)screenYmax-screenYmin) / hscreen;
