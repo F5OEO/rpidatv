@@ -526,9 +526,9 @@ chstartup=$(whiptail --title "$StrAutostartSetupTitle" --radiolist \
 if [ $? -eq 0 ]; then		
 		
 		case "$chstartup" in
-		    Console) cp ./install_bashrc /home/pi/.bashrc >/dev/null 2>/dev/null;;	
-		    Display) cp ./install_display.fr /home/pi/.bashrc >/dev/null 2>/dev/null;;
-	            Button) cp ./install_button /home/pi/.bashrc >/dev/null 2>/dev/null;;
+		    Console) cp $PATHSCRIPT"/install_bashrc" /home/pi/.bashrc >/dev/null 2>/dev/null;;	
+		    Display) cp $PATHSCRIPT"/install_display.fr" /home/pi/.bashrc >/dev/null 2>/dev/null;;
+	            Button) cp $PATHSCRIPT"/install_button" /home/pi/.bashrc >/dev/null 2>/dev/null;;
 			
 		esac
 		set_config_var startup "$chstartup" $CONFIGFILE
