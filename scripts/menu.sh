@@ -583,11 +583,8 @@ fi
 
 do_IP_setup()
 {
-STATICIP=$(get_config_var staticip $CONFIGFILE)
-STATICIP=$(whiptail --inputbox "$StrIPSetupContext" 8 78 $STATICIP --title "$StrIPSetupTitle" 3>&1 1>&2 2>&3)
-if [ $? -eq 0 ]; then
-set_config_var staticip "$STATICIP" $CONFIGFILE
-fi
+CURRENTIP=$(ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*' | grep -v '127.0.0.1')
+whiptail --title "IP" --msgbox "$CURRENTIP" 8 78
 }
 
 do_system_setup()
