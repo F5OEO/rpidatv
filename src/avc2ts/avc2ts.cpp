@@ -912,15 +912,15 @@ namespace rpi_omx
         }
 
         void setExposureValue(OMX_U32 nPortIndex = OMX_ALL,
-                OMX_S32 xEVCompensation = 0, OMX_U32 nSensitivity = 100, OMX_BOOL bAutoSensitivity = OMX_FALSE)
+                OMX_S32 xEVCompensation = 0, OMX_U32 nSensitivity = 100, OMX_BOOL bAutoSensitivity = OMX_TRUE)
         {
             Parameter<OMX_CONFIG_EXPOSUREVALUETYPE> exposure_value;
             exposure_value->nPortIndex = nPortIndex;
             exposure_value->xEVCompensation = xEVCompensation;
             exposure_value->nSensitivity = nSensitivity;
             exposure_value->bAutoSensitivity = bAutoSensitivity;
-	   /* exposure_value->bAutoShutterSpeed=OMX_FALSE;
-	    exposure_value->nShutterSpeedMsec=15000;*/
+	    exposure_value->bAutoShutterSpeed=OMX_FALSE;
+	    /*exposure_value->nShutterSpeedMsec=15000;*/
 
             ERR_OMX( OMX_SetConfig(component_, OMX_IndexConfigCommonExposureValue, &exposure_value), "set camera exposure value");
         }
@@ -2082,7 +2082,7 @@ bcm_host_init();
 #define OMX_BUFFERFLAG_TIME_IS_DTS 0x000004000
 */
 		//printf("Flags %x,Size %d \n",encBufferLow.flags(),encBufferLow.dataSize());
-		encoderLow.getEncoderStat(encBufferLow.flags());
+		//encoderLow.getEncoderStat(encBufferLow.flags());
 		//encoderLow.setDynamicBitrate(VideoBitrate);
 		//printf("Len = %"\n",encBufferLow
 		if(encBufferLow.flags() & OMX_BUFFERFLAG_CODECSIDEINFO)
