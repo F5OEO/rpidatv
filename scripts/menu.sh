@@ -451,12 +451,12 @@ do_display_on()
 	#tvservice -p
 	#sudo chvt 2
 	#sudo chvt 1
-	v4l2-ctl --overlay=1
+	v4l2-ctl --overlay=1 >/dev/null 2>/dev/null
 }
 
 do_display_off()
 {
-	v4l2-ctl --overlay=0
+	v4l2-ctl --overlay=0 >/dev/null 2>/dev/null
 	#tvservice -o
 }
 
