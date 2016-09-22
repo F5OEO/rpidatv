@@ -527,7 +527,14 @@ if [ $? -eq 0 ]; then
 		
 		case "$chstartup" in
 		    Console) cp $PATHSCRIPT"/install_bashrc" /home/pi/.bashrc >/dev/null 2>/dev/null;;	
-		    Display) cp $PATHSCRIPT"/install_display.fr" /home/pi/.bashrc >/dev/null 2>/dev/null;;
+		    Display) MODE_DISPLAY=$(get_config_var display $CONFIGFILE)
+				case "$MODE_DISPLAY" in
+				Waveshare)
+				 cp $PATHSCRIPT"/install_display_inversed.fr" /home/pi/.bashrc >/dev/null 2>/dev/null;;
+				*)
+				cp $PATHSCRIPT"/install_display.fr" /home/pi/.bashrc >/dev/null 2>/dev/null;;
+				esac;;
+			
 	            Button) cp $PATHSCRIPT"/install_button" /home/pi/.bashrc >/dev/null 2>/dev/null;;
 			
 		esac
@@ -549,7 +556,7 @@ case "$MODE_DISPLAY" in
 	Radio2=ON
 	Radio3=OFF
 	;;
-	RpiLCD)
+	Waveshare)
 	Radio1=OFF
 	Radio2=OFF
 	Radio3=ON
@@ -565,7 +572,7 @@ chdisplay=$(whiptail --title "$StrDisplaySetupTitle" --radiolist \
 		"$StrDisplaySetupContext" 20 78 8 \
 		"Tontec35" "$DisplaySetupTontec" $Radio1 \
 		"HDMITouch" "$DisplaySetupHDMI" $Radio2 \
-		"RpiLCD" "$DisplaySetupRpiLCD" $Radio3 \
+		"Waveshare" "$DisplaySetupRpiLCD" $Radio3 \
 		 3>&2 2>&1 1>&3)
 
 if [ $? -eq 0 ]; then		
@@ -573,7 +580,7 @@ if [ $? -eq 0 ]; then
 		case "$chdisplay" in
 		    Tontec35) sudo bash -c 'echo -e "\ndtparam=spi=on\ndtoverlay=mz61581\n" >> /boot/config.txt' ;;	
 		    HDMITouch) ;;
-	            RpiLCD) sudo bash -c 'echo -e "\ndtparam=spi=on\ndtoverlay=waveshare35a\ndtoverlay=ads7846,cs=1,penirq=17,penirq_pull=2,speed=1000000,keep_vref_on=1,swapxy=1,pmax=255,xohms=60,xmin=200,xmax=3900,ymin=200,ymax=3900\n" >> /boot/config.txt' ;;
+	            Waveshare) sudo bash -c 'echo -e "\ndtparam=spi=on\ndtoverlay=waveshare35a\ndtoverlay=ads7846,cs=1,penirq=17,penirq_pull=2,speed=1000000,keep_vref_on=1,swapxy=1,pmax=255,xohms=60,xmin=200,xmax=3900,ymin=200,ymax=3900\n" >> /boot/config.txt' ;;
 
 			
 		esac
