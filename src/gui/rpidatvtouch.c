@@ -68,6 +68,7 @@ char ModeInput[255];
 int TabSR[5]= {125,250,333,500,1000};
 int TabFec[5]={1,2,3,5,7};
 char TabModeInput[5][255]={"CAMMPEG-2","CAMH264","PATERNAUDIO","FILETS","CARRIER"};
+int Inversed=0;//Display is inversed (Waveshare)
 
 GetConfigParam(char *PathConfigFile,char *Param, char *Value)
 {
@@ -142,12 +143,16 @@ int mymillis()
 int IsButtonPushed(int NbButton,int x,int y)
 {
 	int  scaledX, scaledY;
-	scaledX = x/scaleXvalue;
-        scaledY = hscreen-y/scaleYvalue;
-
-//	scaledX = wscreen-y/scaleXvalue; FOR INVERSED TOUCSCREEN (AIW)
-//	scaledY = hscreen-x/scaleYvalue;
-
+	if(Inversed==0)
+	{
+		scaledX = x/scaleXvalue;
+        	scaledY = hscreen-y/scaleYvalue;
+	}
+	else
+	{
+	scaledX = wscreen-y/scaleXvalue; //FOR INVERSED TOUCSCREEN (AIW)
+	scaledY = hscreen-x/scaleYvalue;
+	}
 	//printf("x=%d y=%d scaledx %d scaledy %d\n",x,y,scaledX,scaledY);
 	int margin=20;
 	if((scaledX<=(ButtonArray[NbButton].x+ButtonArray[NbButton].w-margin))&&(scaledX>=ButtonArray[NbButton].x+margin) &&
@@ -603,6 +608,9 @@ int main(int argc, char **argv) {
 	int screenXmax, screenXmin;
 	int screenYmax, screenYmin;
 	
+	if(argc>1)
+		Inversed=atoi(argv[1]);
+
 	for(NoDeviceEvent=0;NoDeviceEvent<5;NoDeviceEvent++)
 	{
 		if (openTouchScreen(NoDeviceEvent) == 1)
