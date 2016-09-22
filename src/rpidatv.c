@@ -51,6 +51,7 @@
 #include <pthread.h>
 
 #include <sys/prctl.h>
+#include <sys/timex.h>
 
 extern void 	dvbsenco_init	(void) ;
 extern uchar*	dvbsenco	(uchar*) ;	
@@ -244,8 +245,8 @@ int InitUgly()
 
 		SetUglyFrequency(TuneFrequency);
 			//gpioSetMode(18, 2); /* set to ALT5, PWM1 : RF */
-			if(PinOutput[0]==18) {gpioSetMode(18, 2);printf("\n Using GPIO 18");}; //ALT 5
-			if(PinOutput[0]==12) {gpioSetMode(12, 4);printf("\n Using GPIO 12");} //ALT 0
+			if(PinOutput[0]==18) {gpioSetMode(18, 2);printf("\n Using GPIO 18\n");}; //ALT 5
+			if(PinOutput[0]==12) {gpioSetMode(12, 4);printf("\n Using GPIO 12\n");} //ALT 0
 			if(PinOutput[0]==40) gpioSetMode(40, 4); //ALT 0
 
 pwm_reg[PWM_CTL] = 0;
@@ -277,6 +278,7 @@ pwm_reg[PWM_CTL] = 0;
 		udelay(1000);
 		
 		int NbStep;
+		int prescale=2;
 		if(SymbolRate>=250)
 		{
 			clk_reg[PCMCLK_DIV] = 0x5A000000 | (8<<12);	// Set pcm div to 2, giving 250MHz step
@@ -284,7 +286,7 @@ pwm_reg[PWM_CTL] = 0;
 		}
 		else
 		{
-			int prescale=4*(250/SymbolRate);
+			prescale=4*(250/SymbolRate);
 			clk_reg[PCMCLK_DIV] = 0x5A000000 | ((prescale*2*2)<<12);	// Set pcm div to 2, giving 250MHz step
 			NbStep= PLLFREQ_PCM/(4*prescale*SymbolRate*1000) -1;
 			printf("Low SymbolRate\n");
@@ -305,8 +307,8 @@ pwm_reg[PWM_CTL] = 0;
 		udelay(1000);
 		clk_reg[PCMCLK_CNTL] = 0x5A000010 |PLL_PWM;		// Source=PLLD and enable
 	
-	
-		//printf("Playing File =%s at %d KSymbol FEC=%d ",argv[1],PLLFREQ_PCM/((NbStep+1)*4L),abs(FEC));
+		
+		printf("RealSR= %lu Symbol/s \n",PLLFREQ_PCM/((NbStep+1)*4L*prescale));
 
 		// ========================== INIT DMA ================================================
 		ctl = (struct control_data_s *)virtbase;
@@ -841,6 +843,31 @@ void *FillBigBuffer (void * arg)
   }
   pthread_exit (0);
 }
+
+int CalibrateSystem()
+{
+	struct timex ntx;
+	int ppm;
+	int status;
+	//Calibrate Clock system (surely depends also on PLL PPM
+	// =====================================================
+
+	ntx.modes = 0; /* only read */
+  	status = ntp_adjtime(&ntx);
+	double clockppm;
+
+  	if (status != TIME_OK)
+	{
+    		printf("Warning: NTP\n");
+		return 0;
+ 	}
+	clockppm = (double)ntx.freq/(double)(1 << 16);
+	if(abs(clockppm)<200)
+		ppm=clockppm;
+	printf("Clock PPM = %d\n",ppm);
+	return ppm;
+}
+
 void print_usage()
 {
 
@@ -987,7 +1014,7 @@ main(int argc, char **argv)
 	//data=malloc(DATA_FILE_SIZE);
 	
 	
-
+	CalibrateSystem();
 	
 	dvbsenco_init() ;
 	
@@ -1174,7 +1201,7 @@ if(ModeIQ==2)
 	
 	while(BufferAvailable()<(TSRate/10)&&(BufferAvailable()<(BIG_BUFFER_SIZE*8/10))) // 1/10 SECOND BUFFERING DEPEND ON SYMBOLRATE OR 80% BUFFERSIZE
 	{
-		printf("Init Filling Memory buffer %d\n",BufferAvailable());
+		//printf("Init Filling Memory buffer %d\n",BufferAvailable());
 		//printf(".");
 		 usleep(500);
 	}
@@ -1264,13 +1291,13 @@ for (;;)
 			time_difference = gettime_now.tv_nsec - start_time;
 			if(time_difference<0) time_difference+=1E9;
 			
-			if(StatusCompteur%10==0)
+			if(StatusCompteur%100==0)
 			{ 
 				
 				//SetUglyFrequency(TuneFrequency);
 				//TuneFrequency+=5000.0;
 				
-				//printf("Memavailable %d/%d FreeSlot=%d/%d Bitrate : %f\n",BufferAvailable(),BIG_BUFFER_SIZE,free_slots_now,NUM_SAMPLES,(1000000.0*(free_slots_now-free_slots))/(float)time_difference);
+				printf("Memavailable %d/%d FreeSlot=%d/%d Bitrate : %f\n",BufferAvailable(),BIG_BUFFER_SIZE,free_slots_now,NUM_SAMPLES,(1000000.0*(free_slots_now-free_slots))/(float)time_difference);
 			}
 			StatusCompteur++;
 			//printf(" DiffTime = %ld FreeSlot=%d Bitrate : %f\n",time_difference,free_slots_now-free_slots,(1000000.0*(free_slots_now-free_slots))/(float)time_difference);		
