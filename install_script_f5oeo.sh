@@ -116,6 +116,10 @@ make
 sudo install fbcp /usr/local/bin/fbcp
 cd ../../
 
+#Install Waveshare DTOVERLAY
+cd /home/pi/rpidatv/scripts/
+sudo cp ./waveshare35a.dtbo /boot/overlays/
+
 
 #Fallback IP to 192.168.1.60
 sudo bash -c 'echo -e "\nprofile static_eth0\nstatic ip_address=192.168.1.60/24\nstatic routers=192.168.1.1\nstatic domain_name_servers=192.168.1.1\ninterface eth0\nfallback static_eth0" >> /etc/dhcpcd.conf'
