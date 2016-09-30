@@ -1,4 +1,4 @@
-PATHSCRIPT=/home/pi/rpidatv
+PATHSCRIPT=/home/pi/rpidatv/scripts
 CONFIGFILE=$PATHSCRIPT"/rpidatvconfig.txt"
 
 
