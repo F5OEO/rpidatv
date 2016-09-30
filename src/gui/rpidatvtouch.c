@@ -23,7 +23,11 @@
 #include "fontinfo.h"
 #include "shapes.h"
 
+#include "hello_fft/mailbox.h"
+#include "hello_fft/gpu_fft.h"
 
+#include <pthread.h>
+#include <fftw3.h>
 
 #define KWHT  "\x1B[37m"
 #define KYEL  "\x1B[33m"
@@ -69,6 +73,7 @@ int TabSR[5]= {125,250,333,500,1000};
 int TabFec[5]={1,2,3,5,7};
 char TabModeInput[5][255]={"CAMMPEG-2","CAMH264","PATERNAUDIO","FILETS","CARRIER"};
 int Inversed=0;//Display is inversed (Waveshare)
+pthread_t thfft,thbutton;
 
 GetConfigParam(char *PathConfigFile,char *Param, char *Value)
 {
@@ -467,17 +472,294 @@ TransmitStop()
 
 }
 
+void coordpoint(VGfloat x, VGfloat y, VGfloat size, VGfloat pcolor[4]) {
+	setfill(pcolor);
+	Circle(x, y, size);
+	setfill(pcolor);
+}
+
+	fftwf_complex *fftout=NULL;
+#define FFT_SIZE 256
+
+int FinishedButton=0;
+void *DisplayFFT(void * arg)
+{
+	FILE * pFileIQ = NULL;
+	int fft_size=FFT_SIZE;
+	fftwf_complex *fftin;
+	 fftin = (fftwf_complex *)fftwf_malloc(sizeof(fftwf_complex) * fft_size);
+	 fftout = (fftwf_complex *)fftwf_malloc(sizeof(fftwf_complex) * fft_size);
+	fftwf_plan plan ;
+	plan = fftwf_plan_dft_1d(fft_size, fftin, fftout, FFTW_FORWARD, FFTW_ESTIMATE );
+
+	struct GPU_FFT_COMPLEX *Dummy;
+	
+	printf("Entering FFT thread\n");	
+	pFileIQ = fopen("fifo.iq", "r");
+	
+	
+	while(FinishedButton==0)
+	{	
+		int Nbread;
+		int log2_N=11; //FFT 1024
+		int ret;
+		
+		Nbread=fread( fftin,sizeof(fftwf_complex),FFT_SIZE,pFileIQ);
+		fftwf_execute( plan );
+		
+		//printf("NbRead %d %d\n",Nbread,sizeof(struct GPU_FFT_COMPLEX));
+		
+		fseek(pFileIQ,(1200000-FFT_SIZE)*sizeof(struct GPU_FFT_COMPLEX),SEEK_CUR);
+	}
+	fftwf_free(fftin);
+	fftwf_free(fftout);
+	
+}
+
+
+void *WaitButtonEvent(void * arg)
+{
+int rawX, rawY, rawPressure,i;
+
+
+   
+	while(getTouchSample(&rawX, &rawY, &rawPressure)==0);
+
+	FinishedButton=1;
+}
+
+ProcessLeandvb()
+{
+   #define PATH_SCRIPT_LEAN "sudo /home/pi/rpidatv/scripts/leandvbgui.sh 2>&1"	
+   char *line=NULL;
+   size_t len = 0;
+    ssize_t read;
+
+	int rawX, rawY, rawPressure;
+	FILE *fp;
+	VGfloat px[1000];
+	VGfloat py[1000];
+	VGfloat shapecolor[4];
+	RGBA(255, 255, 128,1, shapecolor);
+
+	printf("Entering LeandProcess\n");
+	FinishedButton=0; 
+// Thread FFT
+
+	pthread_create (&thfft,NULL, &DisplayFFT,NULL);
+	
+//END ThreadFFT
+	// Thread FFT
+
+	pthread_create (&thbutton,NULL, &WaitButtonEvent,NULL);
+	
+//END ThreadFFT
+
+
+	fp=popen(PATH_SCRIPT_LEAN, "r");
+	if(fp==NULL) printf("Process error\n");
+
+ while (((read = getline(&line, &len, fp)) != -1)&&(FinishedButton==0))
+ {
+        
+        char  strTag[20];
+	int NbData;
+	static int Decim=0;
+	sscanf(line,"%s ",strTag);
+	char * token;
+	static int Lock=0;
+	static float SignalStrength=0;
+	static float MER=0;
+	static float FREQ=0;
+	if((strcmp(strTag,"SYMBOLS")==0))
+	{
+		
+		token = strtok(line," ");
+		token = strtok(NULL," ");
+		sscanf(token,"%d",&NbData);
+		if(Decim%25==0)
+		{
+			//Start(wscreen,hscreen);
+			Fill(255, 255, 255, 1);
+			Roundrect(0,0,256,hscreen, 10, 10);
+			BackgroundRGB(0,0,0,0);
+			//Lock status
+			char sLock[100];
+			if(Lock==1)
+			{
+				strcpy(sLock,"Lock");
+				Fill(0,255,0, 1);
+	
+			}
+			else
+			{
+				strcpy(sLock,"----");
+				Fill(255,0,0, 1);
+			}
+			Roundrect(200,0,100,50, 10, 10);
+			Fill(255, 255, 255, 1);				   // White text
+			Text(200, 20, sLock, SerifTypeface, 25);	
+
+			//Signal Strength
+			char sSignalStrength[100];
+			sprintf(sSignalStrength,"%3.0f",SignalStrength);
+
+			Fill(255-SignalStrength,SignalStrength,0,1);
+			Roundrect(350,0,20+SignalStrength/2,50, 10, 10);
+			Fill(255, 255, 255, 1);				   // White text
+			Text(350, 20, sSignalStrength, SerifTypeface, 25);
+
+			//MER 2-30
+			char sMER[100];
+			sprintf(sMER,"%2.1fdB",MER);
+			Fill(255-MER*8,(MER*8),0,1);
+			Roundrect(500,0,(MER*8),50, 10, 10);
+			Fill(255, 255, 255, 1);				   // White text
+			Text(500,20, sMER, SerifTypeface, 25);
+
+			
+
+		}
+		if(Decim%25==0)
+		{
+			static VGfloat PowerFFTx[FFT_SIZE];
+			static VGfloat PowerFFTy[FFT_SIZE];
+			StrokeWidth(2);
+			
+			Stroke(150, 150, 200, 0.8);
+			int i;
+			if(fftout!=NULL)
+			{
+			for(i=0;i<FFT_SIZE;i+=2)
+			{
+				
+				PowerFFTx[i]=(i<FFT_SIZE/2)?(FFT_SIZE+i)/2:i/2;
+				PowerFFTy[i]=log10f(sqrt(fftout[i][0]*fftout[i][0]+fftout[i][1]*fftout[i][1])/FFT_SIZE)*100;	
+			Line(PowerFFTx[i],0,PowerFFTx[i],PowerFFTy[i]);
+			//Polyline(PowerFFTx,PowerFFTy,FFT_SIZE);
+	
+			//Line(0, (i<1024/2)?(1024/2+i)/2:(i-1024/2)/2,  (int)sqrt(fftout[i][0]*fftout[i][0]+fftout[i][1]*fftout[i][1])*100/1024,(i<1024/2)?(1024/2+i)/2:(i-1024/2)/2);
+			
+			}
+			//Polyline(PowerFFTx,PowerFFTy,FFT_SIZE);
+			}
+			//FREQ
+			Stroke(0, 0, 255, 0.8);
+			//Line(FFT_SIZE/2+FREQ/2/1024000.0,0,FFT_SIZE/2+FREQ/2/1024000.0,hscreen/2);
+			Line(FFT_SIZE/2,0,FFT_SIZE/2,10);
+			Stroke(0, 0, 255, 0.8);
+			Line(0,hscreen-300,256,hscreen-300);
+			StrokeWidth(10);
+			Line(128+(FREQ/40000.0)*256.0,hscreen-300-20,128+(FREQ/40000.0)*256.0,hscreen-300+20);
+			
+			char sFreq[100];
+			sprintf(sFreq,"%2.1fkHz",FREQ/1000.0);
+			Text(0,hscreen-300+25, sFreq, SerifTypeface, 20);
+			
+		}
+		if((Decim%25)==0)
+		{
+			int x,y;
+			Decim++;
+			int i;
+			StrokeWidth(2);
+			Stroke(255, 255, 128, 0.8);
+			for(i=0;i<NbData;i++)
+			{
+				token=strtok(NULL," ");
+				sscanf(token,"%d,%d",&x,&y);
+				coordpoint(x+128, hscreen-(y+128), 5, shapecolor);
+				
+				Stroke(0, 255, 255, 0.8);
+				Line(0,hscreen-128,256,hscreen-128);
+				Line(128,hscreen,128,hscreen-256);
+			
+			}
+			
+
+			End();
+			//usleep(40000);
+			
+		}
+		else
+			Decim++;
+		/*if(Decim%1000==0)
+		{
+			char FileSave[255];
+			FILE *File;
+			sprintf(FileSave,"Snap%d_%dx%d.png",Decim,wscreen,hscreen);
+			File=fopen(FileSave,"w");
+			
+			dumpscreen(wscreen,hscreen,File);
+			fclose(File);
+		}*/
+		/*if(Decim>200)
+		{
+			Decim=0;
+			Start(wscreen,hscreen);
+
+		}*/
+	
+	}
+	if((strcmp(strTag,"SS")==0))
+	{
+		
+		token = strtok(line," ");
+		token = strtok(NULL," ");	
+		sscanf(token,"%f",&SignalStrength);
+		//printf("Signal %f\n",SignalStrength);
+	}
+	if((strcmp(strTag,"MER")==0))
+	{
+		
+		token = strtok(line," ");
+		token = strtok(NULL," ");	
+		sscanf(token,"%f",&MER);
+		//printf("MER %f\n",MER);
+	}
+	if((strcmp(strTag,"FREQ")==0))
+	{
+		
+		token = strtok(line," ");
+		token = strtok(NULL," ");	
+		sscanf(token,"%f",&FREQ);
+		//printf("FREQ %f\n",FREQ);
+	}
+	if((strcmp(strTag,"LOCK")==0))
+	{
+		
+		token = strtok(line," ");
+		token = strtok(NULL," ");	
+		sscanf(token,"%d",&Lock);
+		
+		
+	}		
+	
+	free(line);
+	line=NULL;
+    }
+printf("End Lean - Clean\n");
+usleep(5000000); // Time to FFT end reading samples
+   pthread_join(thfft, NULL);
+	//pclose(fp);
+	pthread_join(thbutton, NULL);
+	printf("End Lean\n");
+   
+}
+
 ReceiveStart()
 {
-		#define PATH_SCRIPT_LEAN "sudo /home/pi/rpidatv/scripts/leandvb2video.sh"
+	
 	//system("sudo SDL_VIDEODRIVER=fbcon SDL_FBDEV=/dev/fb0 mplayer -ao /dev/null -vo sdl  /home/pi/rpidatv/video/mire250.ts &");
-	system(PATH_SCRIPT_LEAN);
+	//system(PATH_SCRIPT_LEAN);
+	ProcessLeandvb();
 }
 
 ReceiveStop()
 {
 	system("sudo killall leandvb");
-	system("sudo killall mplayer");
+		system("sudo killall hello_video.bin");
+	//system("sudo killall mplayer");
 }
 // wait for a specific character 
 void waituntil(int w,int h,int endchar) {
@@ -495,8 +777,9 @@ int rawX, rawY, rawPressure,i;
 				printf("Display ON\n");
 				TransmitStop();
 				ReceiveStop();
-				init(&wscreen, &hscreen);
-				Start(wscreen,hscreen);
+				//init(&wscreen, &hscreen);
+				//Start(wscreen,hscreen);
+				BackgroundRGB(255,255,255,255);
 				IsDisplayOn=1;			
 				
 				SelectPTT(15,0);
@@ -552,11 +835,17 @@ int rawX, rawY, rawPressure,i;
 				if(i==16)
 				{
 					printf("DISPLAY OFF \n");
-					finish();
+					//finish();
+					BackgroundRGB(0,0,0,255);
 					ReceiveStart();
-					
-					IsDisplayOn=0;
-					usleep(500000);
+					BackgroundRGB(255,255,255,255);
+					IsDisplayOn=1;			
+				
+					SelectPTT(15,0);
+					SelectPTT(16,0);
+					UpdateWindow();
+					IsDisplayOn=1;
+					//usleep(500000);
 				}
 
 			}
@@ -594,7 +883,15 @@ int rawX, rawY, rawPressure,i;
     }
 }
 
-
+static void
+terminate(int dummy)
+{
+	printf("Terminate\n");
+	
+	/*restoreterm();
+	finish();*/
+	exit(1);
+}
 
 // main initializes the system and shows the picture. 
 // Exit and clean up when you hit [RETURN].
@@ -608,6 +905,14 @@ int main(int argc, char **argv) {
 	int screenXmax, screenXmin;
 	int screenYmax, screenYmin;
 	
+	int i;
+	for (i = 0; i < 16; i++) {
+		struct sigaction sa;
+
+		memset(&sa, 0, sizeof(sa));
+		sa.sa_handler = terminate;
+		sigaction(i, &sa, NULL);
+	}
 	if(argc>1)
 		Inversed=atoi(argv[1]);
 
@@ -627,6 +932,8 @@ int main(int argc, char **argv) {
 	//printf ("X Scale Factor = %f\n", scaleXvalue);
 	scaleYvalue = ((float)screenYmax-screenYmin) / hscreen;
 	//printf ("Y Scale Factor = %f\n", scaleYvalue);
+
+
 
 	int wbuttonsize=wscreen/5;	
 	int hbuttonsize=hscreen/5;
@@ -807,6 +1114,7 @@ button=AddButton(1*wbuttonsize*3+20,hbuttonsize*3+20,wbuttonsize*1.2,hbuttonsize
 
 	End();
 	*/
+	//ReceiveStart();
 	waituntil(wscreen,hscreen,0x1b);
 	restoreterm();
 	finish();
