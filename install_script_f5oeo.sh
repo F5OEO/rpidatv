@@ -5,7 +5,7 @@ sudo dpkg --configure -a
 sudo apt-get clean
 sudo apt-get update
 sudo apt-get -y install apt-transport-https git rpi-update
-sudo apt-get -y install cmake libusb-1.0-0-dev g++ libx11-dev buffer libjpeg8-dev indent libfreetype6-dev ttf-dejavu-core bc usbmount
+sudo apt-get -y install cmake libusb-1.0-0-dev g++ libx11-dev buffer libjpeg8-dev indent libfreetype6-dev ttf-dejavu-core bc usbmount fftw3-dev
 
 #rpi-update to get latest firmware
 sudo rpi-update
@@ -44,6 +44,7 @@ make
 cd ../
 make
 sudo make install
+
 #Menu autostart
 cd /home/pi/rpidatv/scripts/
 #make kayboard in french
