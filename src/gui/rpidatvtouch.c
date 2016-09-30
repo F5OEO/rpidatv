@@ -23,11 +23,11 @@
 #include "fontinfo.h"
 #include "shapes.h"
 
-#include "hello_fft/mailbox.h"
-#include "hello_fft/gpu_fft.h"
+
 
 #include <pthread.h>
 #include <fftw3.h>
+#include <math.h>
 
 #define KWHT  "\x1B[37m"
 #define KYEL  "\x1B[33m"
@@ -492,7 +492,7 @@ void *DisplayFFT(void * arg)
 	fftwf_plan plan ;
 	plan = fftwf_plan_dft_1d(fft_size, fftin, fftout, FFTW_FORWARD, FFTW_ESTIMATE );
 
-	struct GPU_FFT_COMPLEX *Dummy;
+	
 	
 	printf("Entering FFT thread\n");	
 	pFileIQ = fopen("fifo.iq", "r");
@@ -509,7 +509,7 @@ void *DisplayFFT(void * arg)
 		
 		//printf("NbRead %d %d\n",Nbread,sizeof(struct GPU_FFT_COMPLEX));
 		
-		fseek(pFileIQ,(1200000-FFT_SIZE)*sizeof(struct GPU_FFT_COMPLEX),SEEK_CUR);
+		fseek(pFileIQ,(1200000-FFT_SIZE)*sizeof(fftwf_complex),SEEK_CUR);
 	}
 	fftwf_free(fftin);
 	fftwf_free(fftout);
