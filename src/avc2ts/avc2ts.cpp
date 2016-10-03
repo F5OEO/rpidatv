@@ -919,7 +919,7 @@ namespace rpi_omx
             exposure_value->xEVCompensation = xEVCompensation;
             exposure_value->nSensitivity = nSensitivity;
             exposure_value->bAutoSensitivity = bAutoSensitivity;
-	    exposure_value->bAutoShutterSpeed=OMX_FALSE;
+	    exposure_value->bAutoShutterSpeed=OMX_TRUE;
 	    /*exposure_value->nShutterSpeedMsec=15000;*/
 
             ERR_OMX( OMX_SetConfig(component_, OMX_IndexConfigCommonExposureValue, &exposure_value), "set camera exposure value");
@@ -1886,7 +1886,7 @@ CurrentVideoFormat.width=VideoWidth;
 CurrentVideoFormat.height=VideoHeight;
 CurrentVideoFormat.framerate=VideoFramerate;
 CurrentVideoFormat.ratio=VideoFromat::RATIO_16x9;
-CurrentVideoFormat.fov=true; // To check
+CurrentVideoFormat.fov=false; // To check
  
 bcm_host_init();
 	try
@@ -2084,8 +2084,8 @@ bcm_host_init();
 #define OMX_BUFFERFLAG_TIME_IS_DTS 0x000004000
 */
 		//printf("Flags %x,Size %d \n",encBufferLow.flags(),encBufferLow.dataSize());
-		encoderLow.getEncoderStat(encBufferLow.flags());
-		//encoderLow.setDynamicBitrate(VideoBitrate);
+		//encoderLow.getEncoderStat(encBufferLow.flags());
+		encoderLow.setDynamicBitrate(VideoBitrate);
 		//printf("Len = %"\n",encBufferLow
 		if(encBufferLow.flags() & OMX_BUFFERFLAG_CODECSIDEINFO)
 		{
