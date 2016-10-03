@@ -1531,7 +1531,7 @@ class TSEncaspulator
 	int Videofps;
 	int VideoBitrate;
 	int FrameDuration;
-	int key_frame=1;
+	//int key_frame=1;
 	uint8_t TsUdpBuffer[1316];
 	char *OutputFilename;
 	char *UdpOutput;
@@ -1598,7 +1598,7 @@ class TSEncaspulator
                     
 	}
 
-	void AddFrame(uint8_t *buffer,int size,int OmxFlags,int DelayPTS=200)
+	void AddFrame(uint8_t *buffer,int size,int OmxFlags,uint64_t key_frame,int DelayPTS=200)
 	{
 		 //unsigned char buffer[100];
 		ts_frame_t tsframe;
@@ -1618,7 +1618,7 @@ class TSEncaspulator
 		{
 			if((OmxFlags&OMX_BUFFERFLAG_ENDOFFRAME)&&!(OmxFlags&OMX_BUFFERFLAG_CODECCONFIG))
 			{
-				 key_frame++;
+				 //key_frame++;
 				TotalFrameSize=0;
 				TimeToTransmitFrameUs=0;
 				//printf("-----\n");
@@ -1820,9 +1820,11 @@ int main(int argc, char **argv)
 			break;
 		case 'x': // Width
 			VideoWidth=atoi(optarg);
+			VideoWidth=((VideoWidth>>5)<<5);
 			break;
 		case 'y': // Height
 			VideoHeight=atoi(optarg);
+			VideoHeight=((VideoHeight>>4)<<4);
 			break;
 		case 'f': // Framerate
 			VideoFramerate=atoi(optarg);
@@ -1883,7 +1885,7 @@ int main(int argc, char **argv)
 CurrentVideoFormat.width=VideoWidth;
 CurrentVideoFormat.height=VideoHeight;
 CurrentVideoFormat.framerate=VideoFramerate;
-CurrentVideoFormat.ratio=VideoFromat::RATIO_4x3;//VideoFromat::RATIO_16x9;
+CurrentVideoFormat.ratio=VideoFromat::RATIO_16x9;
 CurrentVideoFormat.fov=true; // To check
  
 bcm_host_init();
@@ -2040,12 +2042,12 @@ bcm_host_init();
 
 	     
 	encoderLow.callFillThisBuffer();
-	
+	 uint64_t key_frame=1;
         while (1)
         {
             bool aval = false;
 	    static unsigned toWriteHigh=0;
-            
+           
 	    int ForceFilled=0;
 
             if (ForceFilled||encBufferLow.filled())
@@ -2082,7 +2084,7 @@ bcm_host_init();
 #define OMX_BUFFERFLAG_TIME_IS_DTS 0x000004000
 */
 		//printf("Flags %x,Size %d \n",encBufferLow.flags(),encBufferLow.dataSize());
-		//encoderLow.getEncoderStat(encBufferLow.flags());
+		encoderLow.getEncoderStat(encBufferLow.flags());
 		//encoderLow.setDynamicBitrate(VideoBitrate);
 		//printf("Len = %"\n",encBufferLow
 		if(encBufferLow.flags() & OMX_BUFFERFLAG_CODECSIDEINFO)
@@ -2130,7 +2132,11 @@ bcm_host_init();
 			//printf(".");
 			//printf("Flags %x,Size %d \n",encBufferLow.flags(),encBufferLow.dataSize());
 			//encoderLow.getEncoderStat(encBufferLow.flags());
-			TsEncoderLow.AddFrame(encBufferLow.data(),encBufferLow.dataSize(),encBufferLow.flags(),DelayPTS);
+			int OmxFlags=encBufferLow.flags();
+			if((OmxFlags&OMX_BUFFERFLAG_ENDOFFRAME)&&!(OmxFlags&OMX_BUFFERFLAG_CODECCONFIG))
+				key_frame++;
+			TsEncoderLow.AddFrame(encBufferLow.data(),encBufferLow.dataSize(),OmxFlags,key_frame,DelayPTS);
+			
 #if 1
 		    struct timespec t,tbefore;
          	    clock_gettime(CLOCK_MONOTONIC, &tbefore);
@@ -2156,7 +2162,10 @@ bcm_host_init();
 			}*/
                 }
 		else
+		{
+			key_frame++; //Skipped Frame, key_frame++ to allow correct timing for next valid frames
 			printf("Buffer null Flags %x\n",encBufferLow.flags());
+		}
                 // Buffer flushed, request a new buffer to be filled by the encoder component
                 encBufferLow.setFilled(false);
                 encoderLow.callFillThisBuffer();
