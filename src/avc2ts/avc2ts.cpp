@@ -548,6 +548,17 @@ namespace rpi_omx
             fillDone_ = val;
         }
 
+	bool setDatasize(OMX_U32 Datasize)
+	{
+		if(Datasize<=allocSize())
+		{
+			ppBuffer_->nOffset=0;
+			ppBuffer_->nFilledLen=Datasize;
+			return true;
+		}
+		return false;	
+	}
+
         OMX_BUFFERHEADERTYPE ** pHeader() { return &ppBuffer_; }
         OMX_BUFFERHEADERTYPE * header() { return ppBuffer_; }
         OMX_U32 flags() const { return ppBuffer_->nFlags; }
@@ -555,6 +566,7 @@ namespace rpi_omx
 
         OMX_U8 * data() { return  ppBuffer_->pBuffer + ppBuffer_->nOffset; }
         OMX_U32 dataSize() const { return ppBuffer_->nFilledLen; }
+	
         OMX_U32 allocSize() const { return ppBuffer_->nAllocLen; }
 	OMX_U32 TimeStamp() {return ppBuffer_->nTickCount;}
 
@@ -1041,6 +1053,28 @@ namespace rpi_omx
             setPortDefinition(OPORT, portDef);
         }
 
+	void setupOutputPort(const VideoFromat Videoformat, unsigned bitrate, unsigned framerate = 25)
+	{
+		// Input Definition
+		Parameter<OMX_PARAM_PORTDEFINITIONTYPE> portDefI;
+            getPortDefinition(IPORT, portDefI);
+		portDefI->format.video.nFrameWidth  = Videoformat.width;
+            portDefI->format.video.nFrameHeight = Videoformat.height;
+            portDefI->format.video.xFramerate   = framerate<<16;
+            portDefI->format.video.nStride      = Videoformat.width;//(portDefI->format.video.nFrameWidth + portDefI->nBufferAlignment - 1) & (~(portDefI->nBufferAlignment - 1));
+	portDefI->format.video.nSliceHeight=Videoformat.height;
+		portDefI->format.video.eColorFormat=OMX_COLOR_FormatYUV420PackedPlanar;
+	 setPortDefinition(IPORT, portDefI);	
+	
+	// Output definition : copy from input
+
+            portDefI->nPortIndex     = OPORT;
+		portDefI->format.video.eColorFormat=OMX_COLOR_FormatUnused;
+	portDefI->format.video.eCompressionFormat = OMX_VIDEO_CodingAVC;
+      		portDefI->format.video.nBitrate=bitrate;
+	            setPortDefinition(OPORT, portDefI);
+	}
+
         void setCodec(OMX_VIDEO_CODINGTYPE codec)
         {
             Parameter<OMX_VIDEO_PARAM_PORTFORMATTYPE> format;
@@ -1302,14 +1336,23 @@ So the advice was for MMAL_VIDEO_INTRA_REFRESH_CYCLIC_MROWS and cir_mbs set prob
 	Count++;
 	}
 
-        void allocBuffers()
+        void allocBuffers(bool WithBuffIn=false)
         {
-            Component::allocBuffers(OPORT, bufferOut_);
+		Component::allocBuffers(OPORT, bufferOut_);
+		HaveABufferIn=WithBuffIn;
+	     	if(HaveABufferIn) 
+		{
+			
+			Component::allocBuffers(IPORT, bufferIn_);
+		}
+			
         }
 
         void freeBuffers()
         {
             Component::freeBuffers(OPORT, bufferOut_);
+		if(HaveABufferIn)
+		Component::freeBuffers(IPORT, bufferIn_);
         }
 
         void callFillThisBuffer()
@@ -1317,12 +1360,18 @@ So the advice was for MMAL_VIDEO_INTRA_REFRESH_CYCLIC_MROWS and cir_mbs set prob
             Component::callFillThisBuffer(bufferOut_);
         }
 
-        Buffer& outBuffer() { return bufferOut_; }
+	void callEmptyThisBuffer()
+        {
+            Component::callEmptyThisBuffer(bufferIn_);
+        }
 
+        Buffer& outBuffer() { return bufferOut_; }
+	Buffer& inBuffer() { return bufferIn_; }
     private:
         Parameter<OMX_PARAM_PORTDEFINITIONTYPE> encoderPortDef_;
         Buffer bufferOut_;
 	Buffer bufferIn_;
+	bool HaveABufferIn=false;
     };
 
     ///
@@ -1473,8 +1522,16 @@ So the advice was for MMAL_VIDEO_INTRA_REFRESH_CYCLIC_MROWS and cir_mbs set prob
         return OMX_ErrorNone;
     }
 
-    static OMX_ERRORTYPE callback_EmptyBufferDone(OMX_HANDLETYPE, OMX_PTR, OMX_BUFFERHEADERTYPE *)
+    static OMX_ERRORTYPE callback_EmptyBufferDone(OMX_HANDLETYPE, OMX_PTR pAppData, OMX_BUFFERHEADERTYPE * pBuffer)
     {
+	Component * component = static_cast<Component *>(pAppData);
+
+        if (component->type() == Encoder::cType)
+        {
+	    //printf("Filled %d Timestamp %li\n",pBuffer->nFilledLen,pBuffer->nTickCount);
+            Encoder * encoder = static_cast<Encoder *>(pAppData);
+            encoder->inBuffer().setFilled();
+        }
         return OMX_ErrorNone;
     }
 
@@ -1975,7 +2032,236 @@ ERR_OMX( OMX_SetupTunnel(camera.component(), Camera::OPORT_VIDEO, encoder.compon
 	}
 };
 
+class PictureTots
+{
+private:
+	
+	
+	 Encoder encoder;
+	TSEncaspulator tsencoder;
+	int EncVideoBitrate;
+	bool FirstTime=true;
+	uint64_t key_frame=1;
+	VideoFromat CurrentVideoFormat;
+	int DelayPTS;
+	int Videofps;
+public:
+public:
+	void Init(VideoFromat &VideoFormat,char *FileName,char *Udp,int VideoBitrate,int TsBitrate,int SetDelayPts,int VPid=256,int fps=25,int IDRPeriod=100,int RowBySlice=0,int EnableMotionVectors=0)
+	{
+		CurrentVideoFormat=VideoFormat;
+		Videofps=fps;
+		DelayPTS=SetDelayPts;
+			// configuring encoders
+		{
+		    VideoFromat vfResized = VideoFormat;
+		    
+		    
+		 encoder.setupOutputPort(VideoFormat,VideoBitrate,fps);
+		    
+		    encoder.setBitrate(VideoBitrate,/*OMX_Video_ControlRateVariable*/OMX_Video_ControlRateConstant);
+		    encoder.setCodec(OMX_VIDEO_CodingAVC);
+		    encoder.setIDR(IDRPeriod);	
+		    encoder.setSEIMessage();
+		    if(EnableMotionVectors) encoder.setVectorMotion();
+	
+			encoder.setQP(10,40);
+			encoder.setLowLatency();
+			encoder.setSeparateNAL();
+			if(RowBySlice)
+				encoder.setMultiSlice(RowBySlice);
+			else
+				encoder.setMinizeFragmentation();
+		    //encoder.setEED();
 
+	/*OMX_VIDEO_AVCProfileBaseline = 0x01,   //< Baseline profile 
+	    OMX_VIDEO_AVCProfileMain     = 0x02,   //< Main profile 
+	    OMX_VIDEO_AVCProfileExtended = 0x04,   //< Extended profile 
+	    OMX_VIDEO_AVCProfileHigh     = 0x08,   //< High profile 
+		OMX_VIDEO_AVCProfileConstrainedBaseline
+	*/
+		    encoder.setProfileLevel(OMX_VIDEO_AVCProfileBaseline);
+
+			// With Main Profile : have more skipped frame
+			tsencoder.SetOutput(FileName,Udp);
+		   tsencoder.ConstructTsTree(VideoBitrate,TsBitrate,256,fps); 	
+		 EncVideoBitrate=VideoBitrate;
+		}
+		// switch components to idle state
+		{
+		      encoder.switchState(OMX_StateIdle);
+			 
+		}
+
+		// enable ports
+		{
+		  	  		    
+			encoder.enablePort();    // all
+		}
+
+		// allocate buffers
+		{
+		  
+		    
+		    encoder.allocBuffers(true);//BufIn & Bufout
+		}
+
+		// switch state of the components prior to starting
+		{
+		  
+		    encoder.switchState(OMX_StateExecuting);
+		}
+
+	}
+// generate an animated test card in YUV format
+ int generate_test_card(OMX_U8 *buf, OMX_U32 * filledLen, int frame)
+{
+   int i, j;
+   OMX_U8 *y = buf, *u = y + CurrentVideoFormat.width * CurrentVideoFormat.height, *v =
+      u + (CurrentVideoFormat.width >> 1) * (CurrentVideoFormat.height >> 1);
+
+   for (j = 0; j < CurrentVideoFormat.height / 2; j++) {
+      OMX_U8 *py = y + 2 * j * CurrentVideoFormat.width;
+      OMX_U8 *pu = u + j * (CurrentVideoFormat.width >> 1);
+      OMX_U8 *pv = v + j * (CurrentVideoFormat.width >> 1);
+      for (i = 0; i < CurrentVideoFormat.width / 2; i++) {
+	 int z = (((i + frame) >> 4) ^ ((j + frame) >> 4)) & 15;
+	 py[0] = py[1] = py[CurrentVideoFormat.width] = py[CurrentVideoFormat.width + 1] = 0x80 + z * 0x8;
+	 pu[0] = 0x00 + z * 0x10;
+	 pv[0] = 0x80 + z * 0x30;
+	 py += 2;
+	 pu++;
+	 pv++;
+      }
+   }
+
+   *filledLen = ((CurrentVideoFormat.width * CurrentVideoFormat.height * 3)/2);
+   usleep(1e6/(2*Videofps));
+   return 1;
+}
+
+void Run(bool want_quit)
+	{
+		Buffer& encBuffer = encoder.outBuffer();
+		Buffer& PictureBuffer = encoder.inBuffer();
+		
+		
+		if(!want_quit&&(FirstTime||PictureBuffer.filled()))
+		{
+			
+			OMX_U32 filledLen;
+			generate_test_card(PictureBuffer.data(),&filledLen,key_frame++);
+			PictureBuffer.setDatasize(filledLen);
+			encoder.callEmptyThisBuffer();
+			PictureBuffer.setFilled(false);
+			if(FirstTime)
+			{
+				encoder.callFillThisBuffer();
+				FirstTime=false;
+			}
+			
+		}
+		if (!want_quit&&encBuffer.filled())
+		 {
+			       
+	      			//encoder.getEncoderStat(encBuffer.flags());
+				encoder.setDynamicBitrate(EncVideoBitrate);
+				//printf("Len = %"\n",encBufferLow
+				if(encBuffer.flags() & OMX_BUFFERFLAG_CODECSIDEINFO)
+				{
+					printf("CODEC CONFIG>\n");
+					int LenVector=encBuffer.dataSize();
+					 
+					for(int j=0;j<CurrentVideoFormat.height/16;j++)
+					{
+						for(int i=0;i<CurrentVideoFormat.width/16;i++)
+						{
+							int Motionx=encBuffer.data()[(CurrentVideoFormat.width/16*j+i)*4];
+							int Motiony=encBuffer.data()[(CurrentVideoFormat.width/16*j+i)*4+1];
+							int MotionAmplitude=sqrt((double)((Motionx * Motionx) + (Motiony * Motiony)));
+							printf("%d ",MotionAmplitude);
+						}
+						printf("\n");
+					}
+					encBuffer.setFilled(false);
+					encoder.callFillThisBuffer();
+					return;
+				}
+						
+				unsigned toWrite = (encBuffer.dataSize()) ;
+				
+		 		
+				if (toWrite)
+				{
+			       
+					int OmxFlags=encBuffer.flags();
+					if((OmxFlags&OMX_BUFFERFLAG_ENDOFFRAME)&&!(OmxFlags&OMX_BUFFERFLAG_CODECCONFIG))
+						key_frame++;
+					tsencoder.AddFrame(encBuffer.data(),encBuffer.dataSize(),OmxFlags,key_frame,DelayPTS);
+			
+	
+		
+				}
+				else
+				{
+					key_frame++; //Skipped Frame, key_frame++ to allow correct timing for next valid frames
+					printf("!");
+				}
+				// Buffer flushed, request a new buffer to be filled by the encoder component
+				encBuffer.setFilled(false);
+				encoder.callFillThisBuffer();
+				PictureBuffer.setFilled(true);
+		  }
+			   
+	}
+
+
+	void Terminate()
+	{ 
+		
+		// return the last full buffer back to the encoder component
+		{
+		    encoder.outBuffer().flags() &= OMX_BUFFERFLAG_EOS;
+
+		 
+		    //encoder.callFillThisBuffer();
+		}
+
+		// flush the buffers on each component
+		{
+		   
+		    encoder.flushPort();
+		}
+
+		// disable all the ports
+		{
+		   
+
+		    encoder.disablePort();
+		}
+
+		// free all the buffers
+		{
+		   
+
+		    encoder.freeBuffers();
+		}
+
+		// transition all the components to idle states
+		{
+		    
+		    encoder.switchState(OMX_StateIdle);
+		}
+
+		// transition all the components to loaded states
+		{
+		   
+
+		    encoder.switchState(OMX_StateLoaded);
+		}
+	}
+};
+	
 
 
 void print_usage()
@@ -2019,10 +2305,13 @@ int main(int argc, char **argv)
 	int RowBySlice=0;
 	char *NetworkOutput=NULL;//"230.0.0.1:10000";
 	int EnableMotionVectors=0;
+	#define CAMERA 0
+	#define PATTERN 1
+	int TypeInput=CAMERA;
 
 	while(1)
 	{
-	a = getopt(argc, argv, "o:b:m:hx:y:f:n:d:i:r:v");
+	a = getopt(argc, argv, "o:b:m:hx:y:f:n:d:i:r:vt:");
 	
 	if(a == -1) 
 	{
@@ -2073,6 +2362,9 @@ int main(int argc, char **argv)
 			break;
 		case 'r': // Rows by slice
 			RowBySlice=atoi(optarg);
+			break;
+		case 't': //Type input
+			TypeInput=atoi(optarg);
 			break;
 		case -1:
         	break;
@@ -2126,8 +2418,12 @@ bcm_host_init();
         pSemaphore = &sem;
 
         CameraTots cameratots;
+	PictureTots picturetots;
+if(TypeInput==0)
 	cameratots.Init(CurrentVideoFormat,OutputFileName,NetworkOutput,VideoBitrate,MuxBitrate,DelayPTS,256,VideoFramerate,IDRPeriod,RowBySlice);
-
+else
+	picturetots.Init(CurrentVideoFormat,OutputFileName,NetworkOutput,VideoBitrate,MuxBitrate,DelayPTS,256,VideoFramerate,IDRPeriod,RowBySlice);
+	
 #if 1
         signal(SIGINT,  signal_handler);
         signal(SIGTERM, signal_handler);
@@ -2149,9 +2445,12 @@ bcm_host_init();
         while (1)
         {
             
+	   if(TypeInput==0)
+		cameratots.Run(want_quit);
+	else
+          	 picturetots.Run(want_quit);
+	
 	   
-           
-	   cameratots.Run(want_quit);
 
                 if (want_quit /*&& (encBufferLow.flags() & OMX_BUFFERFLAG_SYNCFRAME)*/)
                 {
@@ -2183,7 +2482,11 @@ bcm_host_init();
         signal(SIGTERM, SIG_DFL);
         signal(SIGQUIT, SIG_DFL);
 #endif
-	cameratots.Terminate();
+	if(TypeInput==0)
+		cameratots.Terminate();
+	else
+          	picturetots.Terminate();
+		
        
     }
     catch (const OMXExeption& e)
