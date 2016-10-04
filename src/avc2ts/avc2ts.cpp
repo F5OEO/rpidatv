@@ -1539,15 +1539,20 @@ class TSEncaspulator
 	 int        m_sock;
 	 struct     sockaddr_in m_client;
 	public:
-	TSEncaspulator(char *FileName,char *Udp)
+	 TSEncaspulator(){};
+	void SetOutput(char *FileName,char *Udp)
 	{
 		OutputFilename=FileName;
 		 writer = ts_create_writer();
 		UdpOutput=Udp;
 		if(UdpOutput) udp_init();
 	};
+
+
 	void ConstructTsTree(int VideoBit,int TsBitrate,int VPid=256,int fps=25)
 	{
+		
+
 		VideoPid=VPid;
 		Videofps=fps;
 		VideoBitrate=VideoBit;
@@ -1745,8 +1750,233 @@ void udp_init(void)
 
 using namespace rpi_omx;
 
-static const unsigned VIDEO_BITRATE_HIGH = 6000000;
-static const unsigned VIDEO_BITRATE_LOW = 240000;
+class CameraTots
+{
+private:
+	VideoFromat VideoFormat;
+	Camera camera;
+	 Encoder encoder;
+	TSEncaspulator tsencoder;
+	int EncVideoBitrate;
+	bool FirstTime=true;
+	uint64_t key_frame=1;
+	VideoFromat CurrentVideoFormat;
+	int DelayPTS;
+public:
+	void Init(VideoFromat &VideoFormat,char *FileName,char *Udp,int VideoBitrate,int TsBitrate,int SetDelayPts,int VPid=256,int fps=25,int IDRPeriod=100,int RowBySlice=0,int EnableMotionVectors=0)
+	{	
+		CurrentVideoFormat=VideoFormat;
+		DelayPTS=SetDelayPts;
+		 // configuring camera
+		camera.setVideoFromat(VideoFormat);
+		camera.setImageDefaults();
+            camera.setImageFilter(OMX_ALL, OMX_ImageFilterNoise);
+
+            while (!camera.ready())
+            {
+                std::cerr << "waiting for camera..." << std::endl;
+                usleep(10000);
+            } 
+	 // configuring encoders
+		{
+		    VideoFromat vfResized = VideoFormat;
+		    
+		    Parameter<OMX_PARAM_PORTDEFINITIONTYPE> portDef;
+		    camera.getPortDefinition(Camera::OPORT_VIDEO, portDef);
+
+		    
+		    
+		    portDef->format.video.nFrameWidth = vfResized.width;
+		    portDef->format.video.nFrameHeight = vfResized.height;
+
+		    encoder.setupOutputPortFromCamera(portDef, VideoBitrate);
+		    encoder.setBitrate(VideoBitrate,/*OMX_Video_ControlRateVariable*/OMX_Video_ControlRateConstant);
+		    encoder.setCodec(OMX_VIDEO_CodingAVC);
+		    encoder.setIDR(IDRPeriod);	
+		    encoder.setSEIMessage();
+		    if(EnableMotionVectors) encoder.setVectorMotion();
+	
+			encoder.setQP(10,40);
+			encoder.setLowLatency();
+			encoder.setSeparateNAL();
+			if(RowBySlice)
+				encoder.setMultiSlice(RowBySlice);
+			else
+				encoder.setMinizeFragmentation();
+		    //encoder.setEED();
+
+	/*OMX_VIDEO_AVCProfileBaseline = 0x01,   //< Baseline profile 
+	    OMX_VIDEO_AVCProfileMain     = 0x02,   //< Main profile 
+	    OMX_VIDEO_AVCProfileExtended = 0x04,   //< Extended profile 
+	    OMX_VIDEO_AVCProfileHigh     = 0x08,   //< High profile 
+		OMX_VIDEO_AVCProfileConstrainedBaseline
+	*/
+		    encoder.setProfileLevel(OMX_VIDEO_AVCProfileBaseline);
+
+			// With Main Profile : have more skipped frame
+			tsencoder.SetOutput(FileName,Udp);
+		   tsencoder.ConstructTsTree(VideoBitrate,TsBitrate,256,fps); 	
+		 EncVideoBitrate=VideoBitrate;
+	
+		    //encoder.setPeakRate(VIDEO_BITRATE_LOW/1000);
+		    //encoder.setMaxFrameLimits(10000*8);
+		}
+ERR_OMX( OMX_SetupTunnel(camera.component(), Camera::OPORT_VIDEO, encoder.component(), Encoder::IPORT),
+                "tunnel camera.video -> encoder.input");
+
+		// switch components to idle state
+		{
+		    camera.switchState(OMX_StateIdle);
+
+		    encoder.switchState(OMX_StateIdle);
+			 
+		}
+
+		// enable ports
+		{
+		    camera.enablePort(Camera::IPORT);
+		    camera.enablePort(Camera::OPORT_VIDEO);
+
+		    
+		encoder.enablePort();    // all
+		}
+
+		// allocate buffers
+		{
+		    camera.allocBuffers();
+		    
+		    encoder.allocBuffers();
+		}
+
+		// switch state of the components prior to starting
+		{
+		    camera.switchState(OMX_StateExecuting);
+		    encoder.switchState(OMX_StateExecuting);
+		}
+
+		// start capturing video with the camera
+		{
+		    camera.capture(Camera::OPORT_VIDEO, OMX_TRUE);
+		}
+	
+	}
+
+	void Run(bool want_quit)
+	{
+		Buffer& encBuffer = encoder.outBuffer();
+		if(FirstTime) 
+		{
+			FirstTime=false;
+			encoder.callFillThisBuffer();
+		}
+		if (!want_quit&&encBuffer.filled())
+		 {
+			       
+	      			//encoderLow.getEncoderStat(encBufferLow.flags());
+				encoder.setDynamicBitrate(EncVideoBitrate);
+				//printf("Len = %"\n",encBufferLow
+				if(encBuffer.flags() & OMX_BUFFERFLAG_CODECSIDEINFO)
+				{
+					printf("CODEC CONFIG>\n");
+					int LenVector=encBuffer.dataSize();
+					 
+					for(int j=0;j<CurrentVideoFormat.height/16;j++)
+					{
+						for(int i=0;i<CurrentVideoFormat.width/16;i++)
+						{
+							int Motionx=encBuffer.data()[(CurrentVideoFormat.width/16*j+i)*4];
+							int Motiony=encBuffer.data()[(CurrentVideoFormat.width/16*j+i)*4+1];
+							int MotionAmplitude=sqrt((double)((Motionx * Motionx) + (Motiony * Motiony)));
+							printf("%d ",MotionAmplitude);
+						}
+						printf("\n");
+					}
+					encBuffer.setFilled(false);
+					encoder.callFillThisBuffer();
+					return;
+				}
+						
+				unsigned toWrite = (encBuffer.dataSize()) ;
+				
+		 		
+				if (toWrite)
+				{
+			       
+					int OmxFlags=encBuffer.flags();
+					if((OmxFlags&OMX_BUFFERFLAG_ENDOFFRAME)&&!(OmxFlags&OMX_BUFFERFLAG_CODECCONFIG))
+						key_frame++;
+					tsencoder.AddFrame(encBuffer.data(),encBuffer.dataSize(),OmxFlags,key_frame,DelayPTS);
+			
+	
+		
+				}
+				else
+				{
+					key_frame++; //Skipped Frame, key_frame++ to allow correct timing for next valid frames
+					printf("!");
+				}
+				// Buffer flushed, request a new buffer to be filled by the encoder component
+				encBuffer.setFilled(false);
+				encoder.callFillThisBuffer();
+		  }
+			   
+	}
+
+
+	void Terminate()
+	{ 
+		// stop capturing video with the camera
+		{
+		    camera.capture(Camera::OPORT_VIDEO, OMX_FALSE);
+		}
+
+		// return the last full buffer back to the encoder component
+		{
+		    encoder.outBuffer().flags() &= OMX_BUFFERFLAG_EOS;
+
+		 
+		    //encoder.callFillThisBuffer();
+		}
+
+		// flush the buffers on each component
+		{
+		    camera.flushPort();
+
+		    encoder.flushPort();
+		}
+
+		// disable all the ports
+		{
+		    camera.disablePort();
+
+		    encoder.disablePort();
+		}
+
+		// free all the buffers
+		{
+		    camera.freeBuffers();
+
+		    encoder.freeBuffers();
+		}
+
+		// transition all the components to idle states
+		{
+		    camera.switchState(OMX_StateIdle);
+
+		    encoder.switchState(OMX_StateIdle);
+		}
+
+		// transition all the components to loaded states
+		{
+		    camera.switchState(OMX_StateLoaded);
+
+		    encoder.switchState(OMX_StateLoaded);
+		}
+	}
+};
+
+
+
 
 void print_usage()
 {
@@ -1895,129 +2125,8 @@ bcm_host_init();
         VcosSemaphore sem("common semaphore");
         pSemaphore = &sem;
 
-        Camera camera;
-       // VideoSplitter vsplitter;
-	//VideoSplitter vsplitter2;
-        //Resizer resizer;
-        //Encoder encoderHigh;
-        Encoder encoderLow;
-	
-	TSEncaspulator TsEncoderLow(OutputFileName,NetworkOutput);
-	
-        // configuring camera
-        {
-            camera.setVideoFromat(CurrentVideoFormat);
-            camera.setImageDefaults();
-            camera.setImageFilter(OMX_ALL, OMX_ImageFilterNoise);
-
-            while (!camera.ready())
-            {
-                std::cerr << "waiting for camera..." << std::endl;
-                usleep(10000);
-            }
-        }
-
-        // configuring encoders
-        {
-            VideoFromat vfResized = CurrentVideoFormat;
-            
-            Parameter<OMX_PARAM_PORTDEFINITIONTYPE> portDef;
-            camera.getPortDefinition(Camera::OPORT_VIDEO, portDef);
-
-            
-            // low
-            portDef->format.video.nFrameWidth = vfResized.width;
-            portDef->format.video.nFrameHeight = vfResized.height;
-
-            encoderLow.setupOutputPortFromCamera(portDef, VideoBitrate);
-	    encoderLow.setBitrate(VIDEO_BITRATE_LOW,/*OMX_Video_ControlRateVariable*/OMX_Video_ControlRateConstant);
-            encoderLow.setCodec(OMX_VIDEO_CodingAVC);
-	    encoderLow.setIDR(IDRPeriod);	
-	    encoderLow.setSEIMessage();
-	    if(EnableMotionVectors) encoderLow.setVectorMotion();
-	
-	encoderLow.setQP(10,40);
-	encoderLow.setLowLatency();
-		encoderLow.setSeparateNAL();
-		if(RowBySlice)
-			encoderLow.setMultiSlice(RowBySlice);
-		else
-			encoderLow.setMinizeFragmentation();
-	    //encoderLow.setEED();
-	//encoderLow.setPeakRate(VideoBitrate*1);
-/*OMX_VIDEO_AVCProfileBaseline = 0x01,   //< Baseline profile 
-    OMX_VIDEO_AVCProfileMain     = 0x02,   //< Main profile 
-    OMX_VIDEO_AVCProfileExtended = 0x04,   //< Extended profile 
-    OMX_VIDEO_AVCProfileHigh     = 0x08,   //< High profile 
-	OMX_VIDEO_AVCProfileConstrainedBaseline
-*/
-	    encoderLow.setProfileLevel(OMX_VIDEO_AVCProfileBaseline);
-
-		// With Main Profile : have more skipped frame
-	   TsEncoderLow.ConstructTsTree(VideoBitrate,MuxBitrate,256,VideoFramerate); 	
-
-	
-	    //encoderLow.setPeakRate(VIDEO_BITRATE_LOW/1000);
-	    //encoderLow.setMaxFrameLimits(10000*8);
-        }
-
-        
-
-        // tunneling ports
-        {
-
-            ERR_OMX( OMX_SetupTunnel(camera.component(), Camera::OPORT_VIDEO, encoderLow.component(), Encoder::IPORT),
-                "tunnel camera.video -> encoder.input");
-
-            
-        }
-
-        // switch components to idle state
-        {
-            camera.switchState(OMX_StateIdle);
-
-            encoderLow.switchState(OMX_StateIdle);
-		 
-        }
-
-        // enable ports
-        {
-            camera.enablePort(Camera::IPORT);
-            camera.enablePort(Camera::OPORT_VIDEO);
-
-            
-	encoderLow.enablePort();    // all
-        }
-
-        // allocate buffers
-        {
-            camera.allocBuffers();
-            
-            encoderLow.allocBuffers();
-        }
-
-        // switch state of the components prior to starting
-        {
-            camera.switchState(OMX_StateExecuting);
-            encoderLow.switchState(OMX_StateExecuting);
-        }
-
-        // start capturing video with the camera
-        {
-            camera.capture(Camera::OPORT_VIDEO, OMX_TRUE);
-        }
-
-//#if 0
-        // dump (counfigured) ports
-        {
-            camera.dumpPort(Camera::IPORT, OMX_FALSE);
-            camera.dumpPort(Camera::OPORT_VIDEO, OMX_FALSE);
-
-           
-            encoderLow.dumpPort(Encoder::IPORT, OMX_FALSE);
-            encoderLow.dumpPort(Encoder::OPORT, OMX_FALSE);
-        }
-//#endif
+        CameraTots cameratots;
+	cameratots.Init(CurrentVideoFormat,OutputFileName,NetworkOutput,VideoBitrate,MuxBitrate,DelayPTS,256,VideoFramerate,IDRPeriod,RowBySlice);
 
 #if 1
         signal(SIGINT,  signal_handler);
@@ -2025,12 +2134,7 @@ bcm_host_init();
         signal(SIGQUIT, signal_handler);
 #endif
 
-#if 1
-        //FILE * outHigh = fopen("x.h264", "w+");
-        FILE * outLow = fopen("y.h264", "w+");
-        if (!outLow)
-            throw "Can't open output file";
-#endif
+
 
         std::cerr << "Enter capture and encode loop, press Ctrl-C to quit..." << std::endl;
 
@@ -2038,30 +2142,17 @@ bcm_host_init();
         unsigned lowCount = 0;
         unsigned noDataCount = 0;
        
-        Buffer& encBufferLow = encoderLow.outBuffer();
+       
 
 	     
-	encoderLow.callFillThisBuffer();
-	 uint64_t key_frame=1;
+	
         while (1)
         {
-            bool aval = false;
-	    static unsigned toWriteHigh=0;
+            
+	   
            
-	    int ForceFilled=0;
+	   cameratots.Run(want_quit);
 
-            if (ForceFilled||encBufferLow.filled())
-            {
-                aval = true;
-                noDataCount = 0;
-		
-
-                // Don't exit the loop until we are certain that we have processed
-                // a full frame till end of the frame, i.e. we're at the end
-                // of the current key frame if processing one or until
-                // the next key frame is detected. This way we should always
-                // avoid corruption of the last encoded at the expense of
-                // small delay in exiting.
                 if (want_quit /*&& (encBufferLow.flags() & OMX_BUFFERFLAG_SYNCFRAME)*/)
                 {
                     std::cerr << "Key frame boundry reached, exiting loop..." << std::endl;
@@ -2069,111 +2160,7 @@ bcm_host_init();
                 }
 
 
-		
-  		
-		
-		/*
-#define OMX_BUFFERFLAG_ENDOFFRAME 0x00000010
-#define OMX_BUFFERFLAG_SYNCFRAME 0x00000020
-#define OMX_BUFFERFLAG_CODECCONFIG 0x00000080
-#define OMX_BUFFERFLAG_TIME_UNKNOWN 0x00000100
-#define OMX_BUFFERFLAG_ENDOFNAL    0x00000400
-#define OMX_BUFFERFLAG_FRAGMENTLIST 0x00000800
-#define OMX_BUFFERFLAG_DISCONTINUITY 0x00001000
-#define OMX_BUFFERFLAG_CODECSIDEINFO 0x00002000
-#define OMX_BUFFERFLAG_TIME_IS_DTS 0x000004000
-*/
-		//printf("Flags %x,Size %d \n",encBufferLow.flags(),encBufferLow.dataSize());
-		//encoderLow.getEncoderStat(encBufferLow.flags());
-		encoderLow.setDynamicBitrate(VideoBitrate);
-		//printf("Len = %"\n",encBufferLow
-		if(encBufferLow.flags() & OMX_BUFFERFLAG_CODECSIDEINFO)
-		{
-			printf("CODEC CONFIG>\n");
-			int LenVector=encBufferLow.dataSize();
-			 //For Motion vector 
-			/*for(int i=0;i<32;i+=2)
-			{
-				printf("%d,%d|",encBufferLow.data()[i],encBufferLow.data()[i+1]);
-			} 	
-			printf("/n");*/
-			for(int j=0;j<CurrentVideoFormat.height/16;j++)
-			{
-				for(int i=0;i<CurrentVideoFormat.width/16;i++)
-				{
-					int Motionx=encBufferLow.data()[(CurrentVideoFormat.width/16*j+i)*4];
-					int Motiony=encBufferLow.data()[(CurrentVideoFormat.width/16*j+i)*4+1];
-					int MotionAmplitude=sqrt((double)((Motionx * Motionx) + (Motiony * Motiony)));
-					printf("%d ",MotionAmplitude);
-				}
-				printf("\n");
-			}
-			encBufferLow.setFilled(false);
-                	encoderLow.callFillThisBuffer();
-			continue;
-		}
-                // Flush buffer to output file
-                //unsigned toWrite = (encBufferLow.flags()&OMX_BUFFERFLAG_ENDOFFRAME)||(encBufferLow.flags()&OMX_BUFFERFLAG_CODECCONFIG);//encBufferLow.dataSize();
-		static int SkipFirstIntraFrames = 2; // Be sure to be at the right bitrate
-		//printf("Flags %x,Size %d\n",encBufferLow.flags(),encBufferLow.dataSize());
-		if( (SkipFirstIntraFrames>0) && (encBufferLow.dataSize()) && ((encBufferLow.flags()&0x90)==0x90/*ENCODER INFO*//*OMX_BUFFERFLAG_SYNCFRAME*/))
-		{
-			//printf("IntraFrame\n");
-			 SkipFirstIntraFrames--;
-			
-		}
-		
-		unsigned toWrite = (encBufferLow.dataSize())/*&&((encBufferLow.flags()&0x90)!=0x90)*//*&&(SkipFirstIntraFrames<2)*/ ;
-		if( toWrite && (encBufferLow.flags()&OMX_BUFFERFLAG_ENDOFFRAME))  ++lowCount;
- 		//if(  (encBufferLow.flags()&OMX_BUFFERFLAG_ENDOFFRAME) && (toWrite==0))  printf("Frame Droppped\n");
-                if (toWrite)
-                {
-//                    ++lowCount;
-			//printf(".");
-			//printf("Flags %x,Size %d \n",encBufferLow.flags(),encBufferLow.dataSize());
-			//encoderLow.getEncoderStat(encBufferLow.flags());
-			int OmxFlags=encBufferLow.flags();
-			if((OmxFlags&OMX_BUFFERFLAG_ENDOFFRAME)&&!(OmxFlags&OMX_BUFFERFLAG_CODECCONFIG))
-				key_frame++;
-			TsEncoderLow.AddFrame(encBufferLow.data(),encBufferLow.dataSize(),OmxFlags,key_frame,DelayPTS);
-			
-#if 1
-		    struct timespec t,tbefore;
-         	    clock_gettime(CLOCK_MONOTONIC, &tbefore);
-	
-	            //size_t outWritten = fwrite(encBufferLow.data(), 1, encBufferLow.dataSize(), outLow);
-		   //fflush(outLow);
 
-/*
-		    clock_gettime(CLOCK_MONOTONIC, &t);
-		    if((( t.tv_sec -tbefore.tv_sec  )*1000ul + ( t.tv_nsec - tbefore.tv_nsec)/1000000)>0)
-		    	printf("!!!!!!!!!!!!!!!!!!!! Flush IO %li\n",( t.tv_sec -tbefore.tv_sec  )*1000ul + ( t.tv_nsec - tbefore.tv_nsec)/1000000);
-                    if (outWritten != encBufferLow.dataSize())
-                    {
-                        std::cerr << "Failed to write to output file: " << strerror(errno) << std::endl;
-                        break;
-                    }
-*/
-#endif
-			/*if((toWriteHigh-(int)encBufferLow.dataSize())!=0)
-			{
-		            std::cerr << "[Low] buffer -> out file: "
-		                << (toWriteHigh-(int)encBufferLow.dataSize())*8*25 << ":" << encBufferLow.dataSize()*8*25 << "," << toWriteHigh *8*25 << std::endl;
-			}*/
-                }
-		else
-		{
-			key_frame++; //Skipped Frame, key_frame++ to allow correct timing for next valid frames
-			printf("Buffer null Flags %x\n",encBufferLow.flags());
-		}
-                // Buffer flushed, request a new buffer to be filled by the encoder component
-                encBufferLow.setFilled(false);
-                encoderLow.callFillThisBuffer();
-            }
-	   
-
-            if (!aval)
-            {
                 if (want_quit)
                 {
                     ++noDataCount;
@@ -2182,17 +2169,13 @@ bcm_host_init();
                         std::cerr << "" << std::endl;
                         break;
                     }
+		   	
                 }
-
-                usleep(1000);
-            }
+		   usleep(1000);
+            
         }
 
         std::cerr << "high: " << highCount << " low: " << lowCount << std::endl;
-#if 1
-        if (outLow)
-            fclose(outLow);
-#endif
 
 #if 1
         // Restore signal handlers
@@ -2200,54 +2183,8 @@ bcm_host_init();
         signal(SIGTERM, SIG_DFL);
         signal(SIGQUIT, SIG_DFL);
 #endif
-
-        // stop capturing video with the camera
-        {
-            camera.capture(Camera::OPORT_VIDEO, OMX_FALSE);
-        }
-
-        // return the last full buffer back to the encoder component
-        {
-            encoderLow.outBuffer().flags() &= OMX_BUFFERFLAG_EOS;
-
-         
-            encoderLow.callFillThisBuffer();
-        }
-
-        // flush the buffers on each component
-        {
-            camera.flushPort();
-
-            encoderLow.flushPort();
-        }
-
-        // disable all the ports
-        {
-            camera.disablePort();
-
-            encoderLow.disablePort();
-        }
-
-        // free all the buffers
-        {
-            camera.freeBuffers();
-
-            encoderLow.freeBuffers();
-        }
-
-        // transition all the components to idle states
-        {
-            camera.switchState(OMX_StateIdle);
-
-            encoderLow.switchState(OMX_StateIdle);
-        }
-
-        // transition all the components to loaded states
-        {
-            camera.switchState(OMX_StateLoaded);
-
-            encoderLow.switchState(OMX_StateLoaded);
-        }
+	cameratots.Terminate();
+       
     }
     catch (const OMXExeption& e)
     {
