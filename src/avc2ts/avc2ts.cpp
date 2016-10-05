@@ -1732,7 +1732,7 @@ class TSEncaspulator
 			ret = ts_write_frames(writer, &tsframe, 1, &out, &len, &pcr_list);
 			if (len)
 			{
-				//fprintf(stderr, "Muxed VIDEO len: %d (fn=%zu)\n", len, fn);
+				//fprintf(stderr, "Muxed VIDEO len: %d %d\n", len, ret);
 				if(vout) fwrite(out, 1, len, vout);
 				if(UdpOutput) udp_send(out,len);
 			}
@@ -2045,13 +2045,17 @@ private:
 	VideoFromat CurrentVideoFormat;
 	int DelayPTS;
 	int Videofps;
+	struct timespec last_time;
 public:
 public:
 	void Init(VideoFromat &VideoFormat,char *FileName,char *Udp,int VideoBitrate,int TsBitrate,int SetDelayPts,int VPid=256,int fps=25,int IDRPeriod=100,int RowBySlice=0,int EnableMotionVectors=0)
 	{
+		last_time.tv_sec=0;
+		last_time.tv_nsec=0;
 		CurrentVideoFormat=VideoFormat;
 		Videofps=fps;
 		DelayPTS=SetDelayPts;
+		EncVideoBitrate=VideoBitrate;
 			// configuring encoders
 		{
 		    VideoFromat vfResized = VideoFormat;
@@ -2085,7 +2089,7 @@ public:
 			// With Main Profile : have more skipped frame
 			tsencoder.SetOutput(FileName,Udp);
 		   tsencoder.ConstructTsTree(VideoBitrate,TsBitrate,256,fps); 	
-		 EncVideoBitrate=VideoBitrate;
+		 printf("Ts bitrate = %d\n",TsBitrate);
 		}
 		// switch components to idle state
 		{
@@ -2113,10 +2117,43 @@ public:
 		}
 
 	}
+
+void usleep_exactly(long MuToSleep )
+{
+	#define KERNEL_GRANULARITY 80000
+	struct timespec gettime_now;
+	long time_difference;
+	if(last_time.tv_sec==0) clock_gettime(CLOCK_REALTIME, &last_time);
+	clock_gettime(CLOCK_REALTIME, &gettime_now);
+	time_difference = gettime_now.tv_nsec - last_time.tv_nsec;
+	if(time_difference<0) time_difference+=1E9;
+
+	long BigToSleepns=(MuToSleep*1000L-time_difference-KERNEL_GRANULARITY);
+	//printf("ToSleep %ld\n",BigToSleepns/1000);
+	if(BigToSleepns<KERNEL_GRANULARITY)
+	{
+	  last_time=gettime_now;
+	  return;
+	}
+	
+	usleep(BigToSleepns/1000);
+	do
+	{
+		clock_gettime(CLOCK_REALTIME, &gettime_now);
+		time_difference = gettime_now.tv_nsec - last_time.tv_nsec;
+		if(time_difference<0) time_difference+=1E9;
+	}
+	while(time_difference<MuToSleep*1000L);	
+	//printf("TimeDiff =%ld\n",time_difference);
+	last_time=gettime_now;
+			
+}
+
 // generate an animated test card in YUV format
  int generate_test_card(OMX_U8 *buf, OMX_U32 * filledLen, int frame)
 {
    int i, j;
+	frame=frame%256;
    OMX_U8 *y = buf, *u = y + CurrentVideoFormat.width * CurrentVideoFormat.height, *v =
       u + (CurrentVideoFormat.width >> 1) * (CurrentVideoFormat.height >> 1);
 
@@ -2136,7 +2173,7 @@ public:
    }
 
    *filledLen = ((CurrentVideoFormat.width * CurrentVideoFormat.height * 3)/2);
-   usleep(1e6/(2*Videofps));
+  
    return 1;
 }
 
@@ -2150,10 +2187,13 @@ void Run(bool want_quit)
 		{
 			
 			OMX_U32 filledLen;
-			generate_test_card(PictureBuffer.data(),&filledLen,key_frame++);
+			generate_test_card(PictureBuffer.data(),&filledLen,key_frame);
+			usleep_exactly(1e6/Videofps);
 			PictureBuffer.setDatasize(filledLen);
-			encoder.callEmptyThisBuffer();
 			PictureBuffer.setFilled(false);
+			encoder.callEmptyThisBuffer();
+			
+			
 			if(FirstTime)
 			{
 				encoder.callFillThisBuffer();
@@ -2205,8 +2245,9 @@ void Run(bool want_quit)
 				else
 				{
 					key_frame++; //Skipped Frame, key_frame++ to allow correct timing for next valid frames
-					printf("!");
+					printf("! -------------------------------------------------->\n ");
 				}
+				
 				// Buffer flushed, request a new buffer to be filled by the encoder component
 				encBuffer.setFilled(false);
 				encoder.callFillThisBuffer();
