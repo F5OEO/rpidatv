@@ -1420,33 +1420,80 @@ So the advice was for MMAL_VIDEO_INTRA_REFRESH_CYCLIC_MROWS and cir_mbs set prob
         {
         }
 
-        void setupOutputPort(unsigned newWidth, unsigned newHeight)
+        void setupOutputPort(const VideoFromat Videoformat,OMX_COLOR_FORMATTYPE colortype)
         {
-            Parameter<OMX_PARAM_PORTDEFINITIONTYPE> portDef;
-            getPortDefinition(IPORT, portDef);
+//http://www.jvcref.com/files/PI/documentation/ilcomponents/resize.html
+	Parameter<OMX_PARAM_PORTDEFINITIONTYPE> portDefI;
+            getPortDefinition(IPORT, portDefI);
+	
+		portDefI->format.image.nFrameWidth  = Videoformat.width;
+            portDefI->format.image.nFrameHeight = Videoformat.height;
+            portDefI->format.image.eCompressionFormat = OMX_IMAGE_CodingUnused;
+	portDefI->format.image.bFlagErrorConcealment = OMX_TRUE;
+	if(colortype==OMX_COLOR_FormatYUV420PackedPlanar)
+	{
+		portDefI->format.image.nStride      = Videoformat.width;
+		portDefI->format.image.nSliceHeight=Videoformat.height;
+	}
+	else
+	{           portDefI->format.image.nStride      =0 ;
+		portDefI->format.image.nSliceHeight=0;
+	}
 
-            portDef->format.image.nFrameWidth = newWidth;
-            portDef->format.image.nFrameHeight = newHeight;
-            portDef->format.image.eColorFormat = OMX_COLOR_FormatYUV420PackedPlanar;
+	portDefI->format.image.eColorFormat=colortype;
 
-            portDef->format.image.nSliceHeight = 0;
-            portDef->format.image.nStride = 0;
+	 setPortDefinition(IPORT, portDefI);
+	
+// Output definition 
+	Parameter<OMX_PARAM_PORTDEFINITIONTYPE> portDefO;
+	getPortDefinition(OPORT, portDefO);
 
-            setPortDefinition(OPORT, portDef);
+	portDefO->format.image.nFrameWidth  = Videoformat.width;
+         portDefO->format.image.nFrameHeight = Videoformat.height;
+        portDefO->format.image.eCompressionFormat = OMX_IMAGE_CodingUnused;
+	portDefO->format.image.nStride      = Videoformat.width;
+	portDefO->format.image.nSliceHeight=Videoformat.height;
+	portDefO->format.image.bFlagErrorConcealment = OMX_FALSE;
+	portDefO->format.image.eColorFormat=OMX_COLOR_FormatYUV420PackedPlanar;//For encoder
+            	
+	       setPortDefinition(OPORT, portDefO);
+            
+           
         }
-#if 0
-        void resize()
+
+	 void allocBuffers()
         {
-            Parameter<OMX_PARAM_RESIZETYPE> resize;
-            resize->nPortIndex = OPORT;
-            resize->eMode = OMX_RESIZE_NONE; // OMX_RESIZE_BOX;
-            resize->nMaxWidth = frameWidth;
-            resize->nMaxHeight = frameHeight;
-            resize->bPreserveAspectRatio = OMX_TRUE;
-
-            ERR_OMX( OMX_SetParameter(component_, OMX_IndexParamResize, &resize), "resize");
+		
+			
+			Component::allocBuffers(IPORT, bufferIn_);
+		
+			
         }
-#endif
+
+        void freeBuffers()
+        {
+            
+		Component::freeBuffers(IPORT, bufferIn_);
+        }
+
+        void callFillThisBuffer()
+        {
+            Component::callFillThisBuffer(bufferOut_);
+        }
+
+	void callEmptyThisBuffer()
+        {
+            Component::callEmptyThisBuffer(bufferIn_);
+        }
+
+        Buffer& outBuffer() { return bufferOut_; }
+	Buffer& inBuffer() { return bufferIn_; }
+    private:
+        //Parameter<OMX_PARAM_PORTDEFINITIONTYPE> encoderPortDef_;
+        Buffer bufferOut_;
+	Buffer bufferIn_;
+	
+
     };
 
     //
@@ -1531,6 +1578,12 @@ So the advice was for MMAL_VIDEO_INTRA_REFRESH_CYCLIC_MROWS and cir_mbs set prob
 	    //printf("Filled %d Timestamp %li\n",pBuffer->nFilledLen,pBuffer->nTickCount);
             Encoder * encoder = static_cast<Encoder *>(pAppData);
             encoder->inBuffer().setFilled();
+        }
+	if (component->type() == Resizer::cType)
+        {
+
+            Resizer * resizer = static_cast<Resizer *>(pAppData);
+            resizer->inBuffer().setFilled();
         }
         return OMX_ErrorNone;
     }
@@ -2039,6 +2092,7 @@ private:
 	
 	 Encoder encoder;
 	TSEncaspulator tsencoder;
+	Resizer resizer;
 	int EncVideoBitrate;
 	bool FirstTime=true;
 	uint64_t key_frame=1;
@@ -2056,11 +2110,15 @@ public:
 		Videofps=fps;
 		DelayPTS=SetDelayPts;
 		EncVideoBitrate=VideoBitrate;
+		
+		// resizer.setupOutputPort(VideoFormat,OMX_COLOR_FormatYUV420PackedPlanar);
+		resizer.setupOutputPort(VideoFormat,OMX_COLOR_Format32bitABGR8888);//OK
+	resizer.setupOutputPort(VideoFormat,OMX_COLOR_FormatYCbYCr);
 			// configuring encoders
 		{
 		    VideoFromat vfResized = VideoFormat;
 		    
-		    
+		   
 		 encoder.setupOutputPort(VideoFormat,VideoBitrate,fps);
 		    
 		    encoder.setBitrate(VideoBitrate,/*OMX_Video_ControlRateVariable*/OMX_Video_ControlRateConstant);
@@ -2091,28 +2149,33 @@ public:
 		   tsencoder.ConstructTsTree(VideoBitrate,TsBitrate,256,fps); 	
 		 printf("Ts bitrate = %d\n",TsBitrate);
 		}
+
+		ERR_OMX( OMX_SetupTunnel(resizer.component(), Resizer::OPORT, encoder.component(), Encoder::IPORT),         "tunnel resizer.output -> encoder.input (low)");
+
 		// switch components to idle state
 		{
+			resizer.switchState(OMX_StateIdle);
 		      encoder.switchState(OMX_StateIdle);
 			 
 		}
 
 		// enable ports
 		{
-		  	  		    
+		  	resizer.enablePort();  		    
 			encoder.enablePort();    // all
 		}
 
 		// allocate buffers
 		{
 		  
-		    
-		    encoder.allocBuffers(true);//BufIn & Bufout
+		    resizer.allocBuffers();
+			printf("Allocsize= %d\n",resizer.inBuffer().allocSize());
+		    encoder.allocBuffers(false);//Only  Bufout
 		}
 
 		// switch state of the components prior to starting
 		{
-		  
+		  resizer.switchState(OMX_StateExecuting);
 		    encoder.switchState(OMX_StateExecuting);
 		}
 
@@ -2163,9 +2226,9 @@ void usleep_exactly(long MuToSleep )
       OMX_U8 *pv = v + j * (CurrentVideoFormat.width >> 1);
       for (i = 0; i < CurrentVideoFormat.width / 2; i++) {
 	 int z = (((i + frame) >> 4) ^ ((j + frame) >> 4)) & 15;
-	 py[0] = py[1] = py[CurrentVideoFormat.width] = py[CurrentVideoFormat.width + 1] = 0x80 + z * 0x8;
-	 pu[0] = 0x00 + z * 0x10;
-	 pv[0] = 0x80 + z * 0x30;
+	 py[0] = py[1] = py[CurrentVideoFormat.width] = py[CurrentVideoFormat.width + 1] = 0x80 + frame * 0x8;
+	 pu[0] = frame;//0x00 + z * 0x10;
+	 pv[0] = frame;//0x80 + z * 0x30;
 	 py += 2;
 	 pu++;
 	 pv++;
@@ -2177,21 +2240,38 @@ void usleep_exactly(long MuToSleep )
    return 1;
 }
 
+ int generate_test_rgbcard(OMX_U8 *buf, OMX_U32 * filledLen, int frame)
+{
+	OMX_U8 *current=buf;
+   for(int j=0;j<CurrentVideoFormat.height;j++)
+	for(int i=0;i<CurrentVideoFormat.width;i++)
+	{	
+		*current++=255;		
+		*current++=frame%256;
+		*current++=i%128;
+		*current++=frame%256;
+		
+	}		
+   *filledLen = ((CurrentVideoFormat.width * CurrentVideoFormat.height * 4));
+  
+   return 1;
+}
 void Run(bool want_quit)
 	{
 		Buffer& encBuffer = encoder.outBuffer();
-		Buffer& PictureBuffer = encoder.inBuffer();
+		Buffer& PictureBuffer = resizer.inBuffer();
 		
 		
 		if(!want_quit&&(FirstTime||PictureBuffer.filled()))
 		{
 			
 			OMX_U32 filledLen;
-			generate_test_card(PictureBuffer.data(),&filledLen,key_frame);
+//			generate_test_card(PictureBuffer.data(),&filledLen,key_frame);
+			generate_test_rgbcard(PictureBuffer.data(),&filledLen,key_frame);
 			usleep_exactly(1e6/Videofps);
 			PictureBuffer.setDatasize(filledLen);
 			PictureBuffer.setFilled(false);
-			encoder.callEmptyThisBuffer();
+			resizer.callEmptyThisBuffer();
 			
 			
 			if(FirstTime)
@@ -2270,34 +2350,34 @@ void Run(bool want_quit)
 
 		// flush the buffers on each component
 		{
-		   
+		    resizer.flushPort();
 		    encoder.flushPort();
 		}
 
 		// disable all the ports
 		{
 		   
-
+		    resizer.disablePort();
 		    encoder.disablePort();
 		}
 
 		// free all the buffers
 		{
 		   
-
+		   resizer.freeBuffers();	
 		    encoder.freeBuffers();
 		}
 
 		// transition all the components to idle states
 		{
-		    
+		    resizer.switchState(OMX_StateIdle);  
 		    encoder.switchState(OMX_StateIdle);
 		}
 
 		// transition all the components to loaded states
 		{
 		   
-
+			resizer.switchState(OMX_StateLoaded);
 		    encoder.switchState(OMX_StateLoaded);
 		}
 	}
