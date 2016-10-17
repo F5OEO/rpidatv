@@ -72,6 +72,42 @@ fi
 
 }
 
+Pathbrowser() {
+if [ -z $1 ]; then
+imgpath=$(ls -lhp / | awk -F ' ' ' { print $9 " " $5 } ')
+else
+imgpath=$(ls -lhp "/$1" | awk -F ' ' ' { print $9 " " $5 } ')
+fi
+if [ -z $1 ]; then
+pathselect=$(whiptail --menu "$FileBrowserTitle""$filename" 20 50 10 --cancel-button Cancel --ok-button Select $imgpath 3>&1 1>&2 2>&3)
+else
+pathselect=$(whiptail --menu "$FileBrowserTitle""$filename" 20 50 10 --cancel-button Cancel --ok-button Select ../ BACK $imgpath 3>&1 1>&2 2>&3)
+fi
+RET=$?
+if [ $RET -eq 1 ]; then
+## This is the section where you control what happens when the user hits Cancel
+Cancel	
+elif [ $RET -eq 0 ]; then
+	if [[ -d "/$1$pathselect" ]]; then
+		Pathbrowser "/$1$pathselect"
+	elif [[ -f "/$1$pathselect" ]]; then
+		## Do your thing here, this is just a stub of the code I had to do what I wanted the script to do.
+		fileout=`file "$1$pathselect"`
+		filenametemp=`readlink -m $1$pathselect`
+		filename=`dirname $filenametemp` 
+				
+	else
+		echo pathselect $1$pathselect
+		whiptail --title "$FileMenuTitle" --msgbox "$FileMenuContext" 8 44
+		unset base
+		unset imgpath
+		Pathbrowser
+	fi
+	
+fi
+
+}
+
 do_input_setup() {
 MODE_INPUT=$(get_config_var modeinput $CONFIGFILE)
 case "$MODE_INPUT" in
@@ -83,6 +119,9 @@ case "$MODE_INPUT" in
 	Radio5=OFF
 	Radio6=OFF
 	Radio7=OFF
+	Radio8=OFF
+	Radio9=OFF
+	Radio10=OFF
 	;;
 	CAMMPEG-2) 
 	Radio1=OFF
@@ -92,6 +131,9 @@ case "$MODE_INPUT" in
 	Radio5=OFF
 	Radio6=OFF
 	Radio7=OFF
+	Radio8=OFF
+	Radio9=OFF
+	Radio10=OFF
 	;;
 	FILETS) 
 	Radio1=OFF
@@ -101,6 +143,9 @@ case "$MODE_INPUT" in
 	Radio5=OFF
 	Radio6=OFF
 	Radio7=OFF
+	Radio8=OFF
+	Radio9=OFF
+	Radio10=OFF
 	;;
 	PATERNAUDIO) 
 	Radio1=OFF
@@ -110,7 +155,9 @@ case "$MODE_INPUT" in
 	Radio5=OFF
 	Radio6=OFF
 	Radio7=OFF
-	
+	Radio8=OFF
+	Radio9=OFF
+	Radio10=OFF
 	;;
 	CARRIER) 
 	Radio1=OFF
@@ -120,7 +167,9 @@ case "$MODE_INPUT" in
 	Radio5=ON
 	Radio6=OFF
 	Radio7=OFF
-	
+	Radio8=OFF
+	Radio9=OFF
+	Radio10=OFF
 	;;
 	TESTMODE) 
 	Radio1=OFF
@@ -130,7 +179,9 @@ case "$MODE_INPUT" in
 	Radio5=OFF
 	Radio6=ON
 	Radio7=OFF
-
+	Radio8=OFF
+	Radio9=OFF
+	Radio10=OFF
 	;;
 	IPTSIN) 
 	Radio1=OFF
@@ -140,8 +191,47 @@ case "$MODE_INPUT" in
 	Radio5=OFF
 	Radio6=OFF
 	Radio7=ON
-	
+	Radio8=OFF
+	Radio9=OFF
+	Radio10=OFF
 	;;
+	ANALOGCAM) 
+	Radio1=OFF
+	Radio2=OFF
+	Radio3=OFF
+	Radio4=OFF
+	Radio5=OFF
+	Radio6=OFF
+	Radio7=OFF
+	Radio8=ON
+	Radio9=OFF
+	Radio10=OFF
+	;;
+	VNC) 
+	Radio1=OFF
+	Radio2=OFF
+	Radio3=OFF
+	Radio4=OFF
+	Radio5=OFF
+	Radio6=OFF
+	Radio7=OFF
+	Radio8=OFF
+	Radio9=ON
+	Radio10=OFF
+	;;
+	DESKTOP) 
+	Radio1=OFF
+	Radio2=OFF
+	Radio3=OFF
+	Radio4=OFF
+	Radio5=OFF
+	Radio6=OFF
+	Radio7=OFF
+	Radio8=OFF
+	Radio9=OFF
+	Radio10=ON
+	;;
+
 	*) 
 	Radio1=ON
 	Radio2=OFF
@@ -150,20 +240,25 @@ case "$MODE_INPUT" in
 	Radio5=OFF
 	Radio6=OFF
 	Radio7=OFF
-	
+	Radio8=OFF
+	Radio9=OFF
+	Radio10=OFF
 	;;
 	
 esac
 
 chinput=$(whiptail --title "$StrInputSetupTitle" --radiolist \
-		"$StrInputSetupDescription" 20 78 8 \
+		"$StrInputSetupDescription" 20 78 10 \
 		"CAMH264" "$StrInputSetupCAMH264" $Radio1 \
 		"CAMMPEG-2" "$StrInputSetupCAMMPEG_2" $Radio2 \
 		"FILETS" "$StrInputSetupFILETS" $Radio3\
 		"PATERNAUDIO" "$StrInputSetupPATERNAUDIO" $Radio4 \
 		"CARRIER" "$StrInputSetupCARRIER" $Radio5 \
 		"TESTMODE" "$StrInputSetupTESTMODE" $Radio6 \
-		"IPTSIN" "$StrInputSetupIPTSIN" $Radio7 3>&2 2>&1 1>&3)
+		"IPTSIN" "$StrInputSetupIPTSIN" $Radio7 \
+		"ANALOGCAM" "$StrInputSetupANALOGCAM" $Radio8 \
+		"VNC" "$StrInputSetupVNC" $Radio9 \
+		"DESKTOP" "$StrInputSetupDESKTOP" $Radio10 3>&2 2>&1 1>&3)
 		if [ $? -eq 0 ]; then
 	     	 case "$chinput" in
 		    FILETS)
@@ -173,14 +268,17 @@ chinput=$(whiptail --title "$StrInputSetupTitle" --radiolist \
 			Filebrowser "$PATHTS/"
 			whiptail --title "$StrInputSetupFILETSName" --msgbox "$filename" 8 44
 			set_config_var tsvideofile "$filename" $CONFIGFILE
+			PATHTS=`dirname $filename`
+	 		set_config_var pathmedia "$PATHTS" $CONFIGFILE
 		    ;;
 	            PATERNAUDIO)
 			PATERNFILE=$(get_config_var paternfile $CONFIGFILE)
 			filename=$PATERNFILE
 			FileBrowserTitle=JPEG:
-			Filebrowser "$PATHTS/"
+			Pathbrowser "$PATHTS/"
 			whiptail --title "$StrInputSetupPATERNAUDIOName" --msgbox "$filename" 8 44
 			set_config_var paternfile "$filename" $CONFIGFILE
+			set_config_var pathmedia "$filename" $CONFIGFILE	
 		    ;;
 		    IPTSIN)
 		    UDPINADDR=$(get_config_var udpinaddr $CONFIGFILE)
@@ -190,6 +288,22 @@ chinput=$(whiptail --title "$StrInputSetupTitle" --radiolist \
 			set_config_var udpinaddr "$UDPINADDR" $CONFIGFILE
 		    fi			
 		    ;;
+		    ANALOGCAM)
+		    ANALOGCAMNAME=$(get_config_var analogcamname $CONFIGFILE)
+		    
+		    ANALOGCAMNAME=$(whiptail --inputbox "$StrInputSetupANALOGCAMName" 8 78 $ANALOGCAMNAME --title "$StrInputSetupANALOGCAMTitle" 3>&1 1>&2 2>&3)
+		    if [ $? -eq 0 ]; then
+			set_config_var analogcamname "$ANALOGCAMNAME" $CONFIGFILE
+		    fi			
+		    ;;
+		 VNC)
+		    VNCADDR=$(get_config_var vncaddr $CONFIGFILE)
+		    
+		    VNCADDR=$(whiptail --inputbox "$StrInputSetupVNCName" 8 78 $VNCADDR --title "$StrInputSetupVNCTitle" 3>&1 1>&2 2>&3)
+		    if [ $? -eq 0 ]; then
+			set_config_var vncaddr "$VNCADDR" $CONFIGFILE
+		    fi			
+		    ;;		
 		esac
 		set_config_var modeinput "$chinput" $CONFIGFILE
 		fi
@@ -202,10 +316,10 @@ if [ $? -eq 0 ]; then
 set_config_var call "$CALL" $CONFIGFILE
 fi
 
-CALL=$(get_config_var locator $CONFIGFILE)
-CALL=$(whiptail --inputbox "$StrLocatorContext" 8 78 $CALL --title "$StrLocatorTitle" 3>&1 1>&2 2>&3)
+LOCATOR=$(get_config_var locator $CONFIGFILE)
+LOCATOR=$(whiptail --inputbox "$StrLocatorContext" 8 78 $LOCATOR --title "$StrLocatorTitle" 3>&1 1>&2 2>&3)
 if [ $? -eq 0 ]; then
-set_config_var locator "$CALL" $CONFIGFILE
+set_config_var locator "$LOCATOR" $CONFIGFILE
 fi
 
 }
@@ -471,23 +585,31 @@ do_status()
 do_receive_status()
 {
 	whiptail --title "RECEIVE" --msgbox "$INFO" 8 78
-	sudo killall mplayer
+	sudo killall rpidatvgui
 	sudo killall leandvb
+	
 
 }
 
 do_receive()
 {
-	FREQ=$(get_config_var freqoutput $CONFIGFILE)
-	SYMBOLRATEK=$(get_config_var symbolrate $CONFIGFILE)
-	let RECEIVESYMBOLRATE=SYMBOLRATEK*1000
-	let FREQHZ=FREQ*1000000
-	echo receive on $RECEIVESYMBOLRATE at Frequency $FREQHZ
-	mkfifo fifots
-	#sudo rtl_sdr -p 80 -g 30 -f $FREQHZ -s 1024000 - | leandvb --agc --sr $RECEIVESYMBOLRATE --anf 1 -f 1024000 |buffer > fifots &
-	#sudo SDL_VIDEODRIVER=fbcon SDL_FBDEV=/dev/fb0 mplayer -ao /dev/null -vo sdl  fifots &
-	$PATHSCRIPT"/leandvb2video.sh" >/dev/null 2>/dev/null &
+	MODE_OUTPUT=$(get_config_var modeoutput $CONFIGFILE)
+	case "$MODE_OUTPUT" in
+	BATC)
+	ORGINAL_MODE_INPUT=$(get_config_var modeinput $CONFIGFILE)
+	sleep 0.1
+	set_config_var modeinput "DESKTOP" $CONFIGFILE
+	sleep 0.1
+	/home/pi/rpidatv/bin/rpidatvgui 0 1  >/dev/null 2>/dev/null & 
+	$PATHSCRIPT"/a.sh" >/dev/null 2>/dev/null &
 	do_receive_status
+	set_config_var modeinput "$ORGINAL_MODE_INPUT" $CONFIGFILE
+	;;
+	*)
+	/home/pi/rpidatv/bin/rpidatvgui 0 1  >/dev/null 2>/dev/null & 
+	do_receive_status;;
+	esac
+	
 }
 
 do_autostart_setup()
