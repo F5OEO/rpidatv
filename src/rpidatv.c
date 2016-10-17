@@ -950,7 +950,8 @@ main(int argc, char **argv)
 			if(strcmp("3/4",optarg)==0) FEC=3;
 			if(strcmp("5/6",optarg)==0) FEC=5;
 			if(strcmp("7/8",optarg)==0) FEC=7;
-			if(strcmp("0",optarg)==0) FEC=0;//CARRIER MODE
+			if(strcmp("carrier",optarg)==0) FEC=0;//CARRIER MODE
+			if(strcmp("test",optarg)==0) FEC=-1;//TEST MODE
 			break;
 		case 'h': // help
 			print_usage();
