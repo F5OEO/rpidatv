@@ -493,7 +493,7 @@ void *DisplayFFT(void * arg)
 	plan = fftwf_plan_dft_1d(fft_size, fftin, fftout, FFTW_FORWARD, FFTW_ESTIMATE );
 
 	
-	
+	system("mkfifo fifo.iq");
 	printf("Entering FFT thread\n");	
 	pFileIQ = fopen("fifo.iq", "r");
 	
@@ -904,7 +904,7 @@ int main(int argc, char **argv) {
 	rawterm();
 	int screenXmax, screenXmin;
 	int screenYmax, screenYmin;
-	
+	int ReceiveDirect=0;	
 	int i;
 	for (i = 0; i < 16; i++) {
 		struct sigaction sa;
@@ -915,6 +915,14 @@ int main(int argc, char **argv) {
 	}
 	if(argc>1)
 		Inversed=atoi(argv[1]);
+	if(argc>2)
+		ReceiveDirect=atoi(argv[2]);
+
+	if(ReceiveDirect==1)
+	{
+		getTouchScreenDetails(&screenXmin,&screenXmax,&screenYmin,&screenYmax);
+		 ProcessLeandvb(); // For FrMenu and no 
+	}
 
 	for(NoDeviceEvent=0;NoDeviceEvent<5;NoDeviceEvent++)
 	{
