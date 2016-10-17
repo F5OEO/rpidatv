@@ -36,7 +36,20 @@ extern "C" {
 #include <arpa/inet.h>
 #include <netinet/in.h>
 
+#include <fcntl.h>              /* low-level i/o */
+#include <unistd.h>
+#include <errno.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/time.h>
+#include <sys/mman.h>
+#include <sys/ioctl.h>
 
+#include "webcam.h"
+#include "grabdisplay.h"
+#include "vncclient.h"
+
+//#include <linux/videodev2.h>
 
 #define PROGRAM_VERSION "1.0.0"
 
@@ -245,7 +258,8 @@ namespace broadcom
         VIDEO_ENCODER = 200,
         EGL_RENDER = 220,
         NULL_SINK = 240,
-        VIDEO_SPLITTER = 250
+        VIDEO_SPLITTER = 250,
+	IMAGE_ENCODE = 340
     } ComponentType;
 
     static const char * componentType2name(ComponentType type)
@@ -263,6 +277,7 @@ namespace broadcom
             case EGL_RENDER:        return "OMX.broadcom.egl_render";
             case NULL_SINK:         return "OMX.broadcom.null_sink";
             case VIDEO_SPLITTER:    return "OMX.broadcom.video_splitter";
+	    case IMAGE_ENCODE:	return "OMX.broadcom.image_encode";
         }
 
         return nullptr;
@@ -283,6 +298,7 @@ namespace broadcom
             case EGL_RENDER:        return 2;
             case NULL_SINK:         return 3;
             case VIDEO_SPLITTER:    return 5;
+		 case IMAGE_ENCODE: return 2;
         }
 
         return 0;
@@ -1420,20 +1436,22 @@ So the advice was for MMAL_VIDEO_INTRA_REFRESH_CYCLIC_MROWS and cir_mbs set prob
         {
         }
 
-        void setupOutputPort(const VideoFromat Videoformat,OMX_COLOR_FORMATTYPE colortype)
+        void setupOutputPort(int SrcImageWidth,int SrcImageHeight,const VideoFromat Videoformat,OMX_COLOR_FORMATTYPE colortype)
         {
 //http://www.jvcref.com/files/PI/documentation/ilcomponents/resize.html
 	Parameter<OMX_PARAM_PORTDEFINITIONTYPE> portDefI;
             getPortDefinition(IPORT, portDefI);
 	
-		portDefI->format.image.nFrameWidth  = Videoformat.width;
-            portDefI->format.image.nFrameHeight = Videoformat.height;
+		portDefI->format.image.nFrameWidth  = SrcImageWidth;
+            portDefI->format.image.nFrameHeight = SrcImageHeight;
             portDefI->format.image.eCompressionFormat = OMX_IMAGE_CodingUnused;
-	portDefI->format.image.bFlagErrorConcealment = OMX_TRUE;
+	//portDefI->format.image.bFlagErrorConcealment = OMX_TRUE;
 	if(colortype==OMX_COLOR_FormatYUV420PackedPlanar)
 	{
-		portDefI->format.image.nStride      = Videoformat.width;
-		portDefI->format.image.nSliceHeight=Videoformat.height;
+		
+		portDefI->format.image.nStride      = SrcImageWidth;
+		portDefI->format.image.nSliceHeight=SrcImageHeight;
+		printf("%d * %d\n",portDefI->format.image.nStride,portDefI->format.image.nSliceHeight);
 	}
 	else
 	{           portDefI->format.image.nStride      =0 ;
@@ -1441,7 +1459,7 @@ So the advice was for MMAL_VIDEO_INTRA_REFRESH_CYCLIC_MROWS and cir_mbs set prob
 	}
 
 	portDefI->format.image.eColorFormat=colortype;
-
+	
 	 setPortDefinition(IPORT, portDefI);
 	
 // Output definition 
@@ -1496,6 +1514,97 @@ So the advice was for MMAL_VIDEO_INTRA_REFRESH_CYCLIC_MROWS and cir_mbs set prob
 
     };
 
+
+ class ImageEncode : public Component
+    {
+    public:
+        static const ComponentType cType = broadcom::IMAGE_ENCODE;
+
+        static const unsigned IPORT = 340;
+        static const unsigned OPORT = 341;
+
+        ImageEncode()
+        :   Component(cType, (OMX_PTR) this, &cbsEvents)
+        {
+        }
+
+	
+	void setupPort(int SrcImageWidth,int SrcImageHeight,OMX_COLOR_FORMATTYPE colortype)
+        {
+//http://www.jvcref.com/files/PI/documentation/ilcomponents/resize.html
+	Parameter<OMX_PARAM_PORTDEFINITIONTYPE> portDefI;
+            getPortDefinition(IPORT, portDefI);
+	
+		portDefI->format.image.nFrameWidth  = SrcImageWidth;
+            portDefI->format.image.nFrameHeight = SrcImageHeight;
+            portDefI->format.image.eCompressionFormat = OMX_IMAGE_CodingUnused;
+	//portDefI->format.image.bFlagErrorConcealment = OMX_TRUE;
+	if(colortype==OMX_COLOR_FormatYUV420PackedPlanar)
+	{
+		
+		portDefI->format.image.nStride      = SrcImageWidth;
+		portDefI->format.image.nSliceHeight=SrcImageHeight;
+		//printf("%d * %d\n",portDefI->format.image.nStride,portDefI->format.image.nSliceHeight);
+	}
+	else
+	{           portDefI->format.image.nStride      =SrcImageWidth ;
+		portDefI->format.image.nSliceHeight=SrcImageHeight;
+	}
+
+	portDefI->format.image.eColorFormat=colortype;
+	
+	 setPortDefinition(IPORT, portDefI);
+	
+// Output definition 
+	Parameter<OMX_PARAM_PORTDEFINITIONTYPE> portDefO;
+	getPortDefinition(OPORT, portDefO);
+
+	portDefO->format.image.nFrameWidth  = SrcImageWidth;
+         portDefO->format.image.nFrameHeight = SrcImageHeight;
+        portDefO->format.image.eCompressionFormat = OMX_IMAGE_CodingUnused;
+	portDefO->format.image.nStride      =SrcImageWidth;
+	portDefO->format.image.nSliceHeight=SrcImageHeight;
+	//portDefO->format.image.bFlagErrorConcealment = OMX_FALSE;
+	portDefO->format.image.eColorFormat=OMX_COLOR_FormatYUV420PackedPlanar;//For encoder
+         
+   	
+	setPortDefinition(OPORT, portDefO);
+            
+           
+        }
+
+	void allocBuffers()
+        {
+		
+			
+			Component::allocBuffers(IPORT, bufferIn_);
+			
+        }
+
+        void freeBuffers()
+        {
+            
+		Component::freeBuffers(IPORT, bufferIn_);
+        }
+
+        void callFillThisBuffer()
+        {
+            Component::callFillThisBuffer(bufferOut_);
+        }
+
+	void callEmptyThisBuffer()
+        {
+            Component::callEmptyThisBuffer(bufferIn_);
+        }
+
+        Buffer& outBuffer() { return bufferOut_; }
+	Buffer& inBuffer() { return bufferIn_; }
+    private:
+        //Parameter<OMX_PARAM_PORTDEFINITIONTYPE> encoderPortDef_;
+        Buffer bufferOut_;
+	Buffer bufferIn_;
+	
+};
     //
 
     static OMX_ERRORTYPE callback_EventHandler(
@@ -1585,6 +1694,13 @@ So the advice was for MMAL_VIDEO_INTRA_REFRESH_CYCLIC_MROWS and cir_mbs set prob
             Resizer * resizer = static_cast<Resizer *>(pAppData);
             resizer->inBuffer().setFilled();
         }
+
+	if (component->type() == ImageEncode::cType)
+        {
+
+            ImageEncode * imageencode = static_cast<ImageEncode *>(pAppData);
+            imageencode->inBuffer().setFilled();
+        }
         return OMX_ErrorNone;
     }
 
@@ -1648,6 +1764,7 @@ class TSEncaspulator
 	
 	 int        m_sock;
 	 struct     sockaddr_in m_client;
+	
 	public:
 	 TSEncaspulator(){};
 	void SetOutput(char *FileName,char *Udp)
@@ -1713,7 +1830,7 @@ class TSEncaspulator
                     
 	}
 
-	void AddFrame(uint8_t *buffer,int size,int OmxFlags,uint64_t key_frame,int DelayPTS=200)
+	void AddFrame(uint8_t *buffer,int size,int OmxFlags,uint64_t key_frame,int DelayPTS=200,struct timespec *Time=NULL)
 	{
 		 //unsigned char buffer[100];
 		ts_frame_t tsframe;
@@ -1763,6 +1880,7 @@ class TSEncaspulator
 			TotalFrameSize+=tsframe.size;
 			TimeToTransmitFrameUs= (TotalFrameSize*8.0*1000000.0/(float)MaxVideoBitrate);
 			//if(OmxFlags&OMX_BUFFERFLAG_SYNCFRAME)
+			if(Time==NULL)//Frame base calculation
 			{
 				//printf("IDR Image=%d TotalSize=%d Temps=%d\n",tsframe.size,TotalFrameSize,TimeToTransmitFrameUs);
 				vdts=(key_frame*FrameDuration)*90L ; //TimeToTransmitFrameUs*90L/1000;
@@ -1775,7 +1893,18 @@ class TSEncaspulator
 				
 
 			}
-			
+			else
+			{
+				//printf("%d:%d \n",Time->tv_sec,Time->tv_nsec);;
+				vdts=(Time->tv_sec*1000+Time->tv_nsec/1000000)*90L ; //TimeToTransmitFrameUs*90L/1000;
+				vpts=(Time->tv_sec*1000+Time->tv_nsec/1000000)*90L; 	
+				
+				//tsframe.cpb_initial_arrival_time = vdts*300L -  DelayPTS*90*300L ;
+	                	//tsframe.cpb_final_arrival_time = vdts*300L -  DelayPTS*90*300L ;
+				tsframe.cpb_initial_arrival_time = vdts*300L - TimeToTransmitFrameUs*2.7- DelayPTS*90*300L ;
+	                	tsframe.cpb_final_arrival_time = vdts*300L - TimeToTransmitFrameUs*2.7- DelayPTS*90*300L ;
+				
+			}
 	                tsframe.dts = vdts;
 	                tsframe.pts = vpts;
 	                tsframe.random_access = key_frame;
@@ -1872,6 +2001,7 @@ private:
 	uint64_t key_frame=1;
 	VideoFromat CurrentVideoFormat;
 	int DelayPTS;
+	struct timespec InitTime;
 public:
 	void Init(VideoFromat &VideoFormat,char *FileName,char *Udp,int VideoBitrate,int TsBitrate,int SetDelayPts,int VPid=256,int fps=25,int IDRPeriod=100,int RowBySlice=0,int EnableMotionVectors=0)
 	{	
@@ -1976,6 +2106,7 @@ ERR_OMX( OMX_SetupTunnel(camera.component(), Camera::OPORT_VIDEO, encoder.compon
 		Buffer& encBuffer = encoder.outBuffer();
 		if(FirstTime) 
 		{
+			clock_gettime(CLOCK_REALTIME, &InitTime);
 			FirstTime=false;
 			encoder.callFillThisBuffer();
 		}
@@ -2015,7 +2146,13 @@ ERR_OMX( OMX_SetupTunnel(camera.component(), Camera::OPORT_VIDEO, encoder.compon
 					int OmxFlags=encBuffer.flags();
 					if((OmxFlags&OMX_BUFFERFLAG_ENDOFFRAME)&&!(OmxFlags&OMX_BUFFERFLAG_CODECCONFIG))
 						key_frame++;
-					tsencoder.AddFrame(encBuffer.data(),encBuffer.dataSize(),OmxFlags,key_frame,DelayPTS);
+					struct timespec gettime_now;
+				
+							clock_gettime(CLOCK_REALTIME, &gettime_now);
+							gettime_now.tv_sec=(int)difftime(gettime_now.tv_sec,InitTime.tv_sec);
+				tsencoder.AddFrame(encBuffer.data(),encBuffer.dataSize(),OmxFlags,key_frame,DelayPTS,&gettime_now);
+
+					//tsencoder.AddFrame(encBuffer.data(),encBuffer.dataSize(),OmxFlags,key_frame,DelayPTS);
 			
 	
 		
@@ -2093,16 +2230,28 @@ private:
 	 Encoder encoder;
 	TSEncaspulator tsencoder;
 	Resizer resizer;
+	//ImageEncode colorconverter; 
 	int EncVideoBitrate;
 	bool FirstTime=true;
-	uint64_t key_frame=1;
+	uint key_frame=1;
 	VideoFromat CurrentVideoFormat;
 	int DelayPTS;
 	int Videofps;
 	struct timespec last_time;
+	int Mode=Mode_PATTERN;
+	Webcam *pwebcam;
+	GrabDisplay *pgrabdisplay;
+	VncClient *pvncclient;
+	struct timespec InitTime;
+
+
 public:
+static const int Mode_PATTERN=0;
+		static const int Mode_V4L2=1;
+static const int Mode_GRABDISPLAY=2;
+static const int Mode_VNCCLIENT=3;
 public:
-	void Init(VideoFromat &VideoFormat,char *FileName,char *Udp,int VideoBitrate,int TsBitrate,int SetDelayPts,int VPid=256,int fps=25,int IDRPeriod=100,int RowBySlice=0,int EnableMotionVectors=0)
+	void Init(VideoFromat &VideoFormat,char *FileName,char *Udp,int VideoBitrate,int TsBitrate,int SetDelayPts,int VPid=256,int fps=25,int IDRPeriod=100,int RowBySlice=0,int EnableMotionVectors=0,int ModeInput=Mode_PATTERN,char *Extra=NULL)
 	{
 		last_time.tv_sec=0;
 		last_time.tv_nsec=0;
@@ -2110,12 +2259,44 @@ public:
 		Videofps=fps;
 		DelayPTS=SetDelayPts;
 		EncVideoBitrate=VideoBitrate;
+		Mode=ModeInput;
 		
-		// resizer.setupOutputPort(VideoFormat,OMX_COLOR_FormatYUV420PackedPlanar);
-		resizer.setupOutputPort(VideoFormat,OMX_COLOR_Format32bitABGR8888);//OK
-	resizer.setupOutputPort(VideoFormat,OMX_COLOR_FormatYCbYCr);
-			// configuring encoders
+		if(Mode==Mode_V4L2)
 		{
+			pwebcam=new Webcam(Extra);
+			int CamWidth,CamHeight;
+			pwebcam->GetCameraSize(CamWidth,CamHeight);
+			printf("Resizer input = %d x %d\n",CamWidth,CamHeight);
+			
+			resizer.setupOutputPort(CamWidth,CamHeight,VideoFormat,OMX_COLOR_FormatYUV420PackedPlanar);
+		}
+		if(Mode==Mode_PATTERN)
+		{
+		 resizer.setupOutputPort(VideoFormat.width,VideoFormat.height,VideoFormat,OMX_COLOR_FormatYUV420PackedPlanar);
+		}
+		if(Mode==Mode_GRABDISPLAY)
+		{
+			pgrabdisplay=new GrabDisplay(0);
+			int DisplayWidth,DisplayHeight,Rotate;
+
+			pgrabdisplay->GetDisplaySize(DisplayWidth,DisplayHeight,Rotate);
+			printf("Resizer input = %d x %d\n",DisplayWidth,DisplayHeight);
+			resizer.setupOutputPort(DisplayWidth,DisplayHeight,VideoFormat, OMX_COLOR_Format32bitABGR8888);
+		}
+		if(Mode==Mode_VNCCLIENT)
+		{
+			printf("Connecting to VNCSERVER %s...\n",Extra);
+			pvncclient=new VncClient(Extra,"datv");
+			int DisplayWidth,DisplayHeight,Rotate;
+
+			pvncclient->GetDisplaySize(DisplayWidth,DisplayHeight,Rotate);
+			printf("Resizer input = %d x %d\n",DisplayWidth,DisplayHeight);
+			resizer.setupOutputPort(DisplayWidth,DisplayHeight,VideoFormat, OMX_COLOR_Format32bitABGR8888);
+		}
+		//resizer.setupOutputPort(VideoFormat,OMX_COLOR_Format32bitABGR8888);//OK
+	
+			// configuring encoders
+		
 		    VideoFromat vfResized = VideoFormat;
 		    
 		   
@@ -2148,12 +2329,15 @@ public:
 			tsencoder.SetOutput(FileName,Udp);
 		   tsencoder.ConstructTsTree(VideoBitrate,TsBitrate,256,fps); 	
 		 printf("Ts bitrate = %d\n",TsBitrate);
-		}
+		
+
 
 		ERR_OMX( OMX_SetupTunnel(resizer.component(), Resizer::OPORT, encoder.component(), Encoder::IPORT),         "tunnel resizer.output -> encoder.input (low)");
+	
 
 		// switch components to idle state
 		{
+		
 			resizer.switchState(OMX_StateIdle);
 		      encoder.switchState(OMX_StateIdle);
 			 
@@ -2161,20 +2345,35 @@ public:
 
 		// enable ports
 		{
+			
 		  	resizer.enablePort();  		    
 			encoder.enablePort();    // all
 		}
 
 		// allocate buffers
-		{
+		
 		  
 		    resizer.allocBuffers();
-			printf("Allocsize= %d\n",resizer.inBuffer().allocSize());
+		  
+		    if(Mode==Mode_V4L2)
+		    {
+				 pwebcam->SetOmxBuffer((unsigned char*)resizer.inBuffer().data());
+		    }
+			if(Mode==Mode_GRABDISPLAY)
+			{
+				pgrabdisplay->SetOmxBuffer((unsigned char*)resizer.inBuffer().data());
+			}
+		if(Mode==Mode_VNCCLIENT)
+		{	
+			pvncclient->SetOmxBuffer((unsigned char*)resizer.inBuffer().data());
+			}
+		    printf("Allocsize= %d\n",resizer.inBuffer().allocSize());
 		    encoder.allocBuffers(false);//Only  Bufout
-		}
+		
 
 		// switch state of the components prior to starting
 		{
+			
 		  resizer.switchState(OMX_StateExecuting);
 		    encoder.switchState(OMX_StateExecuting);
 		}
@@ -2183,7 +2382,8 @@ public:
 
 void usleep_exactly(long MuToSleep )
 {
-	#define KERNEL_GRANULARITY 80000
+	#define KERNEL_GRANULARITY 1000000
+	#define MARGIN 500
 	struct timespec gettime_now;
 	long time_difference;
 	if(last_time.tv_sec==0) clock_gettime(CLOCK_REALTIME, &last_time);
@@ -2205,8 +2405,9 @@ void usleep_exactly(long MuToSleep )
 		clock_gettime(CLOCK_REALTIME, &gettime_now);
 		time_difference = gettime_now.tv_nsec - last_time.tv_nsec;
 		if(time_difference<0) time_difference+=1E9;
+		//printf("#");
 	}
-	while(time_difference<MuToSleep*1000L);	
+	while(time_difference<(MuToSleep*1000L-MARGIN));	
 	//printf("TimeDiff =%ld\n",time_difference);
 	last_time=gettime_now;
 			
@@ -2256,6 +2457,43 @@ void usleep_exactly(long MuToSleep )
   
    return 1;
 }
+
+/*
+int ConvertColor(OMX_U8 *out,OMX_U8 *in,int Size)
+{
+	OMX_U8 *inprocess=in;
+	int Width=(fmt.fmt.pix.width>>5)<<5;
+	int WidthMissing=fmt.fmt.pix.width-((fmt.fmt.pix.width>>5)<<5);
+	int Height=(fmt.fmt.pix.height>>4)<<4;
+	OMX_U8 *PlanY=out;
+	OMX_U8 *PlanU=out+Width*Height;
+	OMX_U8 *PlanV=PlanU+(Width*Height)/4;
+	
+	//printf("WidthMissin %d\n",WidthMissing);
+	int count=0;
+	for(int j=0;j<Height;j++)
+	{
+		for(int i=0;i<Width/2;i++)
+		{
+			
+			*(PlanU)=*(inprocess++);
+			if((j%2==0)) PlanU++;
+			*(PlanY++)=*(inprocess++);
+			*(PlanV)=*(inprocess++);
+			if((j%2==0)) PlanV++;
+			*(PlanY++)=*(inprocess++);
+			
+		}
+		count+=4*Width/2;
+		if(count>Size) return 0;
+		inprocess+=WidthMissing*2;
+		count+=WidthMissing*2;
+	}
+	//printf("Count =%d\n",count);
+}
+*/
+
+
 void Run(bool want_quit)
 	{
 		Buffer& encBuffer = encoder.outBuffer();
@@ -2267,8 +2505,50 @@ void Run(bool want_quit)
 			
 			OMX_U32 filledLen;
 //			generate_test_card(PictureBuffer.data(),&filledLen,key_frame);
-			generate_test_rgbcard(PictureBuffer.data(),&filledLen,key_frame);
+			if(Mode==Mode_PATTERN)
+			{
+			generate_test_card(PictureBuffer.data(),&filledLen,key_frame);
+		
 			usleep_exactly(1e6/Videofps);
+			}
+			if(Mode==Mode_V4L2)
+			{
+				
+				auto frame = pwebcam->frame(2);
+				
+				filledLen=frame.size;
+				
+				//V4L2_read_frame(PictureBuffer.data(),&filledLen);
+				//usleep_exactly(1e6/(Videofps*2));
+			}
+			if(Mode==Mode_GRABDISPLAY)
+			{
+				
+				pgrabdisplay->GetPicture();
+				int DisplayWidth,DisplayHeight,Rotate;
+
+			pgrabdisplay->GetDisplaySize(DisplayWidth,DisplayHeight,Rotate);
+				filledLen=DisplayWidth*DisplayHeight*4;
+				//printf("%d filled\n",filledLen);
+				usleep_exactly(1e6/Videofps);
+			}
+			
+			if(Mode==Mode_VNCCLIENT)
+			{
+				
+				int FrameDiff=pvncclient->GetPicture(Videofps);
+				
+				filledLen=PictureBuffer.allocSize();
+				//printf("%d filled\n",filledLen);
+				if(FrameDiff==0)
+					usleep_exactly(1e6/Videofps);
+				else
+				{
+					//usleep_exactly((FrameDiff+1)*1e6/Videofps);
+					key_frame+=FrameDiff;
+					//printf("DiffFrame %d\n",FrameDiff);
+				}
+			}
 			PictureBuffer.setDatasize(filledLen);
 			PictureBuffer.setFilled(false);
 			resizer.callEmptyThisBuffer();
@@ -2276,8 +2556,10 @@ void Run(bool want_quit)
 			
 			if(FirstTime)
 			{
-				encoder.callFillThisBuffer();
+				clock_gettime(CLOCK_REALTIME, &InitTime);
 				FirstTime=false;
+				encoder.callFillThisBuffer();
+				
 			}
 			
 		}
@@ -2316,22 +2598,36 @@ void Run(bool want_quit)
 			       
 					int OmxFlags=encBuffer.flags();
 					if((OmxFlags&OMX_BUFFERFLAG_ENDOFFRAME)&&!(OmxFlags&OMX_BUFFERFLAG_CODECCONFIG))
+					{
 						key_frame++;
-					tsencoder.AddFrame(encBuffer.data(),encBuffer.dataSize(),OmxFlags,key_frame,DelayPTS);
+						
+							struct timespec gettime_now;
+				
+							clock_gettime(CLOCK_REALTIME, &gettime_now);
+							gettime_now.tv_sec=(int)difftime(gettime_now.tv_sec,InitTime.tv_sec);
+				tsencoder.AddFrame(encBuffer.data(),encBuffer.dataSize(),OmxFlags,key_frame,DelayPTS,&gettime_now);
+						
+						
+						//tsencoder.AddFrame(encBuffer.data(),encBuffer.dataSize(),OmxFlags,key_frame,DelayPTS);
+						
+					}
 			
 	
 		
 				}
 				else
 				{
+					//usleep_exactly(1e6/(2*Videofps));
 					key_frame++; //Skipped Frame, key_frame++ to allow correct timing for next valid frames
-					printf("! -------------------------------------------------->\n ");
+					printf("!%ld\n",key_frame);
 				}
 				
 				// Buffer flushed, request a new buffer to be filled by the encoder component
 				encBuffer.setFilled(false);
+				//PictureBuffer.setFilled(true);
 				encoder.callFillThisBuffer();
-				PictureBuffer.setFilled(true);
+				
+				
 		  }
 			   
 	}
@@ -2340,6 +2636,18 @@ void Run(bool want_quit)
 	void Terminate()
 	{ 
 		
+		if(Mode==Mode_V4L2)
+		{
+			free(pwebcam);
+		}
+		if(Mode==Mode_GRABDISPLAY)
+		{
+			free(pgrabdisplay);
+		}
+		if(Mode==Mode_VNCCLIENT)
+		{
+			free(pvncclient);
+		}	
 		// return the last full buffer back to the encoder component
 		{
 		    encoder.outBuffer().flags() &= OMX_BUFFERFLAG_EOS;
@@ -2350,33 +2658,35 @@ void Run(bool want_quit)
 
 		// flush the buffers on each component
 		{
+		   
 		    resizer.flushPort();
 		    encoder.flushPort();
 		}
 
 		// disable all the ports
 		{
-		   
+		  
 		    resizer.disablePort();
 		    encoder.disablePort();
 		}
 
 		// free all the buffers
 		{
-		   
+		  
 		   resizer.freeBuffers();	
 		    encoder.freeBuffers();
 		}
 
 		// transition all the components to idle states
 		{
+		
 		    resizer.switchState(OMX_StateIdle);  
 		    encoder.switchState(OMX_StateIdle);
 		}
 
 		// transition all the components to loaded states
 		{
-		   
+		  
 			resizer.switchState(OMX_StateLoaded);
 		    encoder.switchState(OMX_StateLoaded);
 		}
@@ -2401,6 +2711,10 @@ Usage:\nrpi-avc2ts  -o OutputFile -b BitrateVideo -m BitrateMux -x VideoWidth  -
 -d 	      Delay PTS/PCR in ms\n\
 -v	      Enable Motion vectors\n\
 -i	      IDR Period\n\
+-t		TypeInput {0=Picamera,1=InternalPatern,2=USB Camera,3=Rpi Display,4=VNC}\n\
+-e 		Extra Arg:\n\
+			- For usb camera name of device (/dev/video0)\n\
+			- For VNC : IP address of VNC Server. Password must be datv\n\
 -h            help (print this help).\n\
 Example : ./rpi-avc2ts -o result.ts -b 1000000 -m 1400000 -x 640 -y 480 -f 25 -n 230.0.0.1:1000\n\
 \n",\
@@ -2426,13 +2740,17 @@ int main(int argc, char **argv)
 	int RowBySlice=0;
 	char *NetworkOutput=NULL;//"230.0.0.1:10000";
 	int EnableMotionVectors=0;
+	char *ExtraArg=NULL;
 	#define CAMERA 0
 	#define PATTERN 1
+	#define USB_CAMERA 2
+	#define DISPLAY 3
+	#define VNC 4		
 	int TypeInput=CAMERA;
 
 	while(1)
 	{
-	a = getopt(argc, argv, "o:b:m:hx:y:f:n:d:i:r:vt:");
+	a = getopt(argc, argv, "o:b:m:hx:y:f:n:d:i:r:vt:e:");
 	
 	if(a == -1) 
 	{
@@ -2487,16 +2805,19 @@ int main(int argc, char **argv)
 		case 't': //Type input
 			TypeInput=atoi(optarg);
 			break;
+		case 'e': //Type input extra arg
+			ExtraArg=optarg;
+			break;
 		case -1:
         	break;
 		case '?':
 			if (isprint(optopt) )
  				{
- 				fprintf(stderr, "Omxts: unknown option `-%c'.\n", optopt);
+ 				fprintf(stderr, "avc2ts: unknown option `-%c'.\n", optopt);
  				}
 			else
 				{
-				fprintf(stderr, "Omxts: unknown option character `\\x%x'.\n", optopt);
+				fprintf(stderr, "avc2ts: unknown option character `\\x%x'.\n", optopt);
 				}
 			print_usage();
 
@@ -2538,13 +2859,29 @@ bcm_host_init();
         VcosSemaphore sem("common semaphore");
         pSemaphore = &sem;
 
-        CameraTots cameratots;
-	PictureTots picturetots;
+        CameraTots *cameratots;
+	PictureTots *picturetots;
 if(TypeInput==0)
-	cameratots.Init(CurrentVideoFormat,OutputFileName,NetworkOutput,VideoBitrate,MuxBitrate,DelayPTS,256,VideoFramerate,IDRPeriod,RowBySlice);
+{
+	cameratots=new CameraTots; 
+	cameratots->Init(CurrentVideoFormat,OutputFileName,NetworkOutput,VideoBitrate,MuxBitrate,DelayPTS,256,VideoFramerate,IDRPeriod,RowBySlice,false);
+}
 else
-	picturetots.Init(CurrentVideoFormat,OutputFileName,NetworkOutput,VideoBitrate,MuxBitrate,DelayPTS,256,VideoFramerate,IDRPeriod,RowBySlice);
+{
+	int PictureMode=PictureTots::Mode_PATTERN;
+	switch(TypeInput)
+	{
+	case PATTERN:PictureMode=PictureTots::Mode_PATTERN;break;
+	case USB_CAMERA:PictureMode=PictureTots::Mode_V4L2;
+	if(ExtraArg==NULL) ExtraArg="/dev/video0";break;
+	case DISPLAY:PictureMode=PictureTots::Mode_GRABDISPLAY;break;
+	case VNC:PictureMode=PictureTots::Mode_VNCCLIENT;
+	if(ExtraArg==NULL) {printf("IP of VNCServer should be set with -e option\n");exit(0);}
 	
+	}
+	picturetots = new PictureTots;
+	picturetots->Init(CurrentVideoFormat,OutputFileName,NetworkOutput,VideoBitrate,MuxBitrate,DelayPTS,256,VideoFramerate,IDRPeriod,RowBySlice,false,PictureMode,ExtraArg);
+}	
 #if 1
         signal(SIGINT,  signal_handler);
         signal(SIGTERM, signal_handler);
@@ -2567,9 +2904,9 @@ else
         {
             
 	   if(TypeInput==0)
-		cameratots.Run(want_quit);
+		cameratots->Run(want_quit);
 	else
-          	 picturetots.Run(want_quit);
+          	 picturetots->Run(want_quit);
 	
 	   
 
@@ -2604,9 +2941,15 @@ else
         signal(SIGQUIT, SIG_DFL);
 #endif
 	if(TypeInput==0)
-		cameratots.Terminate();
+	{
+		cameratots->Terminate();
+		delete(cameratots);
+	}
 	else
-          	picturetots.Terminate();
+	{
+          	picturetots->Terminate();
+		delete(picturetots);
+	}
 		
        
     }

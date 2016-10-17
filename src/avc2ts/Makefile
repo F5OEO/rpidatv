@@ -5,9 +5,9 @@ CFLAGS = -std=c++11 -Wno-multichar -Wall -Wno-format -g -I/opt/vc/include/IL -I/
 
 LDFLAGS = -Xlinker -R/opt/vc/lib -L/opt/vc/lib/ -Xlinker -L/usr/local/lib -Xlinker -R/usr/local/lib   # -Xlinker --verbose
 #LIBS = -L/opt/vc/lib  -rdynamic -lopenmaxil -lvcos -lbcm_host -lpthread -L/libmpegts/libmpegts.o -lm 
-LIBS = -lopenmaxil -lbcm_host -lvcos -lpthread -lm 
+LIBS = -lopenmaxil -lbcm_host -lvcos -lpthread -lm -lrt -lvncclient
 
-OFILES = avc2ts.o ./libmpegts/libmpegts.a
+OFILES = vncclient.o grabdisplay.o avc2ts.o webcam.o ./libmpegts/libmpegts.a
 
 .PHONY: all clean install dist
 
