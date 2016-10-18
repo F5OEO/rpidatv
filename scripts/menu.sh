@@ -397,7 +397,18 @@ choutput=$(whiptail --title "$StrOutputSetupTitle" --radiolist \
 if [ $? -eq 0 ]; then		
 		
 		case "$choutput" in
-		    IQ) ;;	
+		    IQ) 
+				PIN_I=$(get_config_var gpio_i $CONFIGFILE)
+				PIN_I=$(whiptail --inputbox "$StrPIN_IContext" 8 78 $PIN_I --title "$StrPIN_ITitle" 3>&1 1>&2 2>&3)
+			if [ $? -eq 0 ]; then
+				set_config_var gpio_i "$PIN_I" $CONFIGFILE	
+			fi
+				PIN_Q=$(get_config_var gpio_q $CONFIGFILE)
+				PIN_Q=$(whiptail --inputbox "$StrPIN_QContext" 8 78 $PIN_Q --title "$StrPIN_QTitle" 3>&1 1>&2 2>&3)
+			if [ $? -eq 0 ]; then
+				set_config_var gpio_q "$PIN_Q" $CONFIGFILE	
+			fi
+				;;	
 		    QPSKRF)
 			FREQ_OUTPUT=$(get_config_var freqoutput $CONFIGFILE)
 			FREQ=$(whiptail --inputbox "$StrOutputRFFreqContext" 8 78 $FREQ_OUTPUT --title "$StrOutputRFFreqTitle" 3>&1 1>&2 2>&3)
@@ -418,6 +429,16 @@ if [ $? -eq 0 ]; then
 			fi		    
 			;;
 		    DIGITHIN)
+			PIN_I=$(get_config_var gpio_i $CONFIGFILE)
+				PIN_I=$(whiptail --inputbox "$StrPIN_IContext" 8 78 $PIN_I --title "$StrPIN_ITitle" 3>&1 1>&2 2>&3)
+			if [ $? -eq 0 ]; then
+				set_config_var gpio_i "$PIN_I" $CONFIGFILE	
+			fi
+				PIN_Q=$(get_config_var gpio_q $CONFIGFILE)
+				PIN_Q=$(whiptail --inputbox "$StrPIN_QContext" 8 78 $PIN_Q --title "$StrPIN_QTitle" 3>&1 1>&2 2>&3)
+			if [ $? -eq 0 ]; then
+				set_config_var gpio_q "$PIN_Q" $CONFIGFILE	
+			fi
 			FREQ_OUTPUT=$(get_config_var freqoutput $CONFIGFILE)
 			FREQ=$(whiptail --inputbox "$StrOutputRFFreqContext" 8 78 $FREQ_OUTPUT --title "$StrOutputRFFreqTitle" 3>&1 1>&2 2>&3)
 			if [ $? -eq 0 ]; then

@@ -21,6 +21,11 @@ StrInputSetupVNCName="IP du PC avec VNC (mot de passe datv)"
 StrInputSetupVNCTitle="Configuration VNC"
 StrInputSetupDESKTOP="Ecran du rasberry"
 
+StrPIN_IContext="GPIO pour I {12,18,40} (12 par defaut:pin32)"
+StrPIN_ITitle="Sortie GPIO pour I"
+StrPIN_QContext="GPIO pour Q {13,19,41}(13 par defaut:pin33)"
+StrPIN_QTitle="Sortie GPIO pour Q"
+
 ######## CALL MENU ###################"
 StrCallContext="Paramètrage indicatif"
 StrCallTitle="Indicatif"

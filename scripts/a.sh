@@ -68,15 +68,15 @@ PIDVIDEO=$(get_config_var pidvideo $CONFIGFILE)
 PIDPMT=$(get_config_var pidpmt $CONFIGFILE)
 SERVICEID=$(get_config_var serviceid $CONFIGFILE)
 LOCATOR=$(get_config_var locator $CONFIGFILE)
-
+PIN_I=$(get_config_var gpio_i $CONFIGFILE)
+PIN_Q=$(get_config_var gpio_q $CONFIGFILE)
 
 ANALOGCAMNAME=$(get_config_var analogcamname $CONFIGFILE)
 VNCADDR=$(get_config_var vncaddr $CONFIGFILE)
 
 #v4l2-ctl --overlay=0
 
-PIN_I=12
-PIN_Q=13
+
 
 detect_audio
 
