@@ -606,8 +606,8 @@ do_status()
 do_receive_status()
 {
 	whiptail --title "RECEIVE" --msgbox "$INFO" 8 78
-	sudo killall rpidatvgui
-	sudo killall leandvb
+	sudo killall rpidatvgui >/dev/null 2>/dev/null
+	sudo killall leandvb >/dev/null 2>/dev/null
 	
 
 }

@@ -4,6 +4,8 @@
 *(Created by Evariste Courjaud F5OEO. Code is GPL)*
 
 # Installation
+Install a Raspbian Lite : ([Raspbian Lite](http://www.raspberrypi.org/downloads/raspbian/))
+
 ```sh
 $ wget https://raw.githubusercontent.com/F5OEO/rpidatv/master/install.sh
 $ chmod +x install.sh
@@ -11,7 +13,7 @@ $ ./install.sh
 ```
 
 # Hardware
-Plug a wire on GPIO 12, means Pin 32 of the GPIO header ([header P1](http://elinux.org/RPi_Low-level_peripherals#General_Purpose_Input.2FOutput_.28GPIO.29)): this act as the antenna. Length depend on transmit frequency, but with few centimeters it works for local testing.
+Plug a wire on GPIO 12, means Pin 32 of the GPIO header : this act as the antenna. Length depend on transmit frequency, but with few centimeters it works for local testing.
 
 # Modulator
 **rpidatv** is located in rpidatv/bin folder
