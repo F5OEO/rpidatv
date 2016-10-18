@@ -401,7 +401,9 @@ int InitIQ(int DigithinMode)
 	
 	uint32_t DigiThin_ClockBySymbol=0;
 	// CLK_DIGITHIN 500MHZ(PLLD)/4MHZ = 125
-	#define CLK_4MHZ 125
+	int CLK_DIGITHIN=PLLFREQ_PCM/4E6;
+
+	//#define CLK_4MHZ 125
 	if(DigithinMode==1)
 	{
 				
@@ -411,11 +413,11 @@ int InitIQ(int DigithinMode)
 		usleep(1000);
 		clk_reg[GPCLK_CNTL] = 0x5A << 24 |0<<4 | PLL_PCM;
 		usleep(1000);
-		clk_reg[GPCLK_DIV] = 0x5A << 24 | (CLK_4MHZ<<12) ; //CLK FREQ = 4MHZ: Fixed for Digithin
+		clk_reg[GPCLK_DIV] = 0x5A << 24 | (CLK_DIGITHIN<<12) ; //CLK FREQ = 4MHZ: Fixed for Digithin
 		usleep(100);
-		DigiThin_ClockBySymbol=( PLLFREQ_PCM/(CLK_4MHZ));
+		DigiThin_ClockBySymbol=( PLLFREQ_PCM/(CLK_DIGITHIN));
 		//SRClock=DigiThin_ClockBySymbol*CLK_4MHZ;
-		printf("Digithin Clock at 4MHZ:%ld clock by Symbol (SR=%d)\n",(long int)DigiThin_ClockBySymbol,4000000/(SymbolRate*1000));
+		printf("Digithin Clock at 4MHZ:%ld clock by Symbol (SR=%d)\n",(long int)DigiThin_ClockBySymbol,4000000/(SymbolRate*1000L));
 		udelay(500);
 		clk_reg[GPCLK_CNTL] = 0x5A << 24  | 0 << 9 | 1 << 4 | PLL_PCM; //NO MASH !!!
 		udelay(500);
