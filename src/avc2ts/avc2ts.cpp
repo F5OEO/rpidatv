@@ -1776,11 +1776,11 @@ class TSEncaspulator
 	};
 
 
-	void ConstructTsTree(int VideoBit,int TsBitrate,int VPid=256,int fps=25)
+	void ConstructTsTree(int VideoBit,int TsBitrate,int PMTPid,char *sdt,int fps=25)
 	{
 		
 
-		VideoPid=VPid;
+		VideoPid=PMTPid+1;
 		Videofps=fps;
 		VideoBitrate=VideoBit;
 		FrameDuration=1000/Videofps;
@@ -1797,7 +1797,7 @@ class TSEncaspulator
 		tsmain.num_programs = 1;
 		tsmain.programs=program;
 
-		program[0].pmt_pid = 32;
+		program[0].pmt_pid = PMTPid;
 		program[0].program_num = 1;
 		program[0].pcr_pid = VideoPid;
 		program[0].num_streams = 1;
@@ -1805,7 +1805,7 @@ class TSEncaspulator
 		program[0].sdt = (sdt_program_ctx_t){
                     .service_type = DVB_SERVICE_TYPE_DIGITAL_TELEVISION,
                     .service_name = "Rpidatv",
-                    .provider_name = "F5OEO",
+                    .provider_name = sdt,
                 };
 
 		
@@ -2003,7 +2003,7 @@ private:
 	int DelayPTS;
 	struct timespec InitTime;
 public:
-	void Init(VideoFromat &VideoFormat,char *FileName,char *Udp,int VideoBitrate,int TsBitrate,int SetDelayPts,int VPid=256,int fps=25,int IDRPeriod=100,int RowBySlice=0,int EnableMotionVectors=0)
+	void Init(VideoFromat &VideoFormat,char *FileName,char *Udp,int VideoBitrate,int TsBitrate,int SetDelayPts,int PMTPid,char *sdt,int fps=25,int IDRPeriod=100,int RowBySlice=0,int EnableMotionVectors=0)
 	{	
 		CurrentVideoFormat=VideoFormat;
 		DelayPTS=SetDelayPts;
@@ -2055,7 +2055,7 @@ public:
 
 			// With Main Profile : have more skipped frame
 			tsencoder.SetOutput(FileName,Udp);
-		   tsencoder.ConstructTsTree(VideoBitrate,TsBitrate,256,fps); 	
+		   tsencoder.ConstructTsTree(VideoBitrate,TsBitrate,PMTPid,sdt,fps); 	
 		 EncVideoBitrate=VideoBitrate;
 	
 		    //encoder.setPeakRate(VIDEO_BITRATE_LOW/1000);
@@ -2251,7 +2251,7 @@ static const int Mode_PATTERN=0;
 static const int Mode_GRABDISPLAY=2;
 static const int Mode_VNCCLIENT=3;
 public:
-	void Init(VideoFromat &VideoFormat,char *FileName,char *Udp,int VideoBitrate,int TsBitrate,int SetDelayPts,int VPid=256,int fps=25,int IDRPeriod=100,int RowBySlice=0,int EnableMotionVectors=0,int ModeInput=Mode_PATTERN,char *Extra=NULL)
+	void Init(VideoFromat &VideoFormat,char *FileName,char *Udp,int VideoBitrate,int TsBitrate,int SetDelayPts,int PMTPid,char* sdt,int fps=25,int IDRPeriod=100,int RowBySlice=0,int EnableMotionVectors=0,int ModeInput=Mode_PATTERN,char *Extra=NULL)
 	{
 		last_time.tv_sec=0;
 		last_time.tv_nsec=0;
@@ -2327,7 +2327,7 @@ public:
 
 			// With Main Profile : have more skipped frame
 			tsencoder.SetOutput(FileName,Udp);
-		   tsencoder.ConstructTsTree(VideoBitrate,TsBitrate,256,fps); 	
+		   tsencoder.ConstructTsTree(VideoBitrate,TsBitrate,PMTPid,sdt,fps); 	
 		 printf("Ts bitrate = %d\n",TsBitrate);
 		
 
@@ -2715,6 +2715,8 @@ Usage:\nrpi-avc2ts  -o OutputFile -b BitrateVideo -m BitrateMux -x VideoWidth  -
 -e 		Extra Arg:\n\
 			- For usb camera name of device (/dev/video0)\n\
 			- For VNC : IP address of VNC Server. Password must be datv\n\
+-p 		Set the PidStart: Set PMT=PIDStart,Pidvideo=PidStart+1,PidAudio=PidStart+2\n\
+-s 		Set Servicename : Typically CALL\n\
 -h            help (print this help).\n\
 Example : ./rpi-avc2ts -o result.ts -b 1000000 -m 1400000 -x 640 -y 480 -f 25 -n 230.0.0.1:1000\n\
 \n",\
@@ -2741,6 +2743,8 @@ int main(int argc, char **argv)
 	char *NetworkOutput=NULL;//"230.0.0.1:10000";
 	int EnableMotionVectors=0;
 	char *ExtraArg=NULL;
+	char *sdt="F5OEO";
+	int pidpmt=255,pidvideo=256,pidaudio=257;
 	#define CAMERA 0
 	#define PATTERN 1
 	#define USB_CAMERA 2
@@ -2750,7 +2754,7 @@ int main(int argc, char **argv)
 
 	while(1)
 	{
-	a = getopt(argc, argv, "o:b:m:hx:y:f:n:d:i:r:vt:e:");
+	a = getopt(argc, argv, "o:b:m:hx:y:f:n:d:i:r:vt:e:p:s:");
 	
 	if(a == -1) 
 	{
@@ -2808,6 +2812,14 @@ int main(int argc, char **argv)
 		case 'e': //Type input extra arg
 			ExtraArg=optarg;
 			break;
+		case 'p': //Pid Start
+			pidpmt=atoi(optarg);
+			pidvideo=atoi(optarg)+1;
+			pidaudio=atoi(optarg)+2;
+			break;
+		case 's': //Service sname : sdt
+			sdt=optarg;
+			break;
 		case -1:
         	break;
 		case '?':
@@ -2864,7 +2876,7 @@ bcm_host_init();
 if(TypeInput==0)
 {
 	cameratots=new CameraTots; 
-	cameratots->Init(CurrentVideoFormat,OutputFileName,NetworkOutput,VideoBitrate,MuxBitrate,DelayPTS,256,VideoFramerate,IDRPeriod,RowBySlice,false);
+	cameratots->Init(CurrentVideoFormat,OutputFileName,NetworkOutput,VideoBitrate,MuxBitrate,DelayPTS,pidpmt,sdt,VideoFramerate,IDRPeriod,RowBySlice,false);
 }
 else
 {
@@ -2880,7 +2892,7 @@ else
 	
 	}
 	picturetots = new PictureTots;
-	picturetots->Init(CurrentVideoFormat,OutputFileName,NetworkOutput,VideoBitrate,MuxBitrate,DelayPTS,256,VideoFramerate,IDRPeriod,RowBySlice,false,PictureMode,ExtraArg);
+	picturetots->Init(CurrentVideoFormat,OutputFileName,NetworkOutput,VideoBitrate,MuxBitrate,DelayPTS,pidpmt,sdt,VideoFramerate,IDRPeriod,RowBySlice,false,PictureMode,ExtraArg);
 }	
 #if 1
         signal(SIGINT,  signal_handler);
