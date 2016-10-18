@@ -15,7 +15,7 @@ sudo rpi-update
 cd /home/pi
 #git clone git://github.com/F5OEO/rpidatv -> BUG IN QEMU : Go to download method
 wget https://github.com/F5OEO/rpidatv/archive/master.zip
-unzip master.zip -o
+unzip -o master.zip 
 mv rpidatv-master rpidatv
 rm master.zip
 
@@ -125,8 +125,8 @@ sudo bash -c 'echo -e "\ngpu_mem=128\nstart_x=1\n" >> /boot/config.txt'
 #disable sync option for usbmount
 sudo sed -i 's/sync,//g' /etc/usbmount/usbmount.conf
 
-ForImage='Image'
-if [$1='Image'];
+ForImage=Image
+if ["$1"=="$ForImage"];
 then
 ##Menu autostart
 cd /home/pi/rpidatv/scripts/
