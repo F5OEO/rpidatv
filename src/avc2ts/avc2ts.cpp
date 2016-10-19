@@ -887,6 +887,14 @@ namespace rpi_omx
             portDef->format.video.eColorFormat = OMX_COLOR_FormatYUV420PackedPlanar;
 
             setPortDefinition(OPORT_VIDEO, portDef);
+
+	    getPortDefinition(OPORT_PREVIEW, portDef);
+	portDef->format.video.nFrameWidth  = videoFormat.width;
+            portDef->format.video.nFrameHeight = videoFormat.height;
+            portDef->format.video.xFramerate   = videoFormat.framerate << 16;
+            portDef->format.video.nStride      = align(portDef->format.video.nFrameWidth, portDef->nBufferAlignment);
+            portDef->format.video.eColorFormat = OMX_COLOR_FormatYUV420PackedPlanar;
+	    setPortDefinition(OPORT_PREVIEW, portDef);
             //setFramerate(videoFormat.framerate);
         }
 
@@ -1405,7 +1413,66 @@ So the advice was for MMAL_VIDEO_INTRA_REFRESH_CYCLIC_MROWS and cir_mbs set prob
     };
 
     ///
-    class VideoSplitter : public Component
+    class VideoRenderer : public Component
+    {
+    public:
+        static const ComponentType cType = broadcom::VIDEO_RENDER;
+
+        static const unsigned IPORT = 90;
+
+        VideoRenderer()
+        :   Component(cType, (OMX_PTR) this, &cbsEvents)
+        {
+        }
+
+	void setupPortFromCamera(const Parameter<OMX_PARAM_PORTDEFINITIONTYPE>& cameraPortDef)
+	{
+	
+	Parameter<OMX_PARAM_PORTDEFINITIONTYPE> portDef;
+            getPortDefinition(IPORT, portDef);
+
+          /*  portDef->format.video.nFrameWidth  = cameraPortDef->format.video.nFrameWidth;
+            portDef->format.video.nFrameHeight = cameraPortDef->format.video.nFrameHeight;
+            portDef->format.video.xFramerate   = cameraPortDef->format.video.xFramerate;
+            portDef->format.video.nStride      = cameraPortDef->format.video.nStride;
+	*/
+		portDef=cameraPortDef;
+           // setPortDefinition(IPORT, portDef);
+	}
+	void SetDestRect(int x,int y,int width,int height)
+	{
+	#define DISPLAY_DEVICE 0
+	 Parameter<OMX_CONFIG_DISPLAYREGIONTYPE> display_region;
+    	display_region->nPortIndex=IPORT;
+	    display_region->set = (OMX_DISPLAYSETTYPE)(OMX_DISPLAY_SET_NUM | OMX_DISPLAY_SET_FULLSCREEN | OMX_DISPLAY_SET_MODE | OMX_DISPLAY_SET_DEST_RECT);
+	    display_region->num = DISPLAY_DEVICE;
+	    display_region->fullscreen = OMX_FALSE;
+	    display_region->mode = OMX_DISPLAY_MODE_FILL;
+	    display_region->dest_rect.width = width;
+	    display_region->dest_rect.height = height;
+	    display_region->dest_rect.x_offset = x;
+	    display_region->dest_rect.y_offset = y;
+	ERR_OMX( OMX_SetParameter(component_,  OMX_IndexConfigDisplayRegion, &display_region)," Display rect");
+	}
+
+	void allocBuffers()
+        {
+		
+			
+			Component::allocBuffers(IPORT, bufferIn_);
+			
+        }
+
+        void freeBuffers()
+        {
+            
+		Component::freeBuffers(IPORT, bufferIn_);
+        }
+	private:
+	Buffer bufferIn_;
+    };
+
+class VideoSplitter : public Component
     {
     public:
         static const ComponentType cType = broadcom::VIDEO_SPLITTER;
@@ -1996,6 +2063,7 @@ private:
 	Camera camera;
 	 Encoder encoder;
 	TSEncaspulator tsencoder;
+	VideoRenderer videorender;
 	int EncVideoBitrate;
 	bool FirstTime=true;
 	uint64_t key_frame=1;
@@ -2017,6 +2085,7 @@ public:
                 std::cerr << "waiting for camera..." << std::endl;
                 usleep(10000);
             } 
+	
 	 // configuring encoders
 		{
 		    VideoFromat vfResized = VideoFormat;
@@ -2024,11 +2093,12 @@ public:
 		    Parameter<OMX_PARAM_PORTDEFINITIONTYPE> portDef;
 		    camera.getPortDefinition(Camera::OPORT_VIDEO, portDef);
 
-		    
+		    videorender.setupPortFromCamera(portDef);
+		videorender.SetDestRect(0,0,640,480);
 		    
 		    portDef->format.video.nFrameWidth = vfResized.width;
 		    portDef->format.video.nFrameHeight = vfResized.height;
-
+	
 		    encoder.setupOutputPortFromCamera(portDef, VideoBitrate);
 		    encoder.setBitrate(VideoBitrate,/*OMX_Video_ControlRateVariable*/OMX_Video_ControlRateConstant);
 		    encoder.setCodec(OMX_VIDEO_CodingAVC);
@@ -2063,12 +2133,14 @@ public:
 		}
 ERR_OMX( OMX_SetupTunnel(camera.component(), Camera::OPORT_VIDEO, encoder.component(), Encoder::IPORT),
                 "tunnel camera.video -> encoder.input");
-
+ERR_OMX( OMX_SetupTunnel(camera.component(), Camera::OPORT_PREVIEW, videorender.component(), VideoRenderer::IPORT),
+                "tunnel camera.video -> renderer");
 		// switch components to idle state
 		{
 		    camera.switchState(OMX_StateIdle);
 
 		    encoder.switchState(OMX_StateIdle);
+		videorender.switchState(OMX_StateIdle);
 			 
 		}
 
@@ -2076,7 +2148,8 @@ ERR_OMX( OMX_SetupTunnel(camera.component(), Camera::OPORT_VIDEO, encoder.compon
 		{
 		    camera.enablePort(Camera::IPORT);
 		    camera.enablePort(Camera::OPORT_VIDEO);
-
+			camera.enablePort(Camera::OPORT_PREVIEW);
+		   videorender.enablePort(VideoRenderer::IPORT);
 		    
 		encoder.enablePort();    // all
 		}
@@ -2084,12 +2157,13 @@ ERR_OMX( OMX_SetupTunnel(camera.component(), Camera::OPORT_VIDEO, encoder.compon
 		// allocate buffers
 		{
 		    camera.allocBuffers();
-		    
+		    //videorender.allocBuffers();
 		    encoder.allocBuffers();
 		}
 
 		// switch state of the components prior to starting
 		{
+			videorender.switchState(OMX_StateExecuting);
 		    camera.switchState(OMX_StateExecuting);
 		    encoder.switchState(OMX_StateExecuting);
 		}
@@ -2188,35 +2262,35 @@ ERR_OMX( OMX_SetupTunnel(camera.component(), Camera::OPORT_VIDEO, encoder.compon
 		// flush the buffers on each component
 		{
 		    camera.flushPort();
-
+		videorender.flushPort();
 		    encoder.flushPort();
 		}
 
 		// disable all the ports
 		{
 		    camera.disablePort();
-
+			videorender.disablePort();
 		    encoder.disablePort();
 		}
 
 		// free all the buffers
 		{
 		    camera.freeBuffers();
-
+		//videorender.freeBuffers();
 		    encoder.freeBuffers();
 		}
 
 		// transition all the components to idle states
 		{
 		    camera.switchState(OMX_StateIdle);
-
+		videorender.switchState(OMX_StateIdle);
 		    encoder.switchState(OMX_StateIdle);
 		}
 
 		// transition all the components to loaded states
 		{
 		    camera.switchState(OMX_StateLoaded);
-
+		videorender.switchState(OMX_StateLoaded);
 		    encoder.switchState(OMX_StateLoaded);
 		}
 	}
