@@ -125,9 +125,10 @@ sudo bash -c 'echo -e "\ngpu_mem=128\nstart_x=1\n" >> /boot/config.txt'
 #disable sync option for usbmount
 sudo sed -i 's/sync,//g' /etc/usbmount/usbmount.conf
 
-ForImage=Image
-if ["$1"=="$ForImage"];
+
+if [ "$1" == "Autostart" ];
 then
+echo "Doing autostart..."
 ##Menu autostart
 cd /home/pi/rpidatv/scripts/
 ##make kayboard in french
@@ -144,8 +145,9 @@ if [ $? -eq 0 ]; then
 fi
 #change password to tv
 echo "pi:tv" | sudo chpasswd
+else
+echo "completed without autostart"
 fi
-
 #always enable HDMI at 720p
 #sudo bash -c 'echo -e "\nhdmi_force_hotplug=1\nhdmi_drive=2\nhdmi_group=1\nhdmi_mode=4\n" >> /boot/config.txt'
 
