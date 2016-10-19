@@ -455,7 +455,7 @@ TransmitStart()
 		IsDisplayOn=0; 
 		finish();
 		
-		system("v4l2-ctl --overlay=1");
+		system("v4l2-ctl --overlay=1 >/dev/null 2>/dev/null");
 	}
 	
 	system(PATH_SCRIPT_A);
@@ -467,8 +467,9 @@ TransmitStop()
 	printf("Transmit Stop\n");
 	system("sudo killall rpidatv >/dev/null 2>/dev/null");
 	system("sudo killall ffmpeg >/dev/null 2>/dev/null");
-	
-	system("v4l2-ctl --overlay=0");
+	system("sudo killall tcanim >/dev/null 2>/dev/null");
+	system("sudo killall avc2ts >/dev/null 2>/dev/null");
+	system("v4l2-ctl --overlay=0 >/dev/null 2>/dev/null");
 
 }
 
@@ -758,7 +759,7 @@ ReceiveStart()
 ReceiveStop()
 {
 	system("sudo killall leandvb");
-		system("sudo killall hello_video.bin");
+	system("sudo killall hello_video.bin");
 	//system("sudo killall mplayer");
 }
 // wait for a specific character 
@@ -777,8 +778,8 @@ int rawX, rawY, rawPressure,i;
 				printf("Display ON\n");
 				TransmitStop();
 				ReceiveStop();
-				//init(&wscreen, &hscreen);
-				//Start(wscreen,hscreen);
+				init(&wscreen, &hscreen);
+				Start(wscreen,hscreen);
 				BackgroundRGB(255,255,255,255);
 				IsDisplayOn=1;			
 				
