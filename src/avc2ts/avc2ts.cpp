@@ -1070,7 +1070,7 @@ namespace rpi_omx
             portDef->format.video.xFramerate   = cameraPortDef->format.video.xFramerate;
             portDef->format.video.nStride      = cameraPortDef->format.video.nStride;
             portDef->format.video.nBitrate     = bitrate;
-
+	   printf("FPS=%x\n",cameraPortDef->format.video.xFramerate);	
             if (framerate)
                 portDef->format.video.xFramerate = framerate<<16;
 
@@ -1091,12 +1091,17 @@ namespace rpi_omx
 	 setPortDefinition(IPORT, portDefI);	
 	
 	// Output definition : copy from input
+		Parameter<OMX_PARAM_PORTDEFINITIONTYPE> portDef;
+		getPortDefinition(OPORT, portDef);
+            //portDefI->nPortIndex     = OPORT;
+		//portDef->format.video.eColorFormat=OMX_COLOR_FormatUnused;
+		portDef->format.video.eCompressionFormat = OMX_VIDEO_CodingAVC;
+      		portDef->format.video.nBitrate=bitrate;
+		portDef->format.video.nFrameWidth  = Videoformat.width;
+		portDef->format.video.nFrameHeight = Videoformat.height;
+		portDef->format.video.xFramerate= framerate<<16;
 
-            portDefI->nPortIndex     = OPORT;
-		portDefI->format.video.eColorFormat=OMX_COLOR_FormatUnused;
-	portDefI->format.video.eCompressionFormat = OMX_VIDEO_CodingAVC;
-      		portDefI->format.video.nBitrate=bitrate;
-	            setPortDefinition(OPORT, portDefI);
+	        setPortDefinition(OPORT, portDef);
 	}
 
         void setCodec(OMX_VIDEO_CODINGTYPE codec)
@@ -1140,7 +1145,7 @@ namespace rpi_omx
 	 	idr_st->nIDRPeriod = idr_period;
   		//idr_st->nPFrames=nPFrames;
 		ERR_OMX( OMX_GetParameter(component_, OMX_IndexConfigVideoAVCIntraPeriod, &idr_st)," Get idr");
-
+		//idr_st->nPFrames=idr_period-1;
 		idr_st->nIDRPeriod = idr_period;
 		ERR_OMX( OMX_SetParameter(component_, OMX_IndexConfigVideoAVCIntraPeriod, &idr_st), "set idr");
 
@@ -1320,7 +1325,7 @@ LOW_LATENCY mode is not a mode intended for general use. There was a specific us
 		ERR_OMX( OMX_GetParameter(component_,  OMX_IndexParamVideoIntraRefresh, &IntraRefreshType)," IntraRefreshMode");
 		IntraRefreshType->eRefreshMode=OMX_VIDEO_IntraRefreshCyclicMrows;
 		
-		IntraRefreshType->nCirMBs=10;
+		IntraRefreshType->nCirMBs=SliceSize;
 		ERR_OMX( OMX_SetParameter(component_,  OMX_IndexParamVideoIntraRefresh, &IntraRefreshType)," IntraRefreshMode");
 
 // SHOULD HAVE INSPECT WITH OMX_VIDEO_INTRAREFRESHTYPE
@@ -1855,12 +1860,12 @@ class TSEncaspulator
 		tsmain.muxrate=TsBitrate;
 		tsmain.cbr = 1;
 		tsmain.ts_type = TS_TYPE_DVB;
-		tsmain.pcr_period = 38;
-		tsmain.pat_period = 480;
-	        tsmain.sdt_period = 480;
-        	tsmain.nit_period = 480;
-        	tsmain.tdt_period = 1980;
-        	tsmain.tot_period = 1980;
+		tsmain.pcr_period = 35;
+		tsmain.pat_period = 450;
+	        tsmain.sdt_period = 450;
+        	tsmain.nit_period = 450;
+        	tsmain.tdt_period = 1950;
+        	tsmain.tot_period = 1950;
 		tsmain.num_programs = 1;
 		tsmain.programs=program;
 
@@ -2186,8 +2191,8 @@ ERR_OMX( OMX_SetupTunnel(camera.component(), Camera::OPORT_PREVIEW, videorender.
 		}
 		if (!want_quit&&encBuffer.filled())
 		 {
-			       
-	      			//encoderLow.getEncoderStat(encBufferLow.flags());
+			       //encoder.getEncoderStat(encBuffer.flags());
+	      			
 				encoder.setDynamicBitrate(EncVideoBitrate);
 				//printf("Len = %"\n",encBufferLow
 				if(encBuffer.flags() & OMX_BUFFERFLAG_CODECSIDEINFO)
@@ -2218,8 +2223,7 @@ ERR_OMX( OMX_SetupTunnel(camera.component(), Camera::OPORT_PREVIEW, videorender.
 				{
 			       
 					int OmxFlags=encBuffer.flags();
-					if((OmxFlags&OMX_BUFFERFLAG_ENDOFFRAME)&&!(OmxFlags&OMX_BUFFERFLAG_CODECCONFIG))
-						key_frame++;
+					if((OmxFlags&OMX_BUFFERFLAG_ENDOFFRAME)&&!(OmxFlags&OMX_BUFFERFLAG_CODECCONFIG))	key_frame++;
 					struct timespec gettime_now;
 				
 							clock_gettime(CLOCK_REALTIME, &gettime_now);
@@ -2601,8 +2605,8 @@ void Run(bool want_quit)
 				pgrabdisplay->GetPicture();
 				int DisplayWidth,DisplayHeight,Rotate;
 
-			pgrabdisplay->GetDisplaySize(DisplayWidth,DisplayHeight,Rotate);
-				filledLen=DisplayWidth*DisplayHeight*4;
+				pgrabdisplay->GetDisplaySize(DisplayWidth,DisplayHeight,Rotate);
+				filledLen=PictureBuffer.allocSize();//DisplayWidth*DisplayHeight*4;
 				//printf("%d filled\n",filledLen);
 				usleep_exactly(1e6/Videofps);
 			}
@@ -2671,9 +2675,7 @@ void Run(bool want_quit)
 				{
 			       
 					int OmxFlags=encBuffer.flags();
-					if((OmxFlags&OMX_BUFFERFLAG_ENDOFFRAME)&&!(OmxFlags&OMX_BUFFERFLAG_CODECCONFIG))
-					{
-						key_frame++;
+					if((OmxFlags&OMX_BUFFERFLAG_ENDOFFRAME)&&!(OmxFlags&OMX_BUFFERFLAG_CODECCONFIG))	key_frame++;
 						
 							struct timespec gettime_now;
 				
@@ -2684,7 +2686,7 @@ void Run(bool want_quit)
 						
 						//tsencoder.AddFrame(encBuffer.data(),encBuffer.dataSize(),OmxFlags,key_frame,DelayPTS);
 						
-					}
+					
 			
 	
 		
