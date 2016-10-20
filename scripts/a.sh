@@ -148,8 +148,8 @@ VIDEO_FPS=15
 #TSVIDEOFILE=/home/pi/UglyDATVRelease/mire250.TS
 #PATERNFILE=/home/pi/mire.jpg
 
-
-OUTPUT_IP="udp://230.0.0.1:10000?pkt_size=1316&buffer_size=1316"
+#to debug with IP
+#OUTPUT_IP="-n 230.0.0.1:10000"
 OUTPUT_QPSK="videots"
 
 
@@ -167,6 +167,7 @@ let BITRATE_TS=SYMBOLRATE*2*188*FECNUM/204/FECDEN
 
 #let BITRATE_VIDEO=(BITRATE_TS*7)/10-72000 audio
 let BITRATE_VIDEO=(BITRATE_TS*6)/10
+
 let DELAY=(BITRATE_VIDEO*8)/10
 let SYMBOLRATE_K=SYMBOLRATE/1000
 
@@ -221,11 +222,11 @@ case "$MODE_INPUT" in
 
 	if [ "$AUDIO_CARD" == 0 ]; then
 	# ******************************* H264 VIDEO ONLY ************************************
-	$PATHRPI"/avc2ts" -b $BITRATE_VIDEO -m $BITRATE_TS -x $VIDEO_WIDTH -y $VIDEO_HEIGHT -f $VIDEO_FPS -i 100 -p $PIDPMT -s $CHANNEL -o videots &
+	$PATHRPI"/avc2ts" -b $BITRATE_VIDEO -m $BITRATE_TS -x $VIDEO_WIDTH -y $VIDEO_HEIGHT -f $VIDEO_FPS -i 100 -p $PIDPMT -s $CHANNEL -o videots $OUTPUT_IP &
 	
 	else
 	# ******************************* H264 VIDEO WITH AUDIO (TODO) ************************************
-	$PATHRPI"/avc2ts" -b $BITRATE_VIDEO -m $BITRATE_TS -x $VIDEO_WIDTH -y $VIDEO_HEIGHT -f $VIDEO_FPS -i 100 -p $PIDPMT -s $CHANNEL -o videots &
+	$PATHRPI"/avc2ts" -b $BITRATE_VIDEO -m $BITRATE_TS -x $VIDEO_WIDTH -y $VIDEO_HEIGHT -f $VIDEO_FPS -i 100 -p $PIDPMT -s $CHANNEL -o videots $OUTPUT_IP &
 	
 	fi
 	;;
@@ -265,7 +266,7 @@ case "$MODE_OUTPUT" in
 		sudo $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c $FECNUM"/"$FECDEN -f $FREQUENCY_OUT -p $GAIN -m $MODE -x $PIN_I -y $PIN_Q &;;
 	esac
 
-$PATHRPI"/avc2ts" -b $BITRATE_VIDEO -m $BITRATE_TS -x $VIDEO_WIDTH -y $VIDEO_HEIGHT -f $VIDEO_FPS -i 100 -o videots -t 3 -p $PIDPMT -s $CHANNEL   &
+$PATHRPI"/avc2ts" -b $BITRATE_VIDEO -m $BITRATE_TS -x $VIDEO_WIDTH -y $VIDEO_HEIGHT -f $VIDEO_FPS -i 100 -o videots -t 3 -p $PIDPMT -s $CHANNEL $OUTPUT_IP   &
 
 $PATHRPI"/tcanim" $PATERNFILE"/*10" "48" "72" "CQ" "CQ CQ CQ DE "$CALL" IN $LOCATOR - DATV $SYMBOLRATEK KS FEC "$FECNUM"/"$FECDEN &
 ;;
@@ -283,7 +284,7 @@ case "$MODE_OUTPUT" in
 	esac
 
 
-$PATHRPI"/avc2ts" -b $BITRATE_VIDEO -m $BITRATE_TS -x $VIDEO_WIDTH -y $VIDEO_HEIGHT -f $VIDEO_FPS -i 100 -o videots -t 4 -e $VNCADDR -p $PIDPMT -s $CHANNEL  &
+$PATHRPI"/avc2ts" -b $BITRATE_VIDEO -m $BITRATE_TS -x $VIDEO_WIDTH -y $VIDEO_HEIGHT -f $VIDEO_FPS -i 100 -o videots -t 4 -e $VNCADDR -p $PIDPMT -s $CHANNEL $OUTPUT_IP &
 
 ;;
 
@@ -299,7 +300,7 @@ case "$MODE_OUTPUT" in
 		sudo $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c $FECNUM"/"$FECDEN -f $FREQUENCY_OUT -p $GAIN -m $MODE -x $PIN_I -y $PIN_Q &;;
 	esac
 
-$PATHRPI"/avc2ts" -b $BITRATE_VIDEO -m $BITRATE_TS -x $VIDEO_WIDTH -y $VIDEO_HEIGHT -f $VIDEO_FPS -i 100 -o videots -t 2 -e $ANALOGCAMNAME -p $PIDPMT -s $CHANNEL   &
+$PATHRPI"/avc2ts" -b $BITRATE_VIDEO -m $BITRATE_TS -x $VIDEO_WIDTH -y $VIDEO_HEIGHT -f $VIDEO_FPS -i 100 -o videots -t 2 -e $ANALOGCAMNAME -p $PIDPMT -s $CHANNEL $OUTPUT_IP  &
 
 ;;
 
@@ -312,7 +313,7 @@ case "$MODE_OUTPUT" in
 		sudo $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c $FECNUM"/"$FECDEN -f $FREQUENCY_OUT -p $GAIN -m $MODE -x $PIN_I -y $PIN_Q &;;
 	esac
 
-$PATHRPI"/avc2ts" -b $BITRATE_VIDEO -m $BITRATE_TS -x $VIDEO_WIDTH -y $VIDEO_HEIGHT -f $VIDEO_FPS -i 100 -o videots -t 3 -p $PIDPMT -s $CHANNEL &
+$PATHRPI"/avc2ts" -b $BITRATE_VIDEO -m $BITRATE_TS -x $VIDEO_WIDTH -y $VIDEO_HEIGHT -f $VIDEO_FPS -i 100 -o videots -t 3 -p $PIDPMT -s $CHANNEL $OUTPUT_IP &
 
 ;;
 
