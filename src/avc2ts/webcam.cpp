@@ -103,26 +103,50 @@ int Webcam::ConvertColor(unsigned char *out,unsigned char *in)
 	unsigned char *PlanV=PlanU+(yuv420frame.width*yuv420frame.height)/4;
 	
 	//printf("WidthMissin %d\n",WidthMissing);
-	int count=0;
-	for(int j=0;j<yuv420frame.height;j++)
+	switch(fmt.fmt.pix.pixelformat)
 	{
-		for(int i=0;i<yuv420frame.width/2;i++)
-		{
+		case V4L2_PIX_FMT_UYVY:
+			for(unsigned int j=0;j<yuv420frame.height;j++)
+			{
+				for(unsigned int i=0;i<yuv420frame.width/2;i++)
+				{
 			
-			*(PlanU)=*(inprocess++);
-			if((j%2==0)) PlanU++;
-			*(PlanY++)=*(inprocess++);
-			*(PlanV)=*(inprocess++);
-			if((j%2==0)) PlanV++;
-			*(PlanY++)=*(inprocess++);
+					*(PlanU)=*(inprocess++);
+					if((j%2==0)) PlanU++;
+					*(PlanY++)=*(inprocess++);
+					*(PlanV)=*(inprocess++);
+					if((j%2==0)) PlanV++;
+					*(PlanY++)=*(inprocess++);
 			
-		}
+				}
 		
 		
-		inprocess+=WidthMissing*2;
-		count+=WidthMissing*2;
+				inprocess+=WidthMissing*2;
+		
+			}
+			break;
+		case V4L2_PIX_FMT_YUYV:
+			for(unsigned int j=0;j<yuv420frame.height;j++)
+				{
+					for(unsigned int i=0;i<yuv420frame.width/2;i++)
+					{
+						*(PlanY++)=*(inprocess++);
+						*(PlanU)=*(inprocess++);
+						if((j%2==0)) PlanU++;
+						*(PlanY++)=*(inprocess++);
+						*(PlanV)=*(inprocess++);
+						if((j%2==0)) PlanV++;
+						
+			
+					}
+		
+		
+					inprocess+=WidthMissing*2;
+		
+				}
+				break;
 	}
-	//printf("Count =%d\n",count);
+			//printf("Count =%d\n",count);
 }
 
 /*******************************************************************/
@@ -411,6 +435,12 @@ void Webcam::init_device(void)
             throw runtime_error("VIDIOC_G_FMT");
 	xres = fmt.fmt.pix.width;
         yres = fmt.fmt.pix.height;
+	switch(fmt.fmt.pix.pixelformat)
+	{
+		case V4L2_PIX_FMT_UYVY:printf("Video Format UYVY supported\n");break;
+		case V4L2_PIX_FMT_YUYV:printf("Video Format YUYV supported\n");break;
+		default: printf("Video Format %d NOT IMPLENTED !!!!\n",fmt.fmt.pix.pixelformat);
+	}
 
     }
 
