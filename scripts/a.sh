@@ -54,6 +54,7 @@ MODE_INPUT=$(get_config_var modeinput $CONFIGFILE)
 TSVIDEOFILE=$(get_config_var tsvideofile $CONFIGFILE)
 PATERNFILE=$(get_config_var paternfile $CONFIGFILE)
 UDPINADDR=$(get_config_var udpinaddr $CONFIGFILE)
+UDPOUTADDR=$(get_config_var udpoutaddr $CONFIGFILE)
 CALL=$(get_config_var call $CONFIGFILE)
 CHANNEL=$CALL"-rpidatv"
 FREQ_OUTPUT=$(get_config_var freqoutput $CONFIGFILE)
@@ -83,7 +84,14 @@ FEC=$(get_config_var fec $CONFIGFILE)
 let FECNUM=FEC
 let FECDEN=FEC+1
 
+OUTPUT_IP=""
+
 case "$MODE_OUTPUT" in
+	IP) 
+	FREQUENCY_OUT=0
+	OUTPUT_IP="-n"$UDPOUTADDR":10000"
+	#GAIN=0
+	;;
 	IQ) 
 	FREQUENCY_OUT=0
 	OUTPUT=videots
@@ -149,6 +157,7 @@ VIDEO_FPS=15
 #PATERNFILE=/home/pi/mire.jpg
 
 #to debug with IP
+
 #OUTPUT_IP="-n 230.0.0.1:10000"
 OUTPUT_QPSK="videots"
 
@@ -166,7 +175,7 @@ let BITRATE_TS=SYMBOLRATE*2*188*FECNUM/204/FECDEN
 
 
 #let BITRATE_VIDEO=(BITRATE_TS*7)/10-72000 audio
-let BITRATE_VIDEO=(BITRATE_TS*6)/10
+let BITRATE_VIDEO=(BITRATE_TS*5)/10-10000
 
 let DELAY=(BITRATE_VIDEO*8)/10
 let SYMBOLRATE_K=SYMBOLRATE/1000
@@ -208,6 +217,9 @@ echo Size $VIDEO_WIDTH x $VIDEO_HEIGHT at $VIDEO_FPS fps
 echo "************************************"
 echo "ModeINPUT="$MODE_INPUT
 
+
+OUTPUT_FILE="-o videots"
+
 case "$MODE_INPUT" in
 #============================================ H264 INPUT MODE =========================================================
 "CAMH264")
@@ -216,17 +228,19 @@ case "$MODE_INPUT" in
 	case "$MODE_OUTPUT" in
 	"BATC")
 		sudo nice -n -30 $PATHRPI"/ffmpeg" -loglevel $MODE_DEBUG -i videots -y $OUTPUT_BATC & ;;
+	"IP")
+		OUTPUT_FILE="" ;;
 	*)
 		sudo $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c $FECNUM"/"$FECDEN -f $FREQUENCY_OUT -p $GAIN -m $MODE -x $PIN_I -y $PIN_Q & ;;
 	esac
 
 	if [ "$AUDIO_CARD" == 0 ]; then
 	# ******************************* H264 VIDEO ONLY ************************************
-	$PATHRPI"/avc2ts" -b $BITRATE_VIDEO -m $BITRATE_TS -x $VIDEO_WIDTH -y $VIDEO_HEIGHT -f $VIDEO_FPS -i 100 -p $PIDPMT -s $CHANNEL -o videots $OUTPUT_IP &
+	$PATHRPI"/avc2ts" -b $BITRATE_VIDEO -m $BITRATE_TS -x $VIDEO_WIDTH -y $VIDEO_HEIGHT -f $VIDEO_FPS -i 100 -p $PIDPMT -s $CHANNEL $OUTPUT_FILE $OUTPUT_IP &
 	
 	else
 	# ******************************* H264 VIDEO WITH AUDIO (TODO) ************************************
-	$PATHRPI"/avc2ts" -b $BITRATE_VIDEO -m $BITRATE_TS -x $VIDEO_WIDTH -y $VIDEO_HEIGHT -f $VIDEO_FPS -i 100 -p $PIDPMT -s $CHANNEL -o videots $OUTPUT_IP &
+	$PATHRPI"/avc2ts" -b $BITRATE_VIDEO -m $BITRATE_TS -x $VIDEO_WIDTH -y $VIDEO_HEIGHT -f $VIDEO_FPS -i 100 -p $PIDPMT -s $CHANNEL $OUTPUT_FILE $OUTPUT_IP &
 	
 	fi
 	;;
@@ -259,16 +273,21 @@ fi
 
 "PATERNAUDIO")
 sudo modprobe -r bcm2835_v4l2
+
 case "$MODE_OUTPUT" in
 	"BATC")
 		sudo nice -n -30 $PATHRPI"/ffmpeg" -loglevel $MODE_DEBUG -i videots -y $OUTPUT_BATC & ;;
+	"IP")
+		OUTPUT_FILE="" ;;
 	*)
-		sudo $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c $FECNUM"/"$FECDEN -f $FREQUENCY_OUT -p $GAIN -m $MODE -x $PIN_I -y $PIN_Q &;;
+		sudo  nice -n -30 $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c $FECNUM"/"$FECDEN -f $FREQUENCY_OUT -p $GAIN -m $MODE -x $PIN_I -y $PIN_Q &;;
 	esac
 
-$PATHRPI"/avc2ts" -b $BITRATE_VIDEO -m $BITRATE_TS -x $VIDEO_WIDTH -y $VIDEO_HEIGHT -f $VIDEO_FPS -i 100 -o videots -t 3 -p $PIDPMT -s $CHANNEL $OUTPUT_IP   &
+
+$PATHRPI"/avc2ts" -b $BITRATE_VIDEO -m $BITRATE_TS -x $VIDEO_WIDTH -y $VIDEO_HEIGHT -f $VIDEO_FPS -d 400 -i 100 $OUTPUT_FILE -t 3 -p $PIDPMT -s $CHANNEL $OUTPUT_IP  &
 
 $PATHRPI"/tcanim" $PATERNFILE"/*10" "48" "72" "CQ" "CQ CQ CQ DE "$CALL" IN $LOCATOR - DATV $SYMBOLRATEK KS FEC "$FECNUM"/"$FECDEN &
+
 ;;
 
 #============================================ VNC =============================================================
@@ -279,12 +298,14 @@ sudo modprobe -r bcm2835_v4l2
 case "$MODE_OUTPUT" in
 	"BATC")
 		sudo nice -n -30 $PATHRPI"/ffmpeg" -loglevel $MODE_DEBUG -i videots -y $OUTPUT_BATC & ;;
+	"IP")
+		OUTPUT_FILE="" ;;
 	*)
 		sudo $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c $FECNUM"/"$FECDEN -f $FREQUENCY_OUT -p $GAIN -m $MODE -x $PIN_I -y $PIN_Q &;;
 	esac
 
 
-$PATHRPI"/avc2ts" -b $BITRATE_VIDEO -m $BITRATE_TS -x $VIDEO_WIDTH -y $VIDEO_HEIGHT -f $VIDEO_FPS -i 100 -o videots -t 4 -e $VNCADDR -p $PIDPMT -s $CHANNEL $OUTPUT_IP &
+$PATHRPI"/avc2ts" -b $BITRATE_VIDEO -m $BITRATE_TS -x $VIDEO_WIDTH -y $VIDEO_HEIGHT -f $VIDEO_FPS -i 100 $OUTPUT_FILE -t 4 -e $VNCADDR -p $PIDPMT -s $CHANNEL $OUTPUT_IP &
 
 ;;
 
@@ -296,11 +317,13 @@ sudo modprobe -r bcm2835_v4l2
 case "$MODE_OUTPUT" in
 	"BATC")
 		sudo nice -n -30 $PATHRPI"/ffmpeg" -loglevel $MODE_DEBUG -i videots -y $OUTPUT_BATC & ;;
+	"IP")
+		OUTPUT_FILE="" ;;
 	*)
 		sudo $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c $FECNUM"/"$FECDEN -f $FREQUENCY_OUT -p $GAIN -m $MODE -x $PIN_I -y $PIN_Q &;;
 	esac
 
-$PATHRPI"/avc2ts" -b $BITRATE_VIDEO -m $BITRATE_TS -x $VIDEO_WIDTH -y $VIDEO_HEIGHT -f $VIDEO_FPS -i 100 -o videots -t 2 -e $ANALOGCAMNAME -p $PIDPMT -s $CHANNEL $OUTPUT_IP  &
+$PATHRPI"/avc2ts" -b $BITRATE_VIDEO -m $BITRATE_TS -x $VIDEO_WIDTH -y $VIDEO_HEIGHT -f $VIDEO_FPS -i 100 $OUTPUT_FILE -t 2 -e $ANALOGCAMNAME -p $PIDPMT -s $CHANNEL $OUTPUT_IP  &
 
 ;;
 
@@ -309,11 +332,13 @@ sudo modprobe -r bcm2835_v4l2
 case "$MODE_OUTPUT" in
 	"BATC")
 		sudo nice -n -30 $PATHRPI"/ffmpeg" -loglevel $MODE_DEBUG -i videots -y $OUTPUT_BATC & ;;
+	"IP")
+		OUTPUT_FILE="" ;;
 	*)
 		sudo $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c $FECNUM"/"$FECDEN -f $FREQUENCY_OUT -p $GAIN -m $MODE -x $PIN_I -y $PIN_Q &;;
 	esac
 
-$PATHRPI"/avc2ts" -b $BITRATE_VIDEO -m $BITRATE_TS -x $VIDEO_WIDTH -y $VIDEO_HEIGHT -f $VIDEO_FPS -i 100 -o videots -t 3 -p $PIDPMT -s $CHANNEL $OUTPUT_IP &
+$PATHRPI"/avc2ts" -b $BITRATE_VIDEO -m $BITRATE_TS -x $VIDEO_WIDTH -y $VIDEO_HEIGHT -f $VIDEO_FPS -i 100 $OUTPUT_FILE -t 3 -p $PIDPMT -s $CHANNEL $OUTPUT_IP &
 
 ;;
 
@@ -336,6 +361,7 @@ $PATHRPI"/mnc" -l -i eth0 -p $PORT $UDPINADDR > videots &
 case "$MODE_OUTPUT" in
 	"BATC")
 		sudo nice -n -30 $PATHRPI"/ffmpeg" -loglevel $MODE_DEBUG -i $TSVIDEOFILE -y $OUTPUT_BATC & ;;
+	
 	*)
 		sudo $PATHRPI"/rpidatv" -i $TSVIDEOFILE -s $SYMBOLRATE_K -c $FECNUM"/"$FECDEN -f $FREQUENCY_OUT -p $GAIN -m $MODE -x $PIN_I -y $PIN_Q &;;
 	esac

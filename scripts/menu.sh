@@ -336,6 +336,7 @@ case "$MODE_OUTPUT" in
 	Radio4=OFF
 	Radio5=OFF
 	Radio6=OFF
+	Radio7=OFF
 	;;
 	QPSKRF)
 	Radio1=OFF
@@ -344,6 +345,7 @@ case "$MODE_OUTPUT" in
 	Radio4=OFF
 	Radio5=OFF
 	Radio6=OFF
+	Radio7=OFF
 	;;
 	BATC)
 	Radio1=OFF
@@ -352,6 +354,7 @@ case "$MODE_OUTPUT" in
 	Radio4=OFF
 	Radio5=OFF
 	Radio6=OFF
+	Radio7=OFF
 	;;
 	DIGITHIN)
 	Radio1=OFF
@@ -360,6 +363,7 @@ case "$MODE_OUTPUT" in
 	Radio4=ON
 	Radio5=OFF
 	Radio6=OFF
+	Radio7=OFF
 	;;
 	DTX1)
 	Radio1=OFF
@@ -368,6 +372,7 @@ case "$MODE_OUTPUT" in
 	Radio4=OFF
 	Radio5=ON
 	Radio6=OFF
+	Radio7=OFF
 	;;
 	DATVEXPRESS)
 	Radio1=OFF
@@ -376,6 +381,16 @@ case "$MODE_OUTPUT" in
 	Radio4=OFF
 	Radio5=OFF
 	Radio6=ON
+	Radio7=OFF
+	;;
+	IP)
+	Radio1=OFF
+	Radio2=OFF
+	Radio3=OFF
+	Radio4=OFF
+	Radio5=OFF
+	Radio6=OFF
+	Radio7=ON
 	;;
 	*)
 	Radio1=ON
@@ -384,6 +399,7 @@ case "$MODE_OUTPUT" in
 	Radio4=OFF
 	Radio5=OFF
 	Radio6=OFF
+	Radio7=OFF
 esac
 
 choutput=$(whiptail --title "$StrOutputSetupTitle" --radiolist \
@@ -393,7 +409,8 @@ choutput=$(whiptail --title "$StrOutputSetupTitle" --radiolist \
 		"BATC" "$StrOutputSetupBATC" $Radio3 \
 		"DIGITHIN" "$StrOutputSetupDigithin" $Radio4 \
  		"DTX1" "$StrOutputSetupDTX1" $Radio5 \
-		"DATVEXPRESS" "$StrOutputSetupDATVExpress" $Radio6 3>&2 2>&1 1>&3)
+		"DATVEXPRESS" "$StrOutputSetupDATVExpress" $Radio6 \
+	 	"IP" "$StrOutputSetupIP" $Radio7 3>&2 2>&1 1>&3)
 if [ $? -eq 0 ]; then		
 		
 		case "$choutput" in
@@ -458,6 +475,14 @@ if [ $? -eq 0 ]; then
 			if [ $? -eq 0 ]; then
 				set_config_var rfpower "$GAIN" $CONFIGFILE	
 			fi
+		    ;;
+		    IP)	
+			UDPOUTADDR=$(get_config_var udpoutaddr $CONFIGFILE)
+		    
+		    UDPOUTADDR=$(whiptail --inputbox "$StrOutputSetupIPTSOUTName" 8 78 $UDPOUTADDR --title "$StrOutputSetupIPTSOUTTitle" 3>&1 1>&2 2>&3)
+		    if [ $? -eq 0 ]; then
+			set_config_var udpoutaddr "$UDPOUTADDR" $CONFIGFILE
+		    fi			
 		    ;; 
 		esac
 		set_config_var modeoutput "$choutput" $CONFIGFILE
@@ -578,6 +603,8 @@ do_stop_transmit()
 {
 	sudo killall rpidatv >/dev/null 2>/dev/null
 	sudo killall ffmpeg >/dev/null 2>/dev/null
+		sudo killall tcanim >/dev/null 2>/dev/null
+	sudo killall avc2ts >/dev/null 2>/dev/null
 
 }
 
