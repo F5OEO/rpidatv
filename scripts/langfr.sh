@@ -43,6 +43,10 @@ StrOutputSetupDigithin="Carte Digithin"
 StrOutputSetupDTX1="DTX1"
 StrOutputSetupDATVExpress="DatvExpress"
 
+StrOutputSetupIP="Transmission réseau"
+StrOutputSetupIPTSOUTName="Adresse IP : 230.0.0.1 par exemple"
+StrOutputSetupIPTSOUTTitle="Configuration sortie réseau"
+
 StrOutputRFFreqContext="Frequence de sortie(MHZ)"
 StrOutputRFFreqTitle="Frequence RF QPSK"
 
