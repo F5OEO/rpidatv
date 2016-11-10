@@ -20,7 +20,7 @@ Plug a wire on GPIO 12, means Pin 32 of the GPIO header : this act as the antenn
 ```
 rpidatv -2.0.0
 Usage:
-rpidatv -i File Input -s Symbolrate -c Fec [-o OutputMode] [-f frequency output]  [-l] [-p Power] [-h] 
+rpidatv -i File Input -s Symbolrate -c Fec [-m OutputMode] [-f frequency output]  [-l] [-p Power] [-h] 
 -i            path to Transport File Input 
 -s            SymbolRate in KS (125-4000) 
 -c            Fec : 1/2 or 3/4 or 5/6 or 7/8 
