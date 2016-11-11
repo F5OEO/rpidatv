@@ -96,6 +96,7 @@ case "$MODE_OUTPUT" in
 	FREQUENCY_OUT=0
 	OUTPUT=videots
 	MODE=IQ
+	$PATHSCRIPT"/ctlfilter.sh"
 	#GAIN=0
 	;;
 	QPSKRF)
