@@ -88,7 +88,7 @@ cp bin/ts2es ../../bin/
 #install H264 Decoder : hello_video
 #compile ilcomponet first
 cd /opt/vc/src/hello_pi/
-./rebuild.sh
+sudo ./rebuild.sh
 
 cd /home/pi/rpidatv/src/hello_video
 make
