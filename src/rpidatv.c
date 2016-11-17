@@ -551,7 +551,7 @@ int InitIQ(int DigithinMode)
 
 	uint32_t phys_pwm_fifo_addr = 0x7e20c000 + 0x18;//PWM
 	int samplecnt;
-	NUM_SAMPLES = NUM_SAMPLES_MAX/2; // Minize the buffer in IQ Mode
+	NUM_SAMPLES = NUM_SAMPLES_MAX/4; // Minize the buffer in IQ Mode
 			for (samplecnt = 0; samplecnt < NUM_SAMPLES; samplecnt++) {
 		
 				// Write a PWM sample
@@ -697,7 +697,7 @@ int InitDTX1()
 }
 
 
-#define BIG_BUFFER_SIZE 18800
+#define BIG_BUFFER_SIZE (18800*4)
 #define BURST_MEM_SIZE 188
 typedef struct circular_buffer
 {
