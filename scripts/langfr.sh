@@ -91,11 +91,12 @@ AutostartSetupConsole="Menu console(ce menu)"
 AutostartSetupDisplay="Graphique(avec ecran tactile)"
 AutostartSetupButton="Boutons poussoires"
 
-StrDisplaySetupTitle="Configure un ecran tactile"
+StrDisplaySetupTitle="Configure un ecran tactile - apres reboot"
 StrDisplaySetupContext="Choix:"
 DisplaySetupTontec="Ecran Tontec 3,5 pouces"
 DisplaySetupHDMI="HDMI tactile"
 DisplaySetupRpiLCD="Rpi LCD"
+DisplaySetupConsole="Network Console"
 
 StrIPSetupTitle="Configure en IP Statique"
 StrIPSetupContext="Exemple: 192.168.1.60"

@@ -1,5 +1,9 @@
 #!/bin/bash
-    
+
+############ Set Environment Variables ###############
+
+PATHSCRIPT=/home/pi/rpidatv/scripts
+PATHRPI=/home/pi/rpidatv/bin
 
 set_config_var() {
 lua - "$1" "$2" "$3" <<EOF > "$3.bak"
@@ -51,7 +55,7 @@ fi
 RET=$?
 if [ $RET -eq 1 ]; then
 ## This is the section where you control what happens when the user hits Cancel
-Cancel	
+Cancel
 elif [ $RET -eq 0 ]; then
 	if [[ -d "/$1$pathselect" ]]; then
 		Filebrowser "/$1$pathselect"
@@ -59,7 +63,6 @@ elif [ $RET -eq 0 ]; then
 		## Do your thing here, this is just a stub of the code I had to do what I wanted the script to do.
 		fileout=`file "$1$pathselect"`
 		filename=`readlink -m $1$pathselect`
-				
 	else
 		echo pathselect $1$pathselect
 		whiptail --title "$FileMenuTitle" --msgbox "$FileMenuContext" 8 44
@@ -67,9 +70,7 @@ elif [ $RET -eq 0 ]; then
 		unset imgpath
 		Filebrowser
 	fi
-	
 fi
-
 }
 
 Pathbrowser() {
@@ -95,7 +96,7 @@ elif [ $RET -eq 0 ]; then
 		fileout=`file "$1$pathselect"`
 		filenametemp=`readlink -m $1$pathselect`
 		filename=`dirname $filenametemp` 
-				
+
 	else
 		echo pathselect $1$pathselect
 		whiptail --title "$FileMenuTitle" --msgbox "$FileMenuContext" 8 44
@@ -103,9 +104,8 @@ elif [ $RET -eq 0 ]; then
 		unset imgpath
 		Pathbrowser
 	fi
-	
-fi
 
+fi
 }
 
 do_input_setup() {
@@ -244,7 +244,6 @@ case "$MODE_INPUT" in
 	Radio9=OFF
 	Radio10=OFF
 	;;
-	
 esac
 
 chinput=$(whiptail --title "$StrInputSetupTitle" --radiolist \
@@ -282,28 +281,27 @@ chinput=$(whiptail --title "$StrInputSetupTitle" --radiolist \
 		    ;;
 		    IPTSIN)
 		    UDPINADDR=$(get_config_var udpinaddr $CONFIGFILE)
-		    
+
 		    UDPINADDR=$(whiptail --inputbox "$StrInputSetupIPTSINName" 8 78 $UDPINADDR --title "$StrInputSetupIPTSINTitle" 3>&1 1>&2 2>&3)
 		    if [ $? -eq 0 ]; then
 			set_config_var udpinaddr "$UDPINADDR" $CONFIGFILE
-		    fi			
+		    fi
 		    ;;
 		    ANALOGCAM)
 		    ANALOGCAMNAME=$(get_config_var analogcamname $CONFIGFILE)
-		    
 		    ANALOGCAMNAME=$(whiptail --inputbox "$StrInputSetupANALOGCAMName" 8 78 $ANALOGCAMNAME --title "$StrInputSetupANALOGCAMTitle" 3>&1 1>&2 2>&3)
 		    if [ $? -eq 0 ]; then
 			set_config_var analogcamname "$ANALOGCAMNAME" $CONFIGFILE
-		    fi			
+		    fi
 		    ;;
 		 VNC)
 		    VNCADDR=$(get_config_var vncaddr $CONFIGFILE)
-		    
+
 		    VNCADDR=$(whiptail --inputbox "$StrInputSetupVNCName" 8 78 $VNCADDR --title "$StrInputSetupVNCTitle" 3>&1 1>&2 2>&3)
 		    if [ $? -eq 0 ]; then
 			set_config_var vncaddr "$VNCADDR" $CONFIGFILE
-		    fi			
-		    ;;		
+		    fi
+		    ;;
 		esac
 		set_config_var modeinput "$chinput" $CONFIGFILE
 		fi
@@ -411,56 +409,56 @@ choutput=$(whiptail --title "$StrOutputSetupTitle" --radiolist \
  		"DTX1" "$StrOutputSetupDTX1" $Radio5 \
 		"DATVEXPRESS" "$StrOutputSetupDATVExpress" $Radio6 \
 	 	"IP" "$StrOutputSetupIP" $Radio7 3>&2 2>&1 1>&3)
-if [ $? -eq 0 ]; then		
-		
+if [ $? -eq 0 ]; then
+
 		case "$choutput" in
-		    IQ) 
+		    IQ)
 				PIN_I=$(get_config_var gpio_i $CONFIGFILE)
 				PIN_I=$(whiptail --inputbox "$StrPIN_IContext" 8 78 $PIN_I --title "$StrPIN_ITitle" 3>&1 1>&2 2>&3)
 			if [ $? -eq 0 ]; then
-				set_config_var gpio_i "$PIN_I" $CONFIGFILE	
+				set_config_var gpio_i "$PIN_I" $CONFIGFILE
 			fi
 				PIN_Q=$(get_config_var gpio_q $CONFIGFILE)
 				PIN_Q=$(whiptail --inputbox "$StrPIN_QContext" 8 78 $PIN_Q --title "$StrPIN_QTitle" 3>&1 1>&2 2>&3)
 			if [ $? -eq 0 ]; then
-				set_config_var gpio_q "$PIN_Q" $CONFIGFILE	
+				set_config_var gpio_q "$PIN_Q" $CONFIGFILE
 			fi
-				;;	
+				;;
 		    QPSKRF)
 			FREQ_OUTPUT=$(get_config_var freqoutput $CONFIGFILE)
-			FREQ=$(whiptail --inputbox "$StrOutputRFFreqContext" 8 78 $FREQ_OUTPUT --title "$StrOutputRFFreqTitle" 3>&1 1>&2 2>&3)
-			if [ $? -eq 0 ]; then
-				set_config_var freqoutput "$FREQ" $CONFIGFILE	
-			fi
+			##FREQ=$(whiptail --inputbox "$StrOutputRFFreqContext" 8 78 $FREQ_OUTPUT --title "$StrOutputRFFreqTitle" 3>&1 1>&2 2>&3)
+			##if [ $? -eq 0 ]; then
+			##	set_config_var freqoutput "$FREQ" $CONFIGFILE
+			##fi
 			GAIN_OUTPUT=$(get_config_var rfpower $CONFIGFILE)
 			GAIN=$(whiptail --inputbox "$StrOutputRFGainContext" 8 78 $GAIN_OUTPUT --title "$StrOutputRFGainTitle" 3>&1 1>&2 2>&3)
 			if [ $? -eq 0 ]; then
-				set_config_var rfpower "$GAIN" $CONFIGFILE	
+				set_config_var rfpower "$GAIN" $CONFIGFILE
 			fi
 		    ;;
 	            BATC)
 			BATC_OUTPUT=$(get_config_var batcoutput $CONFIGFILE)
 			ADRESS=$(whiptail --inputbox "$StrOutputBATCContext" 8 78 $BATC_OUTPUT --title "$StrOutputBATCTitle" 3>&1 1>&2 2>&3)
 			if [ $? -eq 0 ]; then
-				set_config_var batcoutput "$ADRESS" $CONFIGFILE	
-			fi		    
+				set_config_var batcoutput "$ADRESS" $CONFIGFILE
+			fi
 			;;
 		    DIGITHIN)
 			PIN_I=$(get_config_var gpio_i $CONFIGFILE)
 				PIN_I=$(whiptail --inputbox "$StrPIN_IContext" 8 78 $PIN_I --title "$StrPIN_ITitle" 3>&1 1>&2 2>&3)
 			if [ $? -eq 0 ]; then
-				set_config_var gpio_i "$PIN_I" $CONFIGFILE	
+				set_config_var gpio_i "$PIN_I" $CONFIGFILE
 			fi
 				PIN_Q=$(get_config_var gpio_q $CONFIGFILE)
 				PIN_Q=$(whiptail --inputbox "$StrPIN_QContext" 8 78 $PIN_Q --title "$StrPIN_QTitle" 3>&1 1>&2 2>&3)
 			if [ $? -eq 0 ]; then
-				set_config_var gpio_q "$PIN_Q" $CONFIGFILE	
+				set_config_var gpio_q "$PIN_Q" $CONFIGFILE
 			fi
 			FREQ_OUTPUT=$(get_config_var freqoutput $CONFIGFILE)
 			FREQ=$(whiptail --inputbox "$StrOutputRFFreqContext" 8 78 $FREQ_OUTPUT --title "$StrOutputRFFreqTitle" 3>&1 1>&2 2>&3)
 			if [ $? -eq 0 ]; then
-				set_config_var freqoutput "$FREQ" $CONFIGFILE	
-			fi	
+				set_config_var freqoutput "$FREQ" $CONFIGFILE
+			fi
 		        sudo ./si570 -f $FREQ -m off
 			;;
 		    DTX1)	;;
@@ -468,22 +466,22 @@ if [ $? -eq 0 ]; then
 			FREQ_OUTPUT=$(get_config_var freqoutput $CONFIGFILE)
 			FREQ=$(whiptail --inputbox "$StrOutputRFFreqContext" 8 78 $FREQ_OUTPUT --title "$StrOutputRFFreqTitle" 3>&1 1>&2 2>&3)
 			if [ $? -eq 0 ]; then
-				set_config_var freqoutput "$FREQ" $CONFIGFILE	
+				set_config_var freqoutput "$FREQ" $CONFIGFILE
 			fi
 			GAIN_OUTPUT=$(get_config_var rfpower $CONFIGFILE)
 			GAIN=$(whiptail --inputbox "$StrOutputRFGainContext" 8 78 $GAIN_OUTPUT --title "$StrOutputRFGainTitle" 3>&1 1>&2 2>&3)
 			if [ $? -eq 0 ]; then
-				set_config_var rfpower "$GAIN" $CONFIGFILE	
+				set_config_var rfpower "$GAIN" $CONFIGFILE
 			fi
 		    ;;
-		    IP)	
+		    IP)
 			UDPOUTADDR=$(get_config_var udpoutaddr $CONFIGFILE)
-		    
+
 		    UDPOUTADDR=$(whiptail --inputbox "$StrOutputSetupIPTSOUTName" 8 78 $UDPOUTADDR --title "$StrOutputSetupIPTSOUTTitle" 3>&1 1>&2 2>&3)
 		    if [ $? -eq 0 ]; then
 			set_config_var udpoutaddr "$UDPOUTADDR" $CONFIGFILE
-		    fi			
-		    ;; 
+		    fi
+		    ;;
 		esac
 		set_config_var modeoutput "$choutput" $CONFIGFILE
 fi
@@ -554,7 +552,7 @@ do_fec_setup()
 		"7" "7/8" $Radio5 3>&2 2>&1 1>&3)
 if [ $? -eq 0 ]; then
 	set_config_var fec "$FEC" $CONFIGFILE
-fi				
+fi
 }
 
 do_PID_setup()
@@ -573,39 +571,48 @@ set_config_var pidaudio "$PID" $CONFIGFILE
 fi
 }
 
+do_freq_setup()
+{
+FREQ_OUTPUT=$(get_config_var freqoutput $CONFIGFILE)
+FREQ=$(whiptail --inputbox "$StrOutputRFFreqContext" 8 78 $FREQ_OUTPUT --title "$StrOutputRFFreqTitle" 3>&1 1>&2 2>&3)
+if [ $? -eq 0 ]; then
+	set_config_var freqoutput "$FREQ" $CONFIGFILE
+fi
+}
+
 do_output_setup() {
 menuchoice=$(whiptail --title "$StrOutputTitle" --menu "$StrOutputContext" 16 78 5 \
         "1 SymbolRate" "$StrOutputSR"  \
         "2 FEC" "$StrOutputFEC" \
 	"3 Output mode" "$StrOutputMode" \
 	"4 PID" "$StrPIDSetup" \
+	"5 Frequency" "$StrOutputRFFreqContext" \
 	3>&2 2>&1 1>&3)
 	case "$menuchoice" in
             1\ *) do_symbolrate_setup ;;
             2\ *) do_fec_setup   ;;
 	    3\ *) do_output_setup_mode ;;
-	    4\ *) do_PID_setup ;;	
+	    4\ *) do_PID_setup ;;
+	    5\ *) do_freq_setup ;;
         esac
 }
 
 
 do_transmit() 
 {
-		
 	$PATHSCRIPT"/a.sh" >/dev/null 2>/dev/null &
 	#$PATHSCRIPT"/a.sh" &
 	do_status
 	do_stop_transmit
-	
 }
 
 do_stop_transmit()
 {
 	sudo killall rpidatv >/dev/null 2>/dev/null
 	sudo killall ffmpeg >/dev/null 2>/dev/null
-		sudo killall tcanim >/dev/null 2>/dev/null
+	sudo killall tcanim >/dev/null 2>/dev/null
 	sudo killall avc2ts >/dev/null 2>/dev/null
-
+	sudo $PATHRPI"/adf4351" off
 }
 
 do_display_on()
@@ -716,45 +723,83 @@ do_display_setup()
 {
 MODE_DISPLAY=$(get_config_var display $CONFIGFILE)
 case "$MODE_DISPLAY" in
-	Tontec35) 
+
+	Tontec35)
 	Radio1=ON
 	Radio2=OFF
 	Radio3=OFF
+	Radio4=OFF
 	;;
 	HDMITouch)
 	Radio1=OFF
 	Radio2=ON
 	Radio3=OFF
-	;;
+	Radio4=OFF
+ 	;;
 	Waveshare)
 	Radio1=OFF
 	Radio2=OFF
 	Radio3=ON
+	Radio4=OFF
 	;;
+        Console)
+        Radio1=OFF
+        Radio2=OFF
+        Radio3=OFF
+        Radio4=ON
+        ;;
 	*)
 	Radio1=ON
 	Radio2=OFF
 	Radio3=OFF
-	
+	Radio4=OFF
 esac
 
 chdisplay=$(whiptail --title "$StrDisplaySetupTitle" --radiolist \
-		"$StrDisplaySetupContext" 20 78 8 \
-		"Tontec35" "$DisplaySetupTontec" $Radio1 \
-		"HDMITouch" "$DisplaySetupHDMI" $Radio2 \
-		"Waveshare" "$DisplaySetupRpiLCD" $Radio3 \
-		 3>&2 2>&1 1>&3)
+	"$StrDisplaySetupContext" 20 78 8 \
+	"Tontec35" "$DisplaySetupTontec" $Radio1 \
+	"HDMITouch" "$DisplaySetupHDMI" $Radio2 \
+	"Waveshare" "$DisplaySetupRpiLCD" $Radio3 \
+        "Console" "$DisplaySetupConsole" $Radio4 \
+ 	 3>&2 2>&1 1>&3)
 
-if [ $? -eq 0 ]; then		
-		
-		case "$chdisplay" in
-		    Tontec35) sudo bash -c 'echo -e "\ndtparam=spi=on\ndtoverlay=mz61581\n" >> /boot/config.txt' ;;	
-		    HDMITouch) sudo bash -c 'echo -e "\nhdmi_group=2\nhdmi_mode=1\nhdmi_mode=87\nhdmi_cvt 800 480 60 6 0 0 0\ndtparam=spi=on\n\ndtoverlay=ads7846,cs=1,penirq=25,penirq_pull=2,speed=50000,keep_vref_on=0,swapxy=0,pmax=255,xohms=150,xmin=200,xmax=3900,ymin=200,ymax=3900" >> /boot/config.txt' ;;
-	            Waveshare) sudo bash -c 'echo -e "\ndtparam=spi=on\ndtoverlay=waveshare35a\ndtoverlay=ads7846,cs=1,penirq=17,penirq_pull=2,speed=1000000,keep_vref_on=1,swapxy=1,pmax=255,xohms=60,xmin=200,xmax=3900,ymin=200,ymax=3900\n" >> /boot/config.txt' ;;
+## This section modifies and replaces the end of /boot/config.txt
+## to allow (only) the correct LCD drivers to be loaded at next boot
 
-			
-		esac
-		set_config_var display "$chdisplay" $CONFIGFILE
+## Set constants for the amendment of /boot/config.txt below
+
+PATHCONFIGS="/home/pi/rpidatv/scripts/configs"  ## Path to config files
+lead='^## Begin LCD Driver'     ## Marker for start of inserted message
+tail='^## End LCD Driver'       ## Marker for start of inserted message
+CHANGEFILE="/boot/config.txt"   ## File requiring added message
+APPENDFILE=$PATHCONFIGS"/lcd_markers.txt" ## File containing both markers
+TRANSFILE=$PATHCONFIGS"/transfer.txt"     ## File used for transfer
+
+if [ $? -eq 0 ]; then           ## If the selection has changed
+
+	grep -q "$lead" "$CHANGEFILE"   ## Is the first marker already present?
+	if [ $? -ne 0 ]; then
+		sudo bash -c 'cat '$APPENDFILE' >> '$CHANGEFILE' '  ## If not append the markers
+	fi
+
+	case "$chdisplay" in  ## Select the correct driver text
+
+		Tontec35)  INSERTFILE=$PATHCONFIGS"/tontec35.txt" ;; ## Message to be added
+		HDMITouch) INSERTFILE=$PATHCONFIGS"/hdmitouch.txt" ;;
+	        Waveshare) INSERTFILE=$PATHCONFIGS"/waveshare.txt" ;;
+		Console)   INSERTFILE=$PATHCONFIGS"/console.txt" ;;
+
+	esac
+
+	## Replace whatever is between the markers with the driver text
+
+	sed -e "/$lead/,/$tail/{ /$lead/{p; r $INSERTFILE
+	  }; /$tail/p; d }" $CHANGEFILE >> $TRANSFILE
+
+	sudo cp "$TRANSFILE" "$CHANGEFILE"          ## Copy from the transfer file
+	rm $TRANSFILE                               ## Delete the transfer file
+
+	set_config_var display "$chdisplay" $CONFIGFILE
 fi
 }
 
@@ -822,26 +867,26 @@ INFO=$CALL":"$MODE_INPUT"-->"$MODE_OUTPUT"("$SYMBOLRATEK"KSymbol FEC "$FECNUM"/"
 #do_display_on
 #"1 Transmission" "Demarre la transmission"\
  menuchoice=$(whiptail --title "$StrMainMenuTitle" --menu "$INFO" 16 82 6 \
-	"0 Transmit" "Go transmit" \
+	"0 Transmit" "Go to transmit" \
         "1 Source" "$StrMainMenuSource" \
-	"2 Sortie" "$StrMainMenuOutput" \
+	"2 Output" "$StrMainMenuOutput" \
 	"3 Station" "$StrMainMenuCall" \
 	"4 Receive" "Receive via rtlsdr" \
 	"5 System" "$StrMainMenuSystem" \
 	3>&2 2>&1 1>&3)
-      
+
         case "$menuchoice" in
-	    0\ *) do_transmit   ;;	
+	    0\ *) do_transmit   ;;
             1\ *) do_input_setup   ;;
 	    2\ *) do_output_setup ;;
    	    3\ *) do_station_setup ;;
-	    4\ *) do_receive ;;	
-	    5\ *) do_system_setup ;;	
+	    4\ *) do_receive ;;
+	    5\ *) do_system_setup ;;
             *)
-		
+
 		 whiptail --title "$StrMainMenuExitTitle" --msgbox "$StrMainMenuExitContext" 8 78
                 status=1
-		
+
 		kill -1 $(pidof -x frmenu.sh) >/dev/null 2>/dev/null
 		kill -1 $(pidof -x gbmenu.sh) >/dev/null 2>/dev/null 
 		sleep 1
