@@ -88,11 +88,12 @@ AutostartSetupConsole="Console menu"
 AutostartSetupDisplay="Display with touchscreen"
 AutostartSetupButton="Push buttons"
 
-StrDisplaySetupTitle="Touchscreen setup"
+StrDisplaySetupTitle="Touchscreen setup - needs reboot after setting"
 StrDisplaySetupContext="Choice:"
 DisplaySetupTontec="Tontec 3,5 inches"
 DisplaySetupHDMI="HDMI touchscreen"
 DisplaySetupRpiLCD="Rpi LCD"
+DisplaySetupConsole="Network Console"
 
 StrIPSetupTitle="Setup a static IP"
 StrIPSetupContext="Example: 192.168.1.60"
@@ -104,7 +105,7 @@ StrMainMenuOutput="Output select"
 StrMainMenuCall="Station call setup"
 StrMainMenuSystem="System setup"
 StrMainMenuExitTitle="Exit"
-StrMainMenuExitContext="Thanks to use RpiDATV... 73's de F5OEO(evaristec@gmail.com)"
+StrMainMenuExitContext="Thanks for using RpiDATV... 73's de F5OEO(evaristec@gmail.com)"
 
 ########## FILE #################
 
