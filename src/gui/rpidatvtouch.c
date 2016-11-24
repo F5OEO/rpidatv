@@ -1153,11 +1153,11 @@ int main(int argc, char **argv) {
 	printf("Value=%s %s\n",Value,"SR");
 	switch(SR)
 	{
-		case 125:SelectSR(5);break;
-		case 250:SelectSR(6);break;
-		case 333:SelectSR(7);break;
-		case 500:SelectSR(8);break;
-		case 1000:SelectSR(9);break;
+		case 250:SelectSR(5);break;
+		case 333:SelectSR(6);break;
+		case 500:SelectSR(7);break;
+		case 1000:SelectSR(8);break;
+		case 2000:SelectSR(9);break;
 	}
 
 	// FEC
