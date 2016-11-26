@@ -4,6 +4,8 @@
 
 PATHSCRIPT=/home/pi/rpidatv/scripts
 PATHRPI=/home/pi/rpidatv/bin
+CONFIGFILE=$PATHSCRIPT"/rpidatvconfig.txt"
+
 
 set_config_var() {
 lua - "$1" "$2" "$3" <<EOF > "$3.bak"
@@ -840,7 +842,18 @@ INFO=$CALL":"$MODE_INPUT"-->"$MODE_OUTPUT"("$SYMBOLRATEK"KSymbol FEC "$FECNUM"/"
 	do_transmit
 }
 
-#********************************************* MAIN MENU **************************************************
+#********************************************* MAIN MENU *********************************
+#************************* Execution of Console Menu starts here *************************
+
+# Check Language
+
+LANG=$(get_config_var language $CONFIGFILE)
+if [ "$LANG" == "en" ]; then
+  source $PATHSCRIPT"/langgb.sh"
+else
+  source $PATHSCRIPT"/langfr.sh"
+fi
+
 status="0"
 OnStartup
 #$PATHRPI"/rpibutton.sh" &
