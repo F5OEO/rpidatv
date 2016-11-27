@@ -4,7 +4,7 @@
 
 PATHSCRIPT=/home/pi/rpidatv/scripts
 PATHRPI=/home/pi/rpidatv/bin
-CONFIGFILE=$PATHSCRIPT"/rpidatvconfig.txt"
+##CONFIGFILE=$PATHSCRIPT"/rpidatvconfig.txt"
 
 
 set_config_var() {
@@ -848,11 +848,11 @@ INFO=$CALL":"$MODE_INPUT"-->"$MODE_OUTPUT"("$SYMBOLRATEK"KSymbol FEC "$FECNUM"/"
 # Check Language
 
 LANG=$(get_config_var language $CONFIGFILE)
-if [ "$LANG" == "en" ]; then
-  source $PATHSCRIPT"/langgb.sh"
-else
-  source $PATHSCRIPT"/langfr.sh"
-fi
+##if [ "$LANG" == "en" ]; then
+##  source $PATHSCRIPT"/langgb.sh"
+##else
+##  source $PATHSCRIPT"/langfr.sh"
+##fi
 
 status="0"
 OnStartup
