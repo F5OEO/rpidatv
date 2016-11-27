@@ -4,8 +4,8 @@
 
 PATHSCRIPT=/home/pi/rpidatv/scripts
 PATHRPI=/home/pi/rpidatv/bin
-##CONFIGFILE=$PATHSCRIPT"/rpidatvconfig.txt"
-
+CONFIGFILE=$PATHSCRIPT"/rpidatvconfig.txt"
+PATHCONFIGS="/home/pi/rpidatv/scripts/configs"  ## Path to config files
 
 set_config_var() {
 lua - "$1" "$2" "$3" <<EOF > "$3.bak"
@@ -692,7 +692,7 @@ case "$MODE_STARTUP" in
 	Radio1=ON
 	Radio2=OFF
 	Radio3=OFF
-	
+
 esac
 
 chstartup=$(whiptail --title "$StrAutostartSetupTitle" --radiolist \
@@ -702,8 +702,7 @@ chstartup=$(whiptail --title "$StrAutostartSetupTitle" --radiolist \
 		"Button" "$AutostartSetupButton" $Radio3 \
 		 3>&2 2>&1 1>&3)
 
-if [ $? -eq 0 ]; then		
-		
+if [ $? -eq 0 ]; then
 		case "$chstartup" in
 		    Console) cp $PATHSCRIPT"/install_bashrc" /home/pi/.bashrc >/dev/null 2>/dev/null;;	
 		    Display) MODE_DISPLAY=$(get_config_var display $CONFIGFILE)
@@ -713,9 +712,9 @@ if [ $? -eq 0 ]; then
 				*)
 				cp $PATHSCRIPT"/install_display.fr" /home/pi/.bashrc >/dev/null 2>/dev/null;;
 				esac;;
-			
+
 	            Button) cp $PATHSCRIPT"/install_button" /home/pi/.bashrc >/dev/null 2>/dev/null;;
-			
+
 		esac
 		set_config_var startup "$chstartup" $CONFIGFILE
 fi
@@ -770,21 +769,20 @@ chdisplay=$(whiptail --title "$StrDisplaySetupTitle" --radiolist \
 
 ## Set constants for the amendment of /boot/config.txt below
 
-PATHCONFIGS="/home/pi/rpidatv/scripts/configs"  ## Path to config files
-lead='^## Begin LCD Driver'     ## Marker for start of inserted message
-tail='^## End LCD Driver'       ## Marker for start of inserted message
-CHANGEFILE="/boot/config.txt"   ## File requiring added message
+lead='^## Begin LCD Driver'               ## Marker for start of inserted text
+tail='^## End LCD Driver'                 ## Marker for end of inserted text
+CHANGEFILE="/boot/config.txt"             ## File requiring added text
 APPENDFILE=$PATHCONFIGS"/lcd_markers.txt" ## File containing both markers
 TRANSFILE=$PATHCONFIGS"/transfer.txt"     ## File used for transfer
 
-if [ $? -eq 0 ]; then           ## If the selection has changed
+if [ $? -eq 0 ]; then                     ## If the selection has changed
 
-	grep -q "$lead" "$CHANGEFILE"   ## Is the first marker already present?
+	grep -q "$lead" "$CHANGEFILE"     ## Is the first marker already present?
 	if [ $? -ne 0 ]; then
 		sudo bash -c 'cat '$APPENDFILE' >> '$CHANGEFILE' '  ## If not append the markers
 	fi
 
-	case "$chdisplay" in  ## Select the correct driver text
+	case "$chdisplay" in              ## Select the correct driver text
 
 		Tontec35)  INSERTFILE=$PATHCONFIGS"/tontec35.txt" ;; ## Message to be added
 		HDMITouch) INSERTFILE=$PATHCONFIGS"/hdmitouch.txt" ;;
@@ -825,9 +823,39 @@ menuchoice=$(whiptail --title "$StrSystemTitle" --menu "$StrSystemContext" 16 78
         esac
 }
 
+do_language_setup()
+{
+menuchoice=$(whiptail --title "$StrLanguageTitle" --menu "$StrOutputContext" 16 78 6 \
+        "1 French Menus" "Menus Francais"  \
+        "2 English Menus" "Change Menus to English" \
+        "3 French Keyboard" "$StrKeyboardChange" \
+        "4 UK Keyboard" "$StrKeyboardChange" \
+        "5 US Keyboard" "$StrKeyboardChange" \
+         3>&2 2>&1 1>&3)
+        case "$menuchoice" in
+            1\ *) set_config_var menulanguage "fr" $CONFIGFILE ;;
+            2\ *) set_config_var menulanguage "en" $CONFIGFILE ;;
+            3\ *) sudo cp $PATHCONFIGS"/keyfr" /etc/default/keyboard ;;
+            4\ *) sudo cp $PATHCONFIGS"/keygb" /etc/default/keyboard ;;
+            5\ *) sudo cp $PATHCONFIGS"/keyus" /etc/default/keyboard ;;
+        esac
+
+        # Check Language
+
+        MENU_LANG=$(get_config_var menulanguage $CONFIGFILE)
+
+        # Set Language
+
+        if [ "$MENU_LANG" == "en" ]; then
+          source $PATHSCRIPT"/langgb.sh"
+        else
+          source $PATHSCRIPT"/langfr.sh"
+        fi
+}
+
 OnStartup()
 {
-	CALL=$(get_config_var call $CONFIGFILE)
+CALL=$(get_config_var call $CONFIGFILE)
 MODE_INPUT=$(get_config_var modeinput $CONFIGFILE)
 MODE_OUTPUT=$(get_config_var modeoutput $CONFIGFILE)
 SYMBOLRATEK=$(get_config_var symbolrate $CONFIGFILE)
@@ -847,14 +875,18 @@ INFO=$CALL":"$MODE_INPUT"-->"$MODE_OUTPUT"("$SYMBOLRATEK"KSymbol FEC "$FECNUM"/"
 
 # Check Language
 
-LANG=$(get_config_var language $CONFIGFILE)
-##if [ "$LANG" == "en" ]; then
-##  source $PATHSCRIPT"/langgb.sh"
-##else
-##  source $PATHSCRIPT"/langfr.sh"
-##fi
+MENU_LANG=$(get_config_var menulanguage $CONFIGFILE)
+
+# Set Language
+
+if [ "$MENU_LANG" == "en" ]; then
+  source $PATHSCRIPT"/langgb.sh"
+else
+  source $PATHSCRIPT"/langfr.sh"
+fi
 
 status="0"
+
 OnStartup
 #$PATHRPI"/rpibutton.sh" &
 sleep 0.2
@@ -878,14 +910,15 @@ INFO=$CALL":"$MODE_INPUT"-->"$MODE_OUTPUT"("$SYMBOLRATEK"KSymbol FEC "$FECNUM"/"
 #do_transmit
 #do_status
 #do_display_on
-#"1 Transmission" "Demarre la transmission"\
- menuchoice=$(whiptail --title "$StrMainMenuTitle" --menu "$INFO" 16 82 6 \
+
+    menuchoice=$(whiptail --title "$StrMainMenuTitle" --menu "$INFO" 16 82 8 \
 	"0 Transmit" "Go to transmit" \
         "1 Source" "$StrMainMenuSource" \
 	"2 Output" "$StrMainMenuOutput" \
 	"3 Station" "$StrMainMenuCall" \
 	"4 Receive" "Receive via rtlsdr" \
 	"5 System" "$StrMainMenuSystem" \
+	"6 Language" "Set Language and Keyboard" \
 	3>&2 2>&1 1>&3)
 
         case "$menuchoice" in
@@ -895,6 +928,7 @@ INFO=$CALL":"$MODE_INPUT"-->"$MODE_OUTPUT"("$SYMBOLRATEK"KSymbol FEC "$FECNUM"/"
    	    3\ *) do_station_setup ;;
 	    4\ *) do_receive ;;
 	    5\ *) do_system_setup ;;
+	    6\ *) do_language_setup ;;
             *)
 
 		 whiptail --title "$StrMainMenuExitTitle" --msgbox "$StrMainMenuExitContext" 8 78

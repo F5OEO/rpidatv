@@ -98,10 +98,15 @@ DisplaySetupConsole="Network Console"
 StrIPSetupTitle="Setup a static IP"
 StrIPSetupContext="Example: 192.168.1.60"
 
+######## LANGUAGE MENU #########
+
+StrLanguageTitle="Language Selection"
+StrKeyboardChange="Needs reboot after setting"
+
 ######## MAIN MENU #########
 StrMainMenuTitle="RpiDATV GUI Version 2.0 (F5OEO Evariste)"
-StrMainMenuSource="Source select"
-StrMainMenuOutput="Output select"
+StrMainMenuSource="Select Video Source"
+StrMainMenuOutput="Configure Output"
 StrMainMenuCall="Station call setup"
 StrMainMenuSystem="System setup"
 StrMainMenuExitTitle="Exit"
