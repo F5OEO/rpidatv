@@ -82,11 +82,19 @@ StrAutostartMenu="Automatic startup"
 StrDisplayMenu="Display type"
 StrIPMenu="IP Address"
 
+######## AUTOSTART MENU #########
+
 StrAutostartSetupTitle="Autostart setup"
 StrAutostartSetupContext="Choice:"
-AutostartSetupConsole="Console menu"
-AutostartSetupDisplay="Display with touchscreen"
-AutostartSetupButton="Push buttons"
+AutostartSetupPrompt="Log-on to Linux Command Prompt"
+AutostartSetupConsole="Log-on to rpidatv Menu"
+AutostartSetupDisplay="Log-on to start Touchscreen Display"
+AutostartSetupButton="Log-on to enable Button Control"
+AutostartSetupTX_boot="Boot-up to Transmit"
+AutostartSetupDisplay_boot="Boot-up to Touchscreen Display"
+AutostartSetupButton_boot="Boot-up to Button Control"
+
+######## TOUCHSCREEN MENU #########
 
 StrDisplaySetupTitle="Touchscreen setup - needs reboot after setting"
 StrDisplaySetupContext="Choice:"

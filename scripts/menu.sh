@@ -602,10 +602,9 @@ menuchoice=$(whiptail --title "$StrOutputTitle" --menu "$StrOutputContext" 16 78
 
 do_transmit() 
 {
-	$PATHSCRIPT"/a.sh" >/dev/null 2>/dev/null &
-	#$PATHSCRIPT"/a.sh" &
-	do_status
-	do_stop_transmit
+    $PATHSCRIPT"/a.sh" >/dev/null 2>/dev/null &
+    do_status  # Wait here transmitting until user presses a key
+    do_stop_transmit
 }
 
 do_stop_transmit()
@@ -644,8 +643,6 @@ do_receive_status()
 	whiptail --title "RECEIVE" --msgbox "$INFO" 8 78
 	sudo killall rpidatvgui >/dev/null 2>/dev/null
 	sudo killall leandvb >/dev/null 2>/dev/null
-	
-
 }
 
 do_receive()
@@ -666,58 +663,101 @@ do_receive()
 	/home/pi/rpidatv/bin/rpidatvgui 0 1  >/dev/null 2>/dev/null & 
 	do_receive_status;;
 	esac
-	
 }
 
 do_autostart_setup()
 {
-MODE_STARTUP=$(get_config_var startup $CONFIGFILE)
-case "$MODE_STARTUP" in
-	Console) 
-	Radio1=ON
-	Radio2=OFF
-	Radio3=OFF
-	;;
-	Display)
-	Radio1=OFF
-	Radio2=ON
-	Radio3=OFF
-	;;
-	Button)
-	Radio1=OFF
-	Radio2=OFF
-	Radio3=ON
-	;;
-	*)
-	Radio1=ON
-	Radio2=OFF
-	Radio3=OFF
+    MODE_STARTUP=$(get_config_var startup $CONFIGFILE)
 
-esac
+    Radio1=OFF
+    Radio2=OFF
+    Radio3=OFF
+    Radio4=OFF
+    Radio5=OFF
+    Radio6=OFF
+    Radio7=OFF
 
-chstartup=$(whiptail --title "$StrAutostartSetupTitle" --radiolist \
-		"$StrAutostartSetupContext" 20 78 8 \
-		"Console" "$AutostartSetupConsole" $Radio1 \
-		"Display" "$AutostartSetupDisplay" $Radio2 \
-		"Button" "$AutostartSetupButton" $Radio3 \
-		 3>&2 2>&1 1>&3)
+    case "$MODE_STARTUP" in
+        Prompt)
+            Radio1=ON;;
+        Console)
+            Radio2=ON;;
+        Display)
+            Radio3=ON;;
+        Button)
+            Radio4=ON;;
+        TX_boot)
+            Radio5=ON;;
+        Display_boot)
+            Radio6=ON;;
+        Button_boot)
+            Radio7=ON;;
+        *)
+            Radio1=ON;;
+    esac
 
-if [ $? -eq 0 ]; then
-		case "$chstartup" in
-		    Console) cp $PATHSCRIPT"/install_bashrc" /home/pi/.bashrc >/dev/null 2>/dev/null;;	
-		    Display) MODE_DISPLAY=$(get_config_var display $CONFIGFILE)
-				case "$MODE_DISPLAY" in
-				Waveshare)
-				 cp $PATHSCRIPT"/install_display_inversed.fr" /home/pi/.bashrc >/dev/null 2>/dev/null;;
-				*)
-				cp $PATHSCRIPT"/install_display.fr" /home/pi/.bashrc >/dev/null 2>/dev/null;;
-				esac;;
+    chstartup=$(whiptail --title "$StrAutostartSetupTitle" --radiolist \
+        "$StrAutostartSetupContext" 20 78 8 \
+        "Prompt" "$AutostartSetupPrompt" $Radio1 \
+        "Console" "$AutostartSetupConsole" $Radio2 \
+        "Display" "$AutostartSetupDisplay" $Radio3 \
+        "Button" "$AutostartSetupButton" $Radio4 \
+        "TX_boot" "$AutostartSetupTX_boot" $Radio5 \
+        "Display_boot" "$AutostartSetupDisplay_boot" $Radio6 \
+        "Button_boot" "$AutostartSetupButton_boot" $Radio7 \
+        3>&2 2>&1 1>&3)
 
-	            Button) cp $PATHSCRIPT"/install_button" /home/pi/.bashrc >/dev/null 2>/dev/null;;
+    if [ $? -eq 0 ]; then
+        case "$chstartup" in
+            Prompt)
+                sudo systemctl disable getty@tty1.service
+                sudo rm /etc/systemd/system/getty@tty1.service.d/autologin.conf
+                cp $PATHCONFIGS"/prompt.bashrc" /home/pi/.bashrc;;
+            Console)
+                sudo systemctl disable getty@tty1.service
+                sudo rm /etc/systemd/system/getty@tty1.service.d/autologin.conf
+                cp $PATHCONFIGS"/console.bashrc" /home/pi/.bashrc;;
 
-		esac
-		set_config_var startup "$chstartup" $CONFIGFILE
-fi
+				##$PATHSCRIPT"/install_bashrc" /home/pi/.bashrc >/dev/null 2>/dev/null;; 
+
+            Display)
+                sudo systemctl disable getty@tty1.service
+                sudo rm /etc/systemd/system/getty@tty1.service.d/autologin.conf
+                MODE_DISPLAY=$(get_config_var display $CONFIGFILE)
+                case "$MODE_DISPLAY" in
+                    Waveshare)
+                        cp $PATHCONFIGS"/displaywaveshare.bashrc" /home/pi/.bashrc;; #>/dev/null 2>/dev/null;;
+                    *)
+                        cp $PATHCONFIGS"/display.bashrc" /home/pi/.bashrc;; #>/dev/null 2>/dev/null;;
+                esac;;
+            Button)
+                sudo systemctl disable getty@tty1.service
+                sudo rm /etc/systemd/system/getty@tty1.service.d/autologin.conf
+                cp $PATHCONFIGS"/button.bashrc" /home/pi/.bashrc;;
+            TX_boot)
+                sudo mkdir -pv /etc/systemd/system/getty@tty1.service.d/
+		sudo cp $PATHCONFIGS"/autologin.conf" /etc/systemd/system/getty@tty1.service.d/
+                sudo systemctl enable getty@tty1.service
+                cp $PATHCONFIGS"/console_tx.bashrc" /home/pi/.bashrc;;
+            Display_boot)
+                sudo mkdir -pv /etc/systemd/system/getty@tty1.service.d/
+                sudo cp $PATHCONFIGS"/autologin.conf" /etc/systemd/system/getty@tty1.service.d/
+                sudo systemctl enable getty@tty1.service
+                MODE_DISPLAY=$(get_config_var display $CONFIGFILE)
+                case "$MODE_DISPLAY" in
+                    Waveshare)
+                        cp $PATHCONFIGS"/displaywaveshare.bashrc" /home/pi/.bashrc;; #>/dev/null 2>/dev/null;;
+                    *)
+                        cp $PATHCONFIGS"/display.bashrc" /home/pi/.bashrc;; #>/dev/null 2>/dev/null;;
+                esac;;
+            Button_boot)
+                sudo mkdir -pv /etc/systemd/system/getty@tty1.service.d/
+                sudo cp $PATHCONFIGS"/autologin.conf" /etc/systemd/system/getty@tty1.service.d/
+                sudo systemctl enable getty@tty1.service
+                cp $PATHCONFIGS"/button.bashrc" /home/pi/.bashrc;;
+        esac
+        set_config_var startup "$chstartup" $CONFIGFILE
+    fi
 }
 
 do_display_setup()
@@ -769,6 +809,7 @@ chdisplay=$(whiptail --title "$StrDisplaySetupTitle" --radiolist \
 
 ## Set constants for the amendment of /boot/config.txt below
 
+PATHCONFIGS="/home/pi/rpidatv/scripts/configs"  ## Path to config files
 lead='^## Begin LCD Driver'               ## Marker for start of inserted text
 tail='^## End LCD Driver'                 ## Marker for end of inserted text
 CHANGEFILE="/boot/config.txt"             ## File requiring added text
@@ -794,7 +835,7 @@ if [ $? -eq 0 ]; then                     ## If the selection has changed
 	## Replace whatever is between the markers with the driver text
 
 	sed -e "/$lead/,/$tail/{ /$lead/{p; r $INSERTFILE
-	  }; /$tail/p; d }" $CHANGEFILE >> $TRANSFILE
+	        }; /$tail/p; d }" $CHANGEFILE >> $TRANSFILE
 
 	sudo cp "$TRANSFILE" "$CHANGEFILE"          ## Copy from the transfer file
 	rm $TRANSFILE                               ## Delete the transfer file
@@ -880,15 +921,17 @@ MENU_LANG=$(get_config_var menulanguage $CONFIGFILE)
 # Set Language
 
 if [ "$MENU_LANG" == "en" ]; then
-  source $PATHSCRIPT"/langgb.sh"
+    source $PATHSCRIPT"/langgb.sh"
 else
-  source $PATHSCRIPT"/langfr.sh"
+    source $PATHSCRIPT"/langfr.sh"
 fi
 
 status="0"
 
-OnStartup
-#$PATHRPI"/rpibutton.sh" &
+if [ "$1" != "menu" ]; then # if tx on boot
+    OnStartup               # go straight to transmit
+fi
+
 sleep 0.2
 
     while [ "$status" -eq 0 ] 

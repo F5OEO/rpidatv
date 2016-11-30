@@ -18,4 +18,4 @@ locator=JNO6EP
 pidstart=1000
 pidaudio=1002
 display=Waveshare
-menulanguage=en
+menulanguage=fr
