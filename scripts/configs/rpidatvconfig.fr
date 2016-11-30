@@ -1,9 +1,9 @@
 modeinput=PATERNAUDIO
-symbolrate=2000
+symbolrate=250
 fec=7
 freqoutput=437
 rfpower=7
-modeoutput=IQ
+modeoutput=QPSKRF
 tsvideofile=/home/pi/rpidatv/video/f4day.ts
 call=F5OEO
 paternfile=/home/pi/rpidatv/video
@@ -18,4 +18,4 @@ locator=JNO6EP
 pidstart=1000
 pidaudio=1002
 display=Waveshare
-menulanguage=en
+menulanguage=fr
