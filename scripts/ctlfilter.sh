@@ -2,7 +2,7 @@
 
 # Called by a.sh in IQ mode to switch in correct
 # Nyquist Filter and band switching
-# Written by Dave G8GKQ 26 Nov 16
+# Written by Dave G8GKQ 26 Nov 16 and 4 Dec 16
 
 # SR Outputs:
 
@@ -11,7 +11,8 @@
 # <360   010
 # <550   011
 # <1100  100
-# >=1100 101 
+# <2200  101
+# >=2200 110 
  
 # Band Outputs:
 
@@ -94,9 +95,13 @@ elif (( $SYMBOLRATEK \< 1100 )); then
                 gpio -g write $filter_bit0 0;
                 gpio -g write $filter_bit1 0;
                 gpio -g write $filter_bit2 1;
-else
+elif (( $SYMBOLRATEK \< 2200 )); then
                 gpio -g write $filter_bit0 1;
                 gpio -g write $filter_bit1 0;
+                gpio -g write $filter_bit2 1;
+else
+                gpio -g write $filter_bit0 0;
+                gpio -g write $filter_bit1 1;
                 gpio -g write $filter_bit2 1;
 fi
 
