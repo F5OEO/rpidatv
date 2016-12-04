@@ -166,11 +166,6 @@ int32_t adf4350_write(uint32_t data)
 	uint8_t CLK_4351_GPIO = 21;
 	uint8_t DATA_4351_GPIO = 22;
 
-	// Kick  wiringPi into action.  Essential!
-
-	//if (wiringPiSetup () == -1)
-	 //printf("Wiring Pi not set up ");
-
 	// Set all nominated pins to outputs
 
 	pinMode(LE_4351_GPIO, OUTPUT);
@@ -187,7 +182,8 @@ int32_t adf4350_write(uint32_t data)
 
 	digitalWrite(LE_4351_GPIO, LOW);
 
-	printf(" ADF4351 Register (one of the five) Updated\n");
+	// printf(" ADF4351 Register (one of the five) Updated\n");
+
 	// Initialise loop
 
 	uint16_t i;
@@ -506,7 +502,8 @@ int32_t adf4350_setup(uint32_t spi_device_id, uint8_t slave_select,
 	adf4350_out_altvoltage0_frequency_resolution(st->pdata->channel_spacing);
 	adf4350_out_altvoltage0_frequency(st->pdata->power_up_frequency);
 
-	printf("ADF4350 successfully initialized.\n");
+	// printf("ADF4350 successfully initialized.\n");
+
 	/*int i;
 	for(i=0;i<6;i++)
 	printf("RegHw%d %x\n",i,st->regs[i]);
