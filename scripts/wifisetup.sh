@@ -9,28 +9,40 @@ reset  # Clear the screen
 if [ -f ~/.wifi_off ]; then
     printf "WiFi was disabled at start-up.\n"
     printf "You cannot set up the WiFi until it is re-enabled.\n"
-    printf "Do you want to re-enable it and reboot imediately?\n"
+    printf "Do you want to re-enable it and reboot immediately? (y/n)\n"
     read -n 1
     printf "\n"
     if [ "$REPLY" = "Y" ]; then
 	echo "rebooting"
         rm ~/.wifi_off
 	sudo reboot now
-    else
-        if [ "$REPLY" = "y" ]; then
-            echo "rebooting"
-            rm ~/.wifi_off
-            sudo reboot now
-        else
-            exit
-        fi
     fi
+    if [ "$REPLY" = "y" ]; then
+        echo "rebooting"
+        rm ~/.wifi_off
+        sudo reboot now
+    fi
+    exit
 fi
 
 ## Wifi is enabled so
-## List the available networks
+## Check current network name
 
-printf "The following networks are available:\n"
+printf "Current WiFi Status:\n\n"
+iwgetid
+printf "\nDo you want to set up a new network? (y/n)\n"
+read -n 1
+printf "\n"
+if [ "$REPLY" = "N" ]; then
+    exit
+fi
+if [ "$REPLY" = "n" ]; then
+   exit
+fi
+ 
+## Set up new network
+
+printf "\nThe following networks are available:\n"
 printf "\n"
 sudo iwlist wlan0 scan | grep 'ESSID'
 printf "\n"

@@ -711,28 +711,25 @@ do_autostart_setup()
         case "$chstartup" in
             Prompt)
                 sudo systemctl disable getty@tty1.service
-                sudo rm /etc/systemd/system/getty@tty1.service.d/autologin.conf
+                sudo rm /etc/systemd/system/getty@tty1.service.d/autologin.conf >/dev/null 2>/dev/null
                 cp $PATHCONFIGS"/prompt.bashrc" /home/pi/.bashrc;;
             Console)
                 sudo systemctl disable getty@tty1.service
-                sudo rm /etc/systemd/system/getty@tty1.service.d/autologin.conf
+                sudo rm /etc/systemd/system/getty@tty1.service.d/autologin.conf >/dev/null 2>/dev/null
                 cp $PATHCONFIGS"/console.bashrc" /home/pi/.bashrc;;
-
-				##$PATHSCRIPT"/install_bashrc" /home/pi/.bashrc >/dev/null 2>/dev/null;; 
-
             Display)
                 sudo systemctl disable getty@tty1.service
-                sudo rm /etc/systemd/system/getty@tty1.service.d/autologin.conf
+                sudo rm /etc/systemd/system/getty@tty1.service.d/autologin.conf >/dev/null 2>/dev/null
                 MODE_DISPLAY=$(get_config_var display $CONFIGFILE)
                 case "$MODE_DISPLAY" in
                     Waveshare)
-                        cp $PATHCONFIGS"/displaywaveshare.bashrc" /home/pi/.bashrc;; #>/dev/null 2>/dev/null;;
+                        cp $PATHCONFIGS"/displaywaveshare.bashrc" /home/pi/.bashrc;;
                     *)
-                        cp $PATHCONFIGS"/display.bashrc" /home/pi/.bashrc;; #>/dev/null 2>/dev/null;;
+                        cp $PATHCONFIGS"/display.bashrc" /home/pi/.bashrc;;
                 esac;;
             Button)
                 sudo systemctl disable getty@tty1.service
-                sudo rm /etc/systemd/system/getty@tty1.service.d/autologin.conf
+                sudo rm /etc/systemd/system/getty@tty1.service.d/autologin.conf /dev/null 2>/dev/null
                 cp $PATHCONFIGS"/button.bashrc" /home/pi/.bashrc;;
             TX_boot)
                 sudo mkdir -pv /etc/systemd/system/getty@tty1.service.d/
@@ -863,24 +860,23 @@ cp $PATHCONFIGS"/text.wifi_off" /home/pi/.wifi_off ## Disable at start-up
 
 do_Enable_DigiThin()
 {
-exit
+whiptail --title "Not implemented yet" --msgbox "Not Implemented yet.  Please press enter to continue" 8 78
 }
 
-do_Exit()
+do_125KS()
 {
-exit
+whiptail --title "Not implemented yet" --msgbox "Not Implemented yet.  Please press enter to continue" 8 78
 }
 
-do_Reboot()
+do_EasyCap()
 {
-sudo reboot now
+whiptail --title "Not implemented yet" --msgbox "Not Implemented yet.  Please press enter to continue" 8 78
 }
 
-do_Shutdown()
+do_Update()
 {
-sudo shutdown now
+whiptail --title "Not implemented yet" --msgbox "Not Implemented yet.  Please press enter to continue" 8 78
 }
-
 
 do_system_setup()
 {
@@ -891,9 +887,9 @@ menuchoice=$(whiptail --title "$StrSystemTitle" --menu "$StrSystemContext" 16 78
     "4 WiFi Set-up" "SSID and password"  \
     "5 WiFi Off" "Turn the WiFi Off" \
     "6 Enable DigiThin" "Not Implemented Yet" \
-    "7 Exit Menu" "Go to Command Line" \
-    "8 Reboot" "Reboot the Raspberry Pi"  \
-    "9 ShutDown" "Shutdown for Safe Power Off" \
+    "7 Enable 125KS" "Not implemented yet" \
+    "8 Set EasyCap" "Not implemented yet"  \
+    "9 Update" "Not implemented yet"  \
     3>&2 2>&1 1>&3)
     case "$menuchoice" in
         1\ *) do_autostart_setup ;;
@@ -902,9 +898,9 @@ menuchoice=$(whiptail --title "$StrSystemTitle" --menu "$StrSystemContext" 16 78
         4\ *) do_WiFi_setup ;;
         5\ *) do_WiFi_Off   ;;
         6\ *) do_Enable_DigiThin ;;
-        7\ *) do_Exit ;;
-        8\ *) do_Reboot   ;;
-        9\ *) do_Shutdown   ;;
+        7\ *) do_125KS ;;
+        8\ *) do_EasyCap ;;
+        9\ *) do_Update ;;
      esac
 }
 
@@ -937,6 +933,61 @@ menuchoice=$(whiptail --title "$StrLanguageTitle" --menu "$StrOutputContext" 16 
           source $PATHSCRIPT"/langfr.sh"
         fi
 }
+
+do_Exit()
+{
+exit
+}
+
+do_Reboot()
+{
+sudo reboot now
+}
+
+do_Shutdown()
+{
+sudo shutdown now
+}
+
+do_TouchScreen()
+{
+reset
+~/rpidatv/bin/rpidatvgui 1
+}
+
+do_EnableButtonSD()
+{
+cp $PATHCONFIGS"/text.pi-sdn" ~/.pi-sdn  ## Load it at logon
+~/.pi-sdn                                ## Load it now
+}
+
+do_DisableButtonSD()
+{
+rm ~/.pi-sdn             ## Stop it being loaded at log-on
+sudo pkill -x pi-sdn     ## kill the current process
+} 
+
+do_shutdown_menu()
+{
+menuchoice=$(whiptail --title "Shutdown Menu" --menu "Select Choice" 16 78 7 \
+    "1 Shutdown now" "Immediate Shutdown"  \
+    "2 Reboot now" "Immediate reboot" \
+    "3 Exit to Linux" "Exit menu to Command Prompt" \
+    "4 Restore TouchScreen" "Exit Menu, restart LCD" \
+    "5 Button Enable" "Enable Shutdown Button" \
+    "6 Button Disable" "Disable Shutdown Button" \
+      3>&2 2>&1 1>&3)
+    case "$menuchoice" in
+        1\ *) do_Shutdown ;;
+        2\ *) do_Reboot ;;
+        3\ *) do_Exit ;;
+        4\ *) do_TouchScreen ;;
+        5\ *) do_EnableButtonSD ;;
+        6\ *) do_DisableButtonSD ;;
+    esac
+}
+
+
 
 OnStartup()
 {
@@ -1006,7 +1057,8 @@ INFO=$CALL":"$MODE_INPUT"-->"$MODE_OUTPUT"("$SYMBOLRATEK"KSymbol FEC "$FECNUM"/"
 	"4 Receive" "Receive via rtlsdr" \
 	"5 System" "$StrMainMenuSystem" \
 	"6 Language" "Set Language and Keyboard" \
-	3>&2 2>&1 1>&3)
+        "7 Shutdown" "Shutdown and reboot options" \
+ 	3>&2 2>&1 1>&3)
 
         case "$menuchoice" in
 	    0\ *) do_transmit   ;;
@@ -1016,7 +1068,8 @@ INFO=$CALL":"$MODE_INPUT"-->"$MODE_OUTPUT"("$SYMBOLRATEK"KSymbol FEC "$FECNUM"/"
 	    4\ *) do_receive ;;
 	    5\ *) do_system_setup ;;
 	    6\ *) do_language_setup ;;
-            *)
+            7\ *) do_shutdown_menu ;;
+             *)
 
 		 whiptail --title "$StrMainMenuExitTitle" --msgbox "$StrMainMenuExitContext" 8 78
                 status=1
@@ -1029,7 +1082,5 @@ INFO=$CALL":"$MODE_INPUT"-->"$MODE_OUTPUT"("$SYMBOLRATEK"KSymbol FEC "$FECNUM"/"
         esac
         exitstatus1=$status1
     done
-else
-    whiptail --title "Testing" --msgbox "Bye" 8 78
 exit
 
