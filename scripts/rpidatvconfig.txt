@@ -20,3 +20,4 @@ pidaudio=257
 display=Waveshare
 menulanguage=en
 analogcamname=/dev/video0
+startup=Prompt

@@ -112,7 +112,19 @@ if ! shopt -oq posix; then
   fi
 fi
 
-## Uncomment to enable tidy shutdown by hardware button
+## Tidy shutdown by hardware button
 ## Button to 3.3v on physical pin 15.  LED to indicate still running on pin 13
 ## See https://github.com/philcrump/pi-sdn
-## sudo pi-sdn 3 2 &
+## Calls .pi-sdn if present and runs "sudo pi-sdn 3 2 &"
+
+if [ -f ~/.pi-sdn ]; then
+    . ~/.pi-sdn
+fi
+
+## Facility to Disable WiFi
+## Calls .wifi_off if present and runs "sudo ifconfig wlan0 down"
+
+if [ -f ~/.wifi_off ]; then
+    . ~/.wifi_off
+fi
+

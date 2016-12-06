@@ -578,7 +578,7 @@ do_freq_setup()
 FREQ_OUTPUT=$(get_config_var freqoutput $CONFIGFILE)
 FREQ=$(whiptail --inputbox "$StrOutputRFFreqContext" 8 78 $FREQ_OUTPUT --title "$StrOutputRFFreqTitle" 3>&1 1>&2 2>&3)
 if [ $? -eq 0 ]; then
-	set_config_var freqoutput "$FREQ" $CONFIGFILE
+    set_config_var freqoutput "$FREQ" $CONFIGFILE
 fi
 }
 
@@ -850,18 +850,62 @@ CURRENTIP=$(ifconfig | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '(
 whiptail --title "IP" --msgbox "$CURRENTIP" 8 78
 }
 
+do_WiFi_setup()
+{
+$PATHSCRIPT"/wifisetup.sh"
+}
+
+do_WiFi_Off()
+{
+sudo ifconfig wlan0 down                           ## Disable it now
+cp $PATHCONFIGS"/text.wifi_off" /home/pi/.wifi_off ## Disable at start-up
+}
+
+do_Enable_DigiThin()
+{
+exit
+}
+
+do_Exit()
+{
+exit
+}
+
+do_Reboot()
+{
+sudo reboot now
+}
+
+do_Shutdown()
+{
+sudo shutdown now
+}
+
+
 do_system_setup()
 {
-menuchoice=$(whiptail --title "$StrSystemTitle" --menu "$StrSystemContext" 16 78 5 \
-        "1 Autostart" "$StrAutostartMenu"  \
-        "2 Display" "$StrDisplayMenu" \
-	"3 IP" "$StrIPMenu" \
-	3>&2 2>&1 1>&3)
-	case "$menuchoice" in
-            1\ *) do_autostart_setup ;;
-            2\ *) do_display_setup   ;;
-	    3\ *) do_IP_setup ;;
-        esac
+menuchoice=$(whiptail --title "$StrSystemTitle" --menu "$StrSystemContext" 16 78 9 \
+    "1 Autostart" "$StrAutostartMenu"  \
+    "2 Display" "$StrDisplayMenu" \
+    "3 IP" "$StrIPMenu" \
+    "4 WiFi Set-up" "SSID and password"  \
+    "5 WiFi Off" "Turn the WiFi Off" \
+    "6 Enable DigiThin" "Not Implemented Yet" \
+    "7 Exit Menu" "Go to Command Line" \
+    "8 Reboot" "Reboot the Raspberry Pi"  \
+    "9 ShutDown" "Shutdown for Safe Power Off" \
+    3>&2 2>&1 1>&3)
+    case "$menuchoice" in
+        1\ *) do_autostart_setup ;;
+        2\ *) do_display_setup   ;;
+	3\ *) do_IP_setup ;;
+        4\ *) do_WiFi_setup ;;
+        5\ *) do_WiFi_Off   ;;
+        6\ *) do_Enable_DigiThin ;;
+        7\ *) do_Exit ;;
+        8\ *) do_Reboot   ;;
+        9\ *) do_Shutdown   ;;
+     esac
 }
 
 do_language_setup()

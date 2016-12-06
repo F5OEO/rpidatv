@@ -1,0 +1,4 @@
+network={
+    ssid="PixienetG"
+    psk=b7a2fc71b648e214d337ca533c8c506167fc8f463477c50df379067cc3341912
+}
