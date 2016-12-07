@@ -177,7 +177,7 @@ int IsButtonPushed(int NbButton,int x,int y)
 		scaledY = hscreen-x/scaleYvalue;
 	}
 	//printf("x=%d y=%d scaledx %d scaledy %d\n",x,y,scaledX,scaledY);
-	int margin=20;
+	int margin=10;  // was 20
 	if((scaledX<=(ButtonArray[NbButton].x+ButtonArray[NbButton].w-margin))&&(scaledX>=ButtonArray[NbButton].x+margin) &&
 	(scaledY<=(ButtonArray[NbButton].y+ButtonArray[NbButton].h-margin))&&(scaledY>=ButtonArray[NbButton].y+margin)
 	/*&&(mymillis()-ButtonArray[NbButton].LastEventTime>TIME_ANTI_BOUNCE)*/)
@@ -521,9 +521,9 @@ void *DisplayFFT(void * arg)
 
 	while(FinishedButton==0)
 	{
-		int Nbread; // not used?
-		int log2_N=11; //FFT 1024 not used?
-		int ret; // not used?
+		int Nbread; // value set later but not used
+		//int log2_N=11; //FFT 1024 not used?
+		//int ret; // not used?
 
 		Nbread=fread( fftin,sizeof(fftwf_complex),FFT_SIZE,pFileIQ);
 		fftwf_execute( plan );
@@ -552,10 +552,10 @@ void ProcessLeandvb()
    size_t len = 0;
     ssize_t read;
 
-	int rawX, rawY, rawPressure;
+	// int rawX, rawY, rawPressure; //  not used
 	FILE *fp;
-	VGfloat px[1000];
-	VGfloat py[1000];
+	// VGfloat px[1000];  // Variable not used
+	// VGfloat py[1000];  // Variable not used
 	VGfloat shapecolor[4];
 	RGBA(255, 255, 128,1, shapecolor);
 
@@ -783,7 +783,7 @@ void waituntil(int w,int h,int endchar)
 	// int key; not used?
 	int rawX, rawY, rawPressure,i;
 
-	int Toggle=0;
+	// int Toggle=0; not used
 
 	for (;;)
 	{
@@ -924,6 +924,10 @@ int main(int argc, char **argv) {
 	int screenYmax, screenYmin;
 	int ReceiveDirect=0;
 	int i;
+        char Param[255];
+        char Value[255];
+ 
+// Catch sigaction and call terminate
 	for (i = 0; i < 16; i++) {
 		struct sigaction sa;
 
@@ -931,8 +935,18 @@ int main(int argc, char **argv) {
 		sa.sa_handler = terminate;
 		sigaction(i, &sa, NULL);
 	}
+
+// Determine if using waveshare screen
+// Either by first argument or from rpidatvconfig.txt
 	if(argc>1)
 		Inversed=atoi(argv[1]);
+        strcpy(Param,"display");
+
+        GetConfigParam(PATH_CONFIG,Param,Value);
+        if(strcmp(Value,"Waveshare")==0)
+        	Inversed=1;
+
+// Determine if ReceiveDirect 2nd argument 
 	if(argc>2)
 		ReceiveDirect=atoi(argv[2]);
 
@@ -942,6 +956,7 @@ int main(int argc, char **argv) {
 		 ProcessLeandvb(); // For FrMenu and no 
 	}
 
+// Check for presence of touchscreen
 	for(NoDeviceEvent=0;NoDeviceEvent<5;NoDeviceEvent++)
 	{
 		if (openTouchScreen(NoDeviceEvent) == 1)
@@ -954,13 +969,14 @@ int main(int argc, char **argv) {
 		perror("No Touchscreen found");
 		exit(1);
 	}
+
+// Calculate screen parameters
 	scaleXvalue = ((float)screenXmax-screenXmin) / wscreen;
 	//printf ("X Scale Factor = %f\n", scaleXvalue);
 	scaleYvalue = ((float)screenYmax-screenYmin) / hscreen;
 	//printf ("Y Scale Factor = %f\n", scaleYvalue);
 
-
-
+// Define button grid
 	int wbuttonsize=wscreen/5;
 	int hbuttonsize=hscreen/6;
 
@@ -1118,8 +1134,6 @@ int main(int argc, char **argv) {
 
 	// Frequency
 
-        char Param[255];
-        char Value[255];
  	strcpy(Param,"freqoutput");
 	GetConfigParam(PATH_CONFIG,Param,Value);
 	strcpy(freqtxt,Value);
