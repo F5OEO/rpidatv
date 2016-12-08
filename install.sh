@@ -1,89 +1,91 @@
 #!/bin/bash
 
-set -e
+# Updated by davecrump on 20161208 
+
+set -e  # Don't report errors....
+
+# Update the package manager, then install the packages we need
 sudo dpkg --configure -a
 sudo apt-get clean
 sudo apt-get update
 sudo apt-get -y install apt-transport-https git rpi-update
 sudo apt-get -y install cmake libusb-1.0-0-dev g++ libx11-dev buffer libjpeg-dev indent libfreetype6-dev ttf-dejavu-core bc usbmount fftw3-dev wiringpi libvncserver-dev
 
-#rpi-update to get latest firmware
+# rpi-update to get latest firmware
 sudo rpi-update
 
-# ---------- install rpidatv -----------
-
+# Get the source software and copy to the Pi
 cd /home/pi
-#git clone git://github.com/F5OEO/rpidatv -> BUG IN QEMU : Go to download method
-wget https://github.com/F5OEO/rpidatv/archive/master.zip
+wget https://github.com/davecrump/rpidatv/archive/master.zip
 unzip -o master.zip 
 mv rpidatv-master rpidatv
 rm master.zip
 
-#rpidatv core
+# Compile rpidatv core
 cd rpidatv/src
 make
 sudo make install
-#rpidatv gui
+
+# Compile rpidatv gui
 cd gui
 make
 sudo make install
 cd ../
-#avc2ts
-cd avc2ts
 
-#git clone git://github.com/kierank/libmpegts
+# Get libmpegts and compile
+cd avc2ts
 wget https://github.com/kierank/libmpegts/archive/master.zip
 unzip master.zip
 mv libmpegts-master libmpegts
 rm master.zip
-
 cd libmpegts
 ./configure
 make
-#make avc2ts
+
+# Compile avc2ts
 cd ../
 make
 sudo make install
 
-#install adf4351
+# Compile adf4351
 cd /home/pi/rpidatv/src/adf4351
 make
 cp adf4351 ../../bin/
 
-#install rtl_sdr
+# Get rtl_sdr
 cd /home/pi
-#git clone https://github.com/keenerd/rtl-sdr
 wget https://github.com/keenerd/rtl-sdr/archive/master.zip
 unzip master.zip
 mv rtl-sdr-master rtl-sdr
 rm master.zip
 
+# Compile and install rtl-sdr
 cd rtl-sdr/ && mkdir build && cd build
 cmake ../ -DINSTALL_UDEV_RULES=ON
 make && sudo make install && sudo ldconfig
 sudo bash -c 'echo -e "\n# for RTL-SDR:\nblacklist dvb_usb_rtl28xxu\n" >> /etc/modprobe.d/blacklist.conf'
 cd ../../
 
-#install leandvb
+# Get leandvb
 cd /home/pi/rpidatv/src
-#git clone git://github.com/pabr/leansdr
 wget https://github.com/pabr/leansdr/archive/master.zip
 unzip master.zip
 mv leansdr-master leansdr
 rm master.zip
 
+# Compile leandvb
 cd leansdr/src/apps
 make
 cp leandvb ../../../../bin/
 
-
-#install tstools
+# Get tstools
 cd /home/pi/rpidatv/src
 wget https://github.com/F5OEO/tstools/archive/master.zip
 unzip master.zip
 mv tstools-master tstools
 rm master.zip
 
+# Compile tstools
 cd tstools
 make
 cp bin/ts2es ../../bin/
@@ -97,7 +99,6 @@ cd /home/pi/rpidatv/src/hello_video
 make
 cp hello_video.bin ../../bin/
 
-
 # TouchScreen GUI
 # FBCP : Duplicate Framebuffer 0 -> 1
 cd /home/pi/
@@ -105,7 +106,8 @@ wget https://github.com/tasanakorn/rpi-fbcp/archive/master.zip
 unzip master.zip
 mv rpi-fbcp-master rpi-fbcp
 rm master.zip
-#git clone https://github.com/tasanakorn/rpi-fbcp
+
+# Compile fbcp
 cd rpi-fbcp/
 mkdir build
 cd build/
@@ -114,46 +116,53 @@ make
 sudo install fbcp /usr/local/bin/fbcp
 cd ../../
 
-#Install Waveshare DTOVERLAY
+# Install Waveshare DTOVERLAY
 cd /home/pi/rpidatv/scripts/
 sudo cp ./waveshare35a.dtbo /boot/overlays/
 
-
-#Fallback IP to 192.168.1.60
+# Fallback IP to 192.168.1.60
 sudo bash -c 'echo -e "\nprofile static_eth0\nstatic ip_address=192.168.1.60/24\nstatic routers=192.168.1.1\nstatic domain_name_servers=192.168.1.1\ninterface eth0\nfallback static_eth0" >> /etc/dhcpcd.conf'
 
-#enable camera
+# Enable camera
 sudo bash -c 'echo -e "\ngpu_mem=128\nstart_x=1\n" >> /boot/config.txt'
 
-#disable sync option for usbmount
+# Disable sync option for usbmount
 sudo sed -i 's/sync,//g' /etc/usbmount/usbmount.conf
 
+# Install executable for hardware shutdown button
+wget 'https://github.com/philcrump/pi-sdn/releases/download/v1.0/pi-sdn' -O /home/pi/pi-sdn
+chmod +x /home/pi/pi-sdn
 
-if [ "$1" == "Autostart" ];
-then
-echo "Doing autostart..."
-##Menu autostart
+# Record Version Number
 cd /home/pi/rpidatv/scripts/
-##make kayboard in french
-sudo cp keyfr /etc/default/keyboard
-##do Menu as auto install
-bash install_autostart.sh
+cp latest_version.txt installed_version.txt
+cd~
 
-#change hostname
-CURRENT_HOSTNAME=`sudo cat /etc/hostname | sudo tr -d " \t\n\r"`
-NEW_HOSTNAME="rpidatv"
-if [ $? -eq 0 ]; then
-  sudo sh -c "echo '$NEW_HOSTNAME' > /etc/hostname"
-  sudo sed -i "s/127.0.1.1.*$CURRENT_HOSTNAME/127.0.1.1\t$NEW_HOSTNAME/g" /etc/hosts
-fi
-#change password to tv
-echo "pi:tv" | sudo chpasswd
+# Switch to French if required
+if [ "$1" == "fr" ];
+then
+  echo "Installing French Language and Keyboard"
+  cd /home/pi/rpidatv/scripts/
+  sudo cp configs/keyfr /etc/default/keyboard
+  cp configs/rpidatvconfig.fr rpidatvconfig.txt
+  echo "Completed French Install"
 else
-echo "completed without autostart"
+  echo "Completed English Install"
 fi
-#always enable HDMI at 720p
-#sudo bash -c 'echo -e "\nhdmi_force_hotplug=1\nhdmi_drive=2\nhdmi_group=1\nhdmi_mode=4\n" >> /boot/config.txt'
+
+# Offer reboot
+printf "A reboot will be required before using the software."
+printf "Do you want to reboot now? (y/n)\n"
+read -n 1
+printf "\n"
+if [ "$REPLY" = "Y" ]; then
+    echo "rebooting"
+    sudo reboot now
+fi
+if [ "$REPLY" = "y" ]; then
+    echo "rebooting"
+    sudo reboot now
+fi
+exit
 
 
-#remove script that starts raspi config on first boot
-#sudo rm -rf /etc/profile.d/raspi-config.sh
