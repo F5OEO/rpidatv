@@ -35,7 +35,7 @@ chmod +x install.sh
 ./install.sh fr
 ```
 
-- When it has finished, type "sudo reboot now", log in again and then start the software by typing:
+- When it has finished, accept the reboot offered or type "sudo reboot now", log in again and then start the software by typing:
 
 ```sh
 /home/pi/rpidatv/scripts/menu.sh menu
