@@ -1,81 +1,48 @@
 ![rpidatv banner](/doc/img/spectreiq.jpg)
 # rpidatv
-**rpidatv** is a digital television transmitter for Raspberry Pi (B,B+,PI2,PI3,Pizero) which output directly to GPIO. 
+**rpidatv** is a digital television transmitter for Raspberry Pi (B,B+,PI2,PI3,Pizero) which outputs directly to GPIO.  This version has been developed for use with an external synthesized oscillaotor and modulator/filter board. 
 *(Created by Evariste Courjaud F5OEO. Code is GPL)*
 
-# Installation
-Install a Raspbian Lite : ([Raspbian Lite](http://www.raspberrypi.org/downloads/raspbian/))
+# Installation for BATC Version
+
+The preferred installation method only needs a Windows PC connected to the same (inetrnet-connected) network as your Raspberry Pi.
+
+- First download the March 2016 release of Raspbian Jessie Lite on to your Windows PC from here http://downloads.raspberrypi.org/raspbian_lite/images//raspbian_lite-2016-03-18/.  Evariste has not tested with later Raspbian images.  There are some problems with the latest version of Raspbian, which Evariste and I are working to resolve.
+
+- Unzip the image and then transfer it to a Micro-SD Card using Win32diskimager https://sourceforge.net/projects/win32diskimager/
+
+- Power up the Pi with the new card inserted, and a network connection.  No keyboard or display required.
+
+- Find the IP address of your Raspberry Pi using an IP Scanner (such as Advanced IP Scanner http://filehippo.com/download_advanced_ip_scanner/ for Windows, or Fing on an iPhone) to get the Pi's IP address 
+
+- From your windows PC use Putty (http://www.chiark.greenend.org.uk/~sgtatham/putty/download.html) to log in to the IP address that you noted earlier.
+
+- Log in (user: pi/password: raspberry), and type "sudo raspi-config" to open the configuration tool.  Select option 1 to expand the file system to the whole disk.
+
+- Exit raspi-config (press tab twice then press return), and reboot.
+
+- Power-off, connect the camera, reconnect power and reboot.  Log in again.
+
+- Cut and paste the following code in, one line at a time:
 
 ```sh
-$ wget https://raw.githubusercontent.com/F5OEO/rpidatv/master/install.sh
-$ chmod +x install.sh
-$ ./install.sh
+wget https://raw.githubusercontent.com/davecrump/rpidatv/master/install.sh
+chmod +x install.sh
+./install.sh
 ```
-
-# Hardware
-Plug a wire on GPIO 12, means Pin 32 of the GPIO header : this act as the antenna. Length depend on transmit frequency, but with few centimeters it works for local testing.
-
-# Modulator
-**rpidatv** is located in rpidatv/bin folder
-```
-rpidatv -2.0.0
-Usage:
-rpidatv -i File Input -s Symbolrate -c Fec [-o OutputMode] [-f frequency output]  [-l] [-p Power] [-h] 
--i            path to Transport File Input 
--s            SymbolRate in KS (125-4000) 
--c            Fec : 1/2 or 3/4 or 5/6 or 7/8 
--m            OutputMode
-	      {RF(Modulate QSK in RF need -f option to set frequency)}
-              {IQ(Output QPSK I/Q}
-              {PARALLEL(Output parallel (DTX1,MINIMOD..)}
-       	      {IQWITHCLK(Output I/Q with CLK (F5LGJ)}
-	      {DIGITHIN (Output I/Q for Digithin)}
--f 	      Frequency to output in RF Mode in MHZ
--l            loop file input
--p 	      Power on output 1..7
--x 	      GPIO Pin output for I or RF {12,18,40}
--y	      GPIO Pin output for Q {13,19,41,45}
--h            help (print this help).
-Example : sudo ./rpidatv -i sample.ts -s 250 -c 1/2 -o RF -f 437.5 -l
-```
- # Transport stream
-**rpidatv** needs a DVB transport stream in input. In the past, ffmpeg was used to generate transport stream. Because ffmpeg is not completely DVB compliant and induces latency, an other tool is proposed : **avc2ts**
-
-# H264 encoder and transport stream encapsulator
-**avc2ts** is located in rpidatv/bin folder
-```
-avc2ts -1.0.0
-Usage:
-rpi-avc2ts  -o OutputFile -b BitrateVideo -m BitrateMux -x VideoWidth  -y VideoHeight -f Framerate -n MulticastGroup [-d PTS/PCR][-v][-h] 
--o            path to Transport File Output 
--b            VideoBitrate in bit/s 
--m            Multiplex Bitrate (should be around 1.4 VideoBitrate)
--x            VideoWidth (should be 16 pixel aligned)
--y 	      VideoHeight (should be 16 pixel aligned)
--f            Framerate (25 for example)
--n 	      Multicast group (optionnal) example 230.0.0.1:10000
--d 	      Delay PTS/PCR in ms
--v	      Enable Motion vectors
--i	      IDR Period
--t		TypeInput {0=Picamera,1=InternalPatern,2=USB Camera,3=Rpi Display,4=VNC}
--e 		Extra Arg:
-			- For usb camera name of device (/dev/video0)
-			- For VNC : IP address of VNC Server. Password must be datv
--p 		Set the PidStart: Set PMT=PIDStart,Pidvideo=PidStart+1,PidAudio=PidStart+2
--s 		Set Servicename : Typically CALL
--h            help (print this help).
-Example : ./rpi-avc2ts -o result.ts -b 1000000 -m 1400000 -x 640 -y 480 -f 25 -n 230.0.0.1:1000
-```
-
-# Console interface
-A console interface is provided under rpidatv/scripts
+- For French menus and keyboard, replace the last line above with 
 ```sh
-$ /home/pi/rpidatv/scripts/gbmenu.sh
+./install.sh fr
 ```
-# Touchscreen interface
-![Rpidatvgui](/doc/img/rpidatvgui.jpg)
-A graphical interface is provided under rpidatv/bin/ folder
+
+- When it has finished, type "sudo reboot now", log in again and then start the software by typing:
+
 ```sh
-$ /home/pi/rpidatv/bin/rpidatvgui
+/home/pi/rpidatv/scripts/menu.sh menu
 ```
+
+You can now explore the menu options and play.
+
+Evariste has only tested on an RPi2, I have been using an RPi3.  I succeeded in generating a direct RF output (from GPIO pin 32) on 437 MHz at 333KS using the on-board camera as the source; it would not work reliably at higher SRs.  The big win for me is that I could feed the I and Q signals from pins 32 and 33 directly into the LC filter on my old DigiLite modulator and generate a 2MS QPSK H264 DVB-S signal from the on-board camera.  Some adjustment of the bias is required as the I and Q signals from the Pi are 3.3v, not 5v as provided by the DigiLite encoder.
+
 
