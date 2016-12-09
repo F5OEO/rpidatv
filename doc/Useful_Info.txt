@@ -1,0 +1,18 @@
+Thsi is a list of details that have been useful in adding features to rpidatv.
+
+1.   Exit from LCD mode.  If you exit from LCD mode by sending ctrl-C from a terminal, there is no echo at the command prompt.
+Re-enable echo by entering "stty echo".
+
+2.  To re-enable the LCD from the command prompt, type
+
+sudo killall fbcp
+fbcp &
+/home/pi/rpidatv/bin/rpidatvgui 1
+
+Leave out the 1 if not using a waveshare dsiplay.
+
+3.  If you switch the type of LCD display from the console menu more than once, it puts multiple entries in /boot/config.txt.  
+This will stop the LCD working.  Edit the file (sudo nano /boot/config.txt) to remove all but the entry for your display and
+reboot.  It should then work.
+
+DGC
