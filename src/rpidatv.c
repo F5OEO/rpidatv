@@ -701,7 +701,8 @@ int InitDTX1()
 }
 
 
-#define BIG_BUFFER_SIZE ((int)((NUM_SAMPLES*4*1.5)/188)*188)
+//#define BIG_BUFFER_SIZE ((int)((NUM_SAMPLES*4*1.5)/188)*188)
+#define BIG_BUFFER_SIZE (18800*8)
 #define BURST_MEM_SIZE (188)
 typedef struct circular_buffer
 {
