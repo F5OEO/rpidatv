@@ -145,6 +145,7 @@ then
   cd /home/pi/rpidatv/scripts/
   sudo cp configs/keyfr /etc/default/keyboard
   cp configs/rpidatvconfig.fr rpidatvconfig.txt
+  cd /home/pi
   echo "Completed French Install"
 else
   echo "Completed English Install"
