@@ -155,13 +155,9 @@ printf "A reboot will be required before using the software."
 printf "Do you want to reboot now? (y/n)\n"
 read -n 1
 printf "\n"
-if [ "$REPLY" = "Y" ]; then
-    echo "rebooting"
-    sudo reboot now
-fi
-if [ "$REPLY" = "y" ]; then
-    echo "rebooting"
-    sudo reboot now
+if [[ "$REPLY" = "y" || "$REPLY" = "Y" ]]; then
+  echo "rebooting"
+  sudo reboot now
 fi
 exit
 
