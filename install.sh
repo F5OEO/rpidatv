@@ -136,7 +136,7 @@ chmod +x /home/pi/pi-sdn
 # Record Version Number
 cd /home/pi/rpidatv/scripts/
 cp latest_version.txt installed_version.txt
-cd~
+cd /home/pi
 
 # Switch to French if required
 if [ "$1" == "fr" ];
