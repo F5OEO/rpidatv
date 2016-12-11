@@ -97,6 +97,7 @@ case "$MODE_OUTPUT" in
 	OUTPUT=videots
 	MODE=IQ
 	$PATHSCRIPT"/ctlfilter.sh"
+	$PATHSCRIPT"/ctlvco.sh"
 	#GAIN=0
 	;;
 	QPSKRF)

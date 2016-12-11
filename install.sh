@@ -45,7 +45,10 @@ cd ../
 make
 sudo make install
 
-
+#install adf4351
+cd /home/pi/rpidatv/src/adf4351
+make
+cp adf4351 ../../bin/
 
 #install rtl_sdr
 cd /home/pi
