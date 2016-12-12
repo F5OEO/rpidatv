@@ -82,6 +82,8 @@ extern uchar*	interleave 	(uchar* packetin) ;
 #define PLLFREQ_PWM             1000000000	//PLLC = 1GHZ , 1.2GHZ ON PIZERO ! But Unstable -> Go back to PLL_D
 #define PLL_PWM			0x6
 
+#define PLLFREQ_192             19200000	//PLLA = 19.2MHZ
+#define PLL_192			0x1
 
 #define CARRIERFREQ		100000000	// Carrier frequency is 100MHz
 
@@ -397,7 +399,7 @@ int InitIQ(int DigithinMode)
 	gpioSetMode(21,1); // GPIO 21 - PIN 40 is output for PTT
 	gpio_reg[0x1C/4]=1<<21; // Set PTT ON
 
-	unsigned int SRClock=PLLFREQ_PCM/(1000*SymbolRate);
+	unsigned int SRClock=PLLFREQ_192/(1000*SymbolRate);
 	//unsigned int SRClockPCM=(PLLFREQ_PCM/(SymbolRate*1000*64))*64;
 	
 	//SymbolRate = PLLFREQ/(SRClockPCM*1000);
@@ -531,11 +533,12 @@ int InitIQ(int DigithinMode)
 	}
 
 	pwm_reg[PWM_CTL] = 0;
-	clk_reg[PWMCLK_CNTL] = 0x5A000000 | (0 << 9) |PLL_PCM ;
+	clk_reg[PWMCLK_CNTL] = 0x5A000000 | (0 << 9) |PLL_192 ;
+
 	udelay(300);
 	clk_reg[PWMCLK_DIV] = 0x5A000000 | ((SRClock)<<12); //*2: FIXME : Because SRClock is normaly based on 500Mhz not 1GH
 	udelay(300);
-	clk_reg[PWMCLK_CNTL] = 0x5A000010 | (0 << 9) | PLL_PCM;
+	clk_reg[PWMCLK_CNTL] = 0x5A000010 | (0 << 9) | PLL_192;
 	pwm_reg[PWM_RNG1] = 32;// 32 Mandatory for Serial Mode without gap
 	udelay(100);
 	pwm_reg[PWM_RNG2] = 32;// 32 Mandatory for Serial Mode without gap
@@ -545,7 +548,7 @@ int InitIQ(int DigithinMode)
 	pwm_reg[PWM_CTL] = PWMCTL_CLRF;
 	udelay(100);
 
-	printf("Real SR = %d KSymbol / Clock Divider =%d \n",PLLFREQ_PCM/(SRClock*1000),SRClock);
+	printf("Real SR = %d KSymbol / Clock Divider =%d \n",PLLFREQ_192/(SRClock*1000),SRClock);
 	//printf("Playing File =%s at %d KSymbol FEC=%d  ",argv[1],PLLFREQ_PCM/SRClock/1000,abs(FEC));
 
 	// --------------------- INIT DMA IQ ------------------------------
@@ -1291,36 +1294,36 @@ for (;;)
 			}
 
 			
-			if(Init==0)
-			{
+			
 				TimeToSleep=((NUM_SAMPLES-free_slots-204*2*4)*1000)/((float)SymbolRate*2);//-22000; // 22ms de Switch process
 				//TimeToSleep=15000+KERNEL_GRANULARITY;
 				//TimeToSleep=25000;
-			}
-			else
-				TimeToSleep=30000;
+			
+			
 			
 	
 			//printf("cur_cb %lx FreeSlots = %d Time to sleep=%d\n",cur_cb,free_slots,TimeToSleep);
 			//printf("Buffer Available=%d\n",BufferAvailable());
 			
 			clock_gettime(CLOCK_REALTIME, &gettime_now);
-			start_time = gettime_now.tv_nsec;		
-			if(TimeToSleep>=(2200+KERNEL_GRANULARITY)) // 2ms : Time to process File/Canal Coding
-			{
-				
-				udelay(TimeToSleep-(2200+KERNEL_GRANULARITY));
-				TimeToSleep=0;
-			}
+			start_time = gettime_now.tv_nsec;
+			if(Init==0)
+			{		
+				if(TimeToSleep>=(2200+KERNEL_GRANULARITY)) // 2ms : Time to process File/Canal Coding
+				{
+					if(TimeToSleep>=20000) TimeToSleep=20000;
+					udelay(TimeToSleep-(2200+KERNEL_GRANULARITY));
+					TimeToSleep=0;
+				}
 	
-			else
-			{
+				else
+				{
 				
-				//udelay(TimeToSleep);
-				sched_yield();
-				//TimeToSleep=0;
-				if(free_slots>(NUM_SAMPLES*9/10))
-					 printf("Buffer nearly empty...%d/%d\n",free_slots,NUM_SAMPLES);
+					printf("!");
+					usleep(1000);//20 ms mini !!
+					if(free_slots>(NUM_SAMPLES*9/10))
+						 printf("Buffer nearly empty...%d/%d\n",free_slots,NUM_SAMPLES);
+				}
 			}
 			
 			
@@ -1359,14 +1362,18 @@ for (;;)
 			clock_gettime(CLOCK_REALTIME, &gettime_now);
 			start_time = gettime_now.tv_nsec;
 			
-		
-			//printf("Process LOCK\n");
 			#ifdef WITH_MEMORY_BUFFER
-			pthread_mutex_lock(&my_circular_buffer.lock);
-			
+			if((Init==0)&&(free_slots > (NUM_SAMPLES*9/10))&&(BufferAvailable()<=188*2))
+			{
+				int k;
+				store_in_buffer_1880(PacketNULL);
+				
+				
+				 printf("Underflow\n"); 
+			}
 			#endif
 			
-			while ((free_slots>204*2*4)&&(BufferAvailable()>188*2)) //204Bytes*2(IQ)*4 paires/octet
+			while (((free_slots>204*2*4)&&(BufferAvailable()>188*2))||(FEC==0)) //204Bytes*2(IQ)*4 paires/octet
 			{
 				
 				static uint32_t BuffAligned[256];
@@ -1405,17 +1412,9 @@ for (;;)
 								}						
 						}
 						#else
-						int ii;
-						while(BufferAvailable()<188) 
-						{
-							//printf("!");
-							sleep(0);
-						}
-						//pthread_mutex_lock(&my_circular_buffer.lock);
+						
 						read_from_buffer_188(buff);
-						//for(ii=0;ii<188;ii++) buff[ii]=read_from_buffer();
-						//pthread_mutex_unlock(&my_circular_buffer.lock);
-						//TotalByteRead+=188;
+						
 						#endif
 					}
 					else
@@ -1496,9 +1495,7 @@ for (;;)
 			*/
 			}
 			//printf("Process UNLOCK\n");
-			#ifdef WITH_MEMORY_BUFFER
-			pthread_mutex_unlock(&my_circular_buffer.lock);
-			#endif
+			
 			clock_gettime(CLOCK_REALTIME, &gettime_now);
 			time_difference = gettime_now.tv_nsec - start_time;
 			if(time_difference<0) time_difference+=1E9;
