@@ -82,29 +82,43 @@ StrAutostartMenu="Automatic startup"
 StrDisplayMenu="Display type"
 StrIPMenu="IP Address"
 
+######## AUTOSTART MENU #########
+
 StrAutostartSetupTitle="Autostart setup"
 StrAutostartSetupContext="Choice:"
-AutostartSetupConsole="Console menu"
-AutostartSetupDisplay="Display with touchscreen"
-AutostartSetupButton="Push buttons"
+AutostartSetupPrompt="Log-on to Linux Command Prompt"
+AutostartSetupConsole="Log-on to rpidatv Menu"
+AutostartSetupDisplay="Log-on to start Touchscreen Display"
+AutostartSetupButton="Log-on to enable Button Control"
+AutostartSetupTX_boot="Boot-up to Transmit"
+AutostartSetupDisplay_boot="Boot-up to Touchscreen Display"
+AutostartSetupButton_boot="Boot-up to Button Control"
 
-StrDisplaySetupTitle="Touchscreen setup"
+######## TOUCHSCREEN MENU #########
+
+StrDisplaySetupTitle="Touchscreen setup - needs reboot after setting"
 StrDisplaySetupContext="Choice:"
 DisplaySetupTontec="Tontec 3,5 inches"
 DisplaySetupHDMI="HDMI touchscreen"
 DisplaySetupRpiLCD="Rpi LCD"
+DisplaySetupConsole="Network Console"
 
 StrIPSetupTitle="Setup a static IP"
 StrIPSetupContext="Example: 192.168.1.60"
 
+######## LANGUAGE MENU #########
+
+StrLanguageTitle="Language Selection"
+StrKeyboardChange="Needs reboot after setting"
+
 ######## MAIN MENU #########
 StrMainMenuTitle="RpiDATV GUI Version 2.0 (F5OEO Evariste)"
-StrMainMenuSource="Source select"
-StrMainMenuOutput="Output select"
+StrMainMenuSource="Select Video Source"
+StrMainMenuOutput="Configure Output"
 StrMainMenuCall="Station call setup"
 StrMainMenuSystem="System setup"
 StrMainMenuExitTitle="Exit"
-StrMainMenuExitContext="Thanks to use RpiDATV... 73's de F5OEO(evaristec@gmail.com)"
+StrMainMenuExitContext="Thanks for using RpiDATV... 73's de F5OEO(evaristec@gmail.com)"
 
 ########## FILE #################
 

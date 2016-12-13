@@ -97,6 +97,7 @@ case "$MODE_OUTPUT" in
 	OUTPUT=videots
 	MODE=IQ
 	$PATHSCRIPT"/ctlfilter.sh"
+	$PATHSCRIPT"/ctlvco.sh"
 	#GAIN=0
 	;;
 	QPSKRF)
@@ -113,7 +114,9 @@ case "$MODE_OUTPUT" in
 	OUTPUT=videots
 	DIGITHIN_MODE=1
 	MODE=DIGITHIN
-	#GAIN=0
+        $PATHSCRIPT"/ctlfilter.sh"
+        $PATHSCRIPT"/ctlvco.sh"
+ 	#GAIN=0
 	;;
 	DTX1) 
 	MODE=PARALLEL
@@ -311,8 +314,6 @@ $PATHRPI"/avc2ts" -b $BITRATE_VIDEO -m $BITRATE_TS -x $VIDEO_WIDTH -y $VIDEO_HEI
 ;;
 
 #============================================ ANALOG =============================================================
-
-
 "ANALOGCAM")
 sudo modprobe -r bcm2835_v4l2
 case "$MODE_OUTPUT" in
@@ -328,6 +329,7 @@ $PATHRPI"/avc2ts" -b $BITRATE_VIDEO -m $BITRATE_TS -x $VIDEO_WIDTH -y $VIDEO_HEI
 
 ;;
 
+#============================================ DESKTOP =============================================================
 "DESKTOP")
 sudo modprobe -r bcm2835_v4l2
 case "$MODE_OUTPUT" in
@@ -358,11 +360,11 @@ $PATHRPI"/mnc" -l -i eth0 -p $PORT $UDPINADDR > videots &
 
 # *********************************** TRANSPORT STREAM INPUT FILE ******************************************
 "FILETS")
-	
+
 case "$MODE_OUTPUT" in
 	"BATC")
 		sudo nice -n -30 $PATHRPI"/ffmpeg" -loglevel $MODE_DEBUG -i $TSVIDEOFILE -y $OUTPUT_BATC & ;;
-	
+
 	*)
 		sudo $PATHRPI"/rpidatv" -i $TSVIDEOFILE -s $SYMBOLRATE_K -c $FECNUM"/"$FECDEN -f $FREQUENCY_OUT -p $GAIN -m $MODE -x $PIN_I -y $PIN_Q &;;
 	esac

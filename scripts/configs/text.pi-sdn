@@ -1,0 +1,8 @@
+## called by .bashrc at log-on to enable hardware button shutdown
+## If this file is in ~, then hardware button shutdown is enabled
+
+sudo ~/pi-sdn 3 2 &
+
+##
+
+

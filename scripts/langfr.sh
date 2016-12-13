@@ -85,20 +85,34 @@ StrAutostartMenu="Démarrage automatique"
 StrDisplayMenu="Ecran"
 StrIPMenu="Adresse IP"
 
+######## AUTOSTART MENU #########
+
 StrAutostartSetupTitle="Configure le démarrage"
 StrAutostartSetupContext="Choix:"
-AutostartSetupConsole="Menu console(ce menu)"
-AutostartSetupDisplay="Graphique(avec ecran tactile)"
-AutostartSetupButton="Boutons poussoires"
+AutostartSetupPrompt="Log-on to Linux Command Prompt"
+AutostartSetupConsole="Log-on to rpidatv Menu"
+AutostartSetupDisplay="Log-on to start Graphique(avec ecran tactile)"
+AutostartSetupButton="Log-on to enable Boutons poussoires"
+AutostartSetupTX_boot="Boot-up to Transmit"
+AutostartSetupDisplay_boot="Boot-up to Graphique(avec ecran tactile)"
+AutostartSetupButton_boot="Boot-up to Boutons poussoires"
 
-StrDisplaySetupTitle="Configure un ecran tactile"
+######## TOUCHSCREEN MENU #########
+
+StrDisplaySetupTitle="Configure un ecran tactile - apres reboot"
 StrDisplaySetupContext="Choix:"
 DisplaySetupTontec="Ecran Tontec 3,5 pouces"
 DisplaySetupHDMI="HDMI tactile"
 DisplaySetupRpiLCD="Rpi LCD"
+DisplaySetupConsole="Network Console"
 
 StrIPSetupTitle="Configure en IP Statique"
 StrIPSetupContext="Exemple: 192.168.1.60"
+
+######## LANGUAGE MENU #########
+
+StrLanguageTitle="Configure la Langue"
+StrKeyboardChange="Redemarrage apres reglage"
 
 ######## MAIN MENU #########
 StrMainMenuTitle="RpiDATV GUI Version 2.0 (F5OEO Evariste)"
