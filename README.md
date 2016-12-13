@@ -11,7 +11,7 @@ The preferred installation method only needs a Windows PC connected to the same 
 
 - Unzip the image and then transfer it to a Micro-SD Card using Win32diskimager https://sourceforge.net/projects/win32diskimager/
 
-- Before you remove the card from your Windows PC, look at the card with windows explorer and go to the \boot directory.  Create a new empty file called ssh in the \boot directory by right-clicking, selecting New, Text Document, and then change the name to ssh (not ssh.txt).  You should get a window warning about changing the filename extension.  Click OK.  If you do not get this warbning, you have created a file called ssh.txt and you need to rename it ssh.
+- Before you remove the card from your Windows PC, look at the card with windows explorer and go to the \boot directory.  Create a new empty file called ssh in the \boot directory by right-clicking, selecting New, Text Document, and then change the name to ssh (not ssh.txt).  You should get a window warning about changing the filename extension.  Click OK.  If you do not get this warning, you have created a file called ssh.txt and you need to rename it ssh.
 
 - If you have a Pi Camera and/or touchscreen display, you can connect them now.  Power up the Pi with the new card inserted, and a network connection.  No keyboard or HDMI display are required. 
 
