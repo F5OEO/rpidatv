@@ -7,7 +7,7 @@ set -e  # Don't report errors
 # ---------- Update rpidatv -----------
 
 cd /home/pi
-wget https://github.com/F5OEO/rpidatv/archive/master.zip -O master.zip
+wget https://github.com/davecrump/rpidatv/archive/master.zip -O master.zip
 unzip -o master.zip 
 cp -f -r rpidatv-master rpidatv
 rm master.zip
