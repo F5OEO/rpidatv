@@ -5,7 +5,7 @@
 
 # Installation for BATC Version
 
-The preferred installation method only needs a Windows PC connected to the same (inetrnet-connected) network as your Raspberry Pi.
+The preferred installation method only needs a Windows PC connected to the same (internet-connected) network as your Raspberry Pi.
 
 - First download the November 2016 release of Raspbian Jessie Lite on to your Windows PC from here http://downloads.raspberrypi.org/raspbian_lite/images/raspbian_lite-2016-11-29/.  
 
