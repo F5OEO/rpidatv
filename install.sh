@@ -136,7 +136,7 @@ chmod +x /home/pi/pi-sdn
 # Record Version Number
 cd /home/pi/rpidatv/scripts/
 cp latest_version.txt installed_version.txt
-cd~
+cd /home/pi
 
 # Switch to French if required
 if [ "$1" == "fr" ];
@@ -145,6 +145,7 @@ then
   cd /home/pi/rpidatv/scripts/
   sudo cp configs/keyfr /etc/default/keyboard
   cp configs/rpidatvconfig.fr rpidatvconfig.txt
+  cd /home/pi
   echo "Completed French Install"
 else
   echo "Completed English Install"
@@ -155,13 +156,9 @@ printf "A reboot will be required before using the software."
 printf "Do you want to reboot now? (y/n)\n"
 read -n 1
 printf "\n"
-if [ "$REPLY" = "Y" ]; then
-    echo "rebooting"
-    sudo reboot now
-fi
-if [ "$REPLY" = "y" ]; then
-    echo "rebooting"
-    sudo reboot now
+if [[ "$REPLY" = "y" || "$REPLY" = "Y" ]]; then
+  echo "rebooting"
+  sudo reboot now
 fi
 exit
 
