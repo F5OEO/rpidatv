@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Updated by davecrump 20161210
+# Updated by davecrump 20161214
 
 set -e  # Don't report errors
 
@@ -37,5 +37,15 @@ make
 cp adf4351 ../../bin/
 cd /home/pi/rpidatv
 
+# Offer reboot
+printf "A reboot will be required before using the update."
+printf "Do you want to reboot now? (y/n)\n"
+read -n 1
+printf "\n"
+if [[ "$REPLY" = "y" || "$REPLY" = "Y" ]]; then
+  echo "rebooting"
+  sudo reboot now
+fi
+exit
 
 
