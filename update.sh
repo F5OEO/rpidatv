@@ -37,6 +37,10 @@ make
 cp adf4351 ../../bin/
 cd /home/pi/rpidatv
 
+# Update the version number
+rm /home/pi/rpidatv/scripts/installed_version.txt
+cp /home/pi/rpidatv/scripts/latest_version.txt /home/pi/rpidatv/scripts/installed_version.txt
+
 # Offer reboot
 printf "A reboot will be required before using the update."
 printf "Do you want to reboot now? (y/n)\n"
