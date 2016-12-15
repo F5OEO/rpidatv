@@ -11,7 +11,11 @@ set -e  # Don't report errors
 cd /home/pi
 wget https://github.com/davecrump/rpidatv/archive/master.zip -O master.zip
 unzip -o master.zip 
-cp -f -r rpidatv-master rpidatv
+cp -f -r rpidatv-master/bin rpidatv
+cp -f -r rpidatv-master/doc rpidatv
+cp -f -r rpidatv-master/scripts rpidatv
+cp -f -r rpidatv-master/src rpidatv
+cp -f -r rpidatv-master/video rpidatv
 rm master.zip
 
 # Compile rpidatv core
@@ -39,6 +43,44 @@ make
 cp adf4351 ../../bin/
 cd /home/pi/rpidatv
 
+# Get tstools
+cd /home/pi/rpidatv/src
+wget https://github.com/F5OEO/tstools/archive/master.zip
+unzip master.zip
+mv tstools-master tstools
+rm master.zip
+
+# Compile tstools
+cd tstools
+make
+cp bin/ts2es ../../bin/
+
+#install H264 Decoder : hello_video
+#compile ilcomponet first
+cd /opt/vc/src/hello_pi/
+sudo ./rebuild.sh
+
+cd /home/pi/rpidatv/src/hello_video
+make
+cp hello_video.bin ../../bin/
+
+# TouchScreen GUI
+# FBCP : Duplicate Framebuffer 0 -> 1
+cd /home/pi/
+wget https://github.com/tasanakorn/rpi-fbcp/archive/master.zip
+unzip master.zip
+mv rpi-fbcp-master rpi-fbcp
+rm master.zip
+
+# Compile fbcp
+cd rpi-fbcp/
+mkdir build
+cd build/
+cmake ..
+make
+sudo install fbcp /usr/local/bin/fbcp
+cd ../../
+
 # Update the version number
 rm /home/pi/rpidatv/scripts/installed_version.txt
 cp /home/pi/rpidatv/scripts/latest_version.txt /home/pi/rpidatv/scripts/installed_version.txt
@@ -53,5 +95,3 @@ if [[ "$REPLY" = "y" || "$REPLY" = "Y" ]]; then
   sudo reboot now
 fi
 exit
-
-
