@@ -47,6 +47,7 @@ cd /home/pi/rpidatv
 cd /home/pi/rpidatv/src
 wget https://github.com/F5OEO/tstools/archive/master.zip
 unzip master.zip
+rm -rf tstools
 mv tstools-master tstools
 rm master.zip
 
