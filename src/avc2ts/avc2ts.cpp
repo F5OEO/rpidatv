@@ -1387,7 +1387,7 @@ So the advice was for MMAL_VIDEO_INTRA_REFRESH_CYCLIC_MROWS and cir_mbs set prob
 		VideoStat->nPortIndex= OPORT;
 		ERR_OMX( OMX_GetParameter(component_, OMX_IndexConfigBrcmPortStats, &VideoStat)," Get VideoStat");
 		struct timespec t;
-         clock_gettime(CLOCK_MONOTONIC, &t);
+         clock_gettime(CLOCK_REALTIME, &t);
 		printf("VideoStat : %s ByteCount %d Buffer %d - Frame %d = %d Skip %d Discard %d Max Delta%d:%d TIME %li\n",/*VideoStat->nByteCount.nLowPart*8*25/VideoStat->nFrameCount,*/debug,VideoStat->nByteCount.nLowPart,VideoStat->nBufferCount,VideoStat->nFrameCount,VideoStat->nBufferCount-VideoStat->nFrameCount*2,VideoStat->nFrameSkips,VideoStat->nDiscards,VideoStat->nMaxTimeDelta.nHighPart,VideoStat->nMaxTimeDelta.nLowPart,( t.tv_sec -tbefore.tv_sec  )*1000ul + ( t.tv_nsec - tbefore.tv_nsec)/1000000);
 	tbefore=t;
 	Count++;
@@ -1890,8 +1890,8 @@ class TSEncaspulator
 		tsmain.cbr = 1;
 		tsmain.ts_type = TS_TYPE_DVB;
 		tsmain.pcr_period = 35;
-		tsmain.pat_period = 450;
-	        tsmain.sdt_period = 450;
+		tsmain.pat_period = 400;
+	        tsmain.sdt_period = 400;
         	tsmain.nit_period = 450;
         	tsmain.tdt_period = 1950;
         	tsmain.tot_period = 1950;
@@ -2002,7 +2002,7 @@ class TSEncaspulator
 			}
 			else
 			{
-				//printf("%d:%d %lld\n",Time->tv_sec,Time->tv_nsec,key_frame);
+				//printf("%d:%d %lld\n",Time->tv_sec,Time->tv_nsec/(int64_t)1E6L,key_frame);
 				vdts=(Time->tv_sec*1000+Time->tv_nsec/1000000.0)*90L ; //TimeToTransmitFrameUs*90L/1000;
 				vpts=(Time->tv_sec*1000+Time->tv_nsec/1000000.0)*90L; 	
 				
@@ -2030,11 +2030,11 @@ class TSEncaspulator
 				}*/	
 				static struct timespec gettime_now,gettime_first;
 				long time_difference;
-				clock_gettime(CLOCK_MONOTONIC, &gettime_now);
+				clock_gettime(CLOCK_REALTIME, &gettime_now);
 				time_difference = gettime_now.tv_nsec - gettime_first.tv_nsec;
 				if(time_difference<0) time_difference+=1E9L;
 				
-				clock_gettime(CLOCK_MONOTONIC, &gettime_first);
+				clock_gettime(CLOCK_REALTIME, &gettime_first);
 	
 				if(vout)
 				{
@@ -2046,7 +2046,7 @@ class TSEncaspulator
 					 fwrite(out, 1, len, vout);
 				}
 				if(UdpOutput) udp_send(out,len);
-				clock_gettime(CLOCK_MONOTONIC, &gettime_now);
+				clock_gettime(CLOCK_REALTIME, &gettime_now);
 				time_difference = gettime_now.tv_nsec - gettime_first.tv_nsec;
 				if(time_difference<0) time_difference+=1E9;
 				//if(time_difference>5000000) printf("Overflow ! timetowrite=%ld\n",time_difference);
@@ -2247,7 +2247,7 @@ ERR_OMX( OMX_SetupTunnel(camera.component(), Camera::OPORT_PREVIEW, videorender.
 		Buffer& encBuffer = encoder.outBuffer();
 		if(FirstTime) 
 		{
-			clock_gettime(CLOCK_MONOTONIC, &InitTime);
+			clock_gettime(CLOCK_REALTIME, &InitTime);
 			FirstTime=false;
 			encoder.callFillThisBuffer();
 		}
@@ -2289,7 +2289,7 @@ ERR_OMX( OMX_SetupTunnel(camera.component(), Camera::OPORT_PREVIEW, videorender.
 					if((OmxFlags&OMX_BUFFERFLAG_ENDOFFRAME)&&!(OmxFlags&OMX_BUFFERFLAG_CODECCONFIG))	key_frame++;
 					struct timespec gettime_now;
 				
-							clock_gettime(CLOCK_MONOTONIC, &gettime_now);
+							clock_gettime(CLOCK_REALTIME, &gettime_now);
 							gettime_now.tv_sec=(int)difftime(gettime_now.tv_sec,InitTime.tv_sec);
 	//			tsencoder.AddFrame(encBuffer.data(),encBuffer.dataSize(),OmxFlags,key_frame,DelayPTS,&gettime_now);
 
@@ -2531,8 +2531,8 @@ void usleep_exactly(long MuToSleep )
 	#define MARGIN 500
 	struct timespec gettime_now;
 	long time_difference;
-	if(last_time.tv_sec==0) clock_gettime(CLOCK_MONOTONIC, &last_time);
-	clock_gettime(CLOCK_MONOTONIC, &gettime_now);
+	if(last_time.tv_sec==0) clock_gettime(CLOCK_REALTIME, &last_time);
+	clock_gettime(CLOCK_REALTIME, &gettime_now);
 	time_difference = gettime_now.tv_nsec - last_time.tv_nsec;
 	if(time_difference<0) time_difference+=1E9;
 
@@ -2547,7 +2547,7 @@ void usleep_exactly(long MuToSleep )
 	usleep(BigToSleepns/1000);
 	do
 	{
-		clock_gettime(CLOCK_MONOTONIC, &gettime_now);
+		clock_gettime(CLOCK_REALTIME, &gettime_now);
 		time_difference = gettime_now.tv_nsec - last_time.tv_nsec;
 		if(time_difference<0) time_difference+=1E9;
 		//printf("#");
@@ -2701,7 +2701,7 @@ void Run(bool want_quit)
 			
 			if(FirstTime)
 			{
-				clock_gettime(CLOCK_MONOTONIC, &InitTime);
+				clock_gettime(CLOCK_REALTIME, &InitTime);
 				FirstTime=false;
 				encoder.callFillThisBuffer();
 				
@@ -2752,16 +2752,19 @@ void Run(bool want_quit)
 						
 							struct timespec gettime_now;
 				
-							clock_gettime(CLOCK_MONOTONIC, &gettime_now);
-							gettime_now.tv_sec=(int)difftime(gettime_now.tv_sec,InitTime.tv_sec);
+							clock_gettime(CLOCK_REALTIME, &gettime_now);
+//printf("Avnt %ld:%ld - %ld:%ld \n",gettime_now.tv_sec,gettime_now.tv_nsec,InitTime.tv_sec,InitTime.tv_nsec);
+							//gettime_now.tv_sec=(int)difftime(gettime_now.tv_sec,InitTime.tv_sec);
+gettime_now.tv_sec=gettime_now.tv_sec-InitTime.tv_sec;
 if(gettime_now.tv_nsec<InitTime.tv_nsec)
 {	
-	gettime_now.tv_nsec=1E9+gettime_now.tv_nsec-InitTime.tv_nsec;
+	
+	gettime_now.tv_nsec=((int64_t)1E9L+(int64_t)gettime_now.tv_nsec)-(int64_t)InitTime.tv_nsec;
 	  gettime_now.tv_sec-=1;
 }
 else
 {
-	gettime_now.tv_nsec=gettime_now.tv_nsec-InitTime.tv_nsec;
+	gettime_now.tv_nsec=gettime_now.tv_nsec-(int64_t)InitTime.tv_nsec;
 }
 
 				tsencoder.AddFrame(encBuffer.data(),encBuffer.dataSize(),OmxFlags,key_frame,DelayPTS,&gettime_now);
