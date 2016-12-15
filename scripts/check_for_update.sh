@@ -24,13 +24,12 @@ then
     printf "\n"
     if [[ "$REPLY" = "y" || "$REPLY" = "Y" ]];
     then
-        printf "\nUgrading now...\n"
+        printf "\nUpgrading now...\n"
         cd /home/pi
         rm update.sh >/dev/null 2>/dev/null
         wget -q https://raw.githubusercontent.com/davecrump/rpidatv/master/update.sh
         chmod +x update.sh
-        /home/pi/update.sh &
-        printf "Starting Update....\n"
+        /home/pi/update.sh 
         exit
     else
         printf "Not upgrading\n"
