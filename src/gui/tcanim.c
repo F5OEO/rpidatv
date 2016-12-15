@@ -187,7 +187,7 @@ void draw(int w, int h) {
 			Rect (0,20,720,34) ;
 			Fill (255,255,255,1) ;
 			Text (w-frames*2,28,bannertext,SansTypeface,19) ;
-			frames++ ;
+			frames+=20 ;
 			temp = TextWidth (bannertext,SansTypeface,19) ;
 			if (temp - frames * 2 < -720)
 			{
@@ -325,7 +325,7 @@ int main(int argc, char **argv)
 	printf ("\n") ;
 
 	init (&w, &h);
-	w = 720 ; h = 576 ;
+	//w = 720 ; h = 576 ;
 	makeImage() ;	
 	Start (w,h) ;
 	vgSetPixels (0,0,save[0],0,0,w,h) ;
@@ -380,10 +380,11 @@ int main(int argc, char **argv)
 		counter2++ ;
 		draw(w, h);		
 		End() ;
+		usleep(400000);
 		cycles++ ;
 
 		namefields++ ;
-		if (namefields >= nameseconds * 50)
+		if (namefields >= nameseconds * 5)
 		{
 			nameindex++ ;
 			namefields = 0 ;
