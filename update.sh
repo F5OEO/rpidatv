@@ -70,6 +70,7 @@ cp hello_video.bin ../../bin/
 cd /home/pi/
 wget https://github.com/tasanakorn/rpi-fbcp/archive/master.zip
 unzip master.zip
+rm -rf rpi-fbcp
 mv rpi-fbcp-master rpi-fbcp
 rm master.zip
 
