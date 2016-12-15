@@ -29,7 +29,7 @@ then
         rm update.sh >/dev/null 2>/dev/null
         wget -q https://raw.githubusercontent.com/davecrump/rpidatv/master/update.sh
         chmod +x update.sh
-        /home/pi/update.sh 
+        source /home/pi/update.sh 
         exit
     else
         printf "Not upgrading\n"
