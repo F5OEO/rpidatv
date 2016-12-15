@@ -1,6 +1,8 @@
 #!/bin/bash
 
-# Updated by davecrump 20161214
+# Updated by davecrump 20161215
+
+printf "\nCommencing update.\n"
 
 set -e  # Don't report errors
 
@@ -42,12 +44,12 @@ rm /home/pi/rpidatv/scripts/installed_version.txt
 cp /home/pi/rpidatv/scripts/latest_version.txt /home/pi/rpidatv/scripts/installed_version.txt
 
 # Offer reboot
-printf "A reboot will be required before using the update."
+printf "A reboot will be required before using the update.\n"
 printf "Do you want to reboot now? (y/n)\n"
 read -n 1
 printf "\n"
 if [[ "$REPLY" = "y" || "$REPLY" = "Y" ]]; then
-  echo "rebooting"
+  printf "\nRebooting\n"
   sudo reboot now
 fi
 exit
