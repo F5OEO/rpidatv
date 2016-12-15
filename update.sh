@@ -74,6 +74,7 @@ rm master.zip
 
 # Compile fbcp
 cd rpi-fbcp/
+rm -rf build
 mkdir build
 cd build/
 cmake ..
