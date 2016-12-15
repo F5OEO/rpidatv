@@ -333,7 +333,7 @@ pwm_reg[PWM_CTL] = 0;
 		
 			// Write a frequency sample
 
-			cbp->info = BCM2708_DMA_NO_WIDE_BURSTS | BCM2708_DMA_WAIT_RESP |BCM2708_DMA_D_DREQ /*| BCM2708_DMA_PER_MAP(5)*/;
+			cbp->info = BCM2708_DMA_NO_WIDE_BURSTS /* BCM2708_DMA_WAIT_RESP |BCM2708_DMA_D_DREQ | BCM2708_DMA_PER_MAP(5)*/;
 			cbp->src = mem_virt_to_phys(ctl->sample + samplecnt);
 			cbp->dst = phys_pwm_fifo_addr;
 			cbp->length = 4;
@@ -345,7 +345,7 @@ pwm_reg[PWM_CTL] = 0;
 					
 			// Delay
 			
-			cbp->info =  /*BCM2708_DMA_SRC_IGNOR  |*/ BCM2708_DMA_NO_WIDE_BURSTS | BCM2708_DMA_WAIT_RESP | BCM2708_DMA_D_DREQ  | BCM2708_DMA_PER_MAP(2);
+			cbp->info =  BCM2708_DMA_SRC_IGNOR  |/* BCM2708_DMA_NO_WIDE_BURSTS | BCM2708_DMA_WAIT_RESP |*/ BCM2708_DMA_D_DREQ  | BCM2708_DMA_PER_MAP(2);
 			cbp->src = mem_virt_to_phys(virtbase);
 			cbp->dst = phys_fifo_addr;//Delay with PCM
 			cbp->length = 4;
@@ -705,7 +705,7 @@ int InitDTX1()
 
 
 //#define BIG_BUFFER_SIZE ((int)((NUM_SAMPLES*4*1.5)/188)*188)
-#define BIG_BUFFER_SIZE (18800*8)
+#define BIG_BUFFER_SIZE (18800*8*2)
 #define BURST_MEM_SIZE (188)
 typedef struct circular_buffer
 {
@@ -1246,12 +1246,14 @@ if(ModeIQ==2)
 	pthread_create (&th1,NULL, &FillBigBuffer,NULL);
 	pthread_attr_destroy (&attr);
 	
-	
-	while(BufferAvailable()<(BIG_BUFFER_SIZE*5/10)) // 1/10 SECOND BUFFERING DEPEND ON SYMBOLRATE OR 80% BUFFERSIZE
+	if(FEC>0)
 	{
-		//printf("Init Filling Memory buffer %d\n",BufferAvailable());
-		//printf(".");
-		 usleep(10000);
+		while(BufferAvailable()<(BIG_BUFFER_SIZE*5/10)) // 1/10 SECOND BUFFERING DEPEND ON SYMBOLRATE OR 80% BUFFERSIZE
+		{
+			//printf("Init Filling Memory buffer %d\n",BufferAvailable());
+			//printf(".");
+			 usleep(10000);
+		}
 	}
 	/*
 	int NbByteInitRead=0;
@@ -1352,7 +1354,7 @@ for (;;)
 
 			free_slots=free_slots_now;
 			// FIX IT : Max(freeslot et Numsample/8)
-			if((Init==1)&&(free_slots <= 204*2*4 /*NUM_SAMPLES/8*/))
+			if(((Init==1)&&(free_slots <= 204*2*4 /*NUM_SAMPLES/8*/))||(FEC==0))
 			{
 				printf("%ld:%ld : End of Fulling buffer \n",gettime_now.tv_sec,gettime_now.tv_nsec);
 				dma_reg[DMA_CS+DMA_CHANNEL*0x40] = 0x10880001;	// go, mid priority, wait for outstanding writes :7 Seems Max Priority
