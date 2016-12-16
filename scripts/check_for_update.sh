@@ -1,13 +1,15 @@
 #!/bin/bash
 
 ## Download the latest_version file and convert it to a variable
-cd /home/pi/rpidatv
-rm /home/pi/rpidatv/latest_version.txt  >/dev/null 2>/dev/null
+cd /home/pi/rpidatv/scripts
+rm /home/pi/rpidatv/scripts/latest_version.txt  >/dev/null 2>/dev/null
 wget -q https://raw.githubusercontent.com/davecrump/rpidatv/master/scripts/latest_version.txt
 LATESTVERSION=$(head -c 9 latest_version.txt)
+rm /home/pi/rpidatv/scripts/latest_version.txt  >/dev/null 2>/dev/null
 
 ## Check installed version
-INSTALLEDVERSION=$(head -c 9 scripts/installed_version.txt)
+INSTALLEDVERSION=$(head -c 9 installed_version.txt)
+cd /home/pi
 
 ## Compare versions
 if [ $LATESTVERSION -eq $INSTALLEDVERSION ];
