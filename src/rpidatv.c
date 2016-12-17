@@ -399,7 +399,7 @@ int InitIQ(int DigithinMode)
 	gpioSetMode(21,1); // GPIO 21 - PIN 40 is output for PTT
 	gpio_reg[0x1C/4]=1<<21; // Set PTT ON
 
-	unsigned int SRClock=PLLFREQ_192/(1000*SymbolRate);
+	unsigned int SRClock;
 	//unsigned int SRClockPCM=(PLLFREQ_PCM/(SymbolRate*1000*64))*64;
 	
 	//SymbolRate = PLLFREQ/(SRClockPCM*1000);
@@ -496,7 +496,7 @@ int InitIQ(int DigithinMode)
 		        
 			
 			
-			
+			SRClock=PLLFREQ_PCM/(1000*SymbolRate);
 			#ifdef DIGILITE_CLOCK_MODE
 			printf("\n ******** DIGILITE CLOCK MODE*********** \n");
 			printf("SRClok=%d SYmbolRate=%dKSymb\n",SRClock,500000/SRClock);
@@ -533,12 +533,26 @@ int InitIQ(int DigithinMode)
 	}
 
 	pwm_reg[PWM_CTL] = 0;
-	clk_reg[PWMCLK_CNTL] = 0x5A000000 | (0 << 9) |PLL_192 ;
-
-	udelay(300);
-	clk_reg[PWMCLK_DIV] = 0x5A000000 | ((SRClock)<<12); //*2: FIXME : Because SRClock is normaly based on 500Mhz not 1GH
-	udelay(300);
-	clk_reg[PWMCLK_CNTL] = 0x5A000010 | (0 << 9) | PLL_192;
+	if(SymbolRate<250)
+	{
+		SRClock=PLLFREQ_192/(1000*SymbolRate);
+		clk_reg[PWMCLK_CNTL] = 0x5A000000 | (0 << 9) |PLL_192 ;
+		udelay(300);
+		clk_reg[PWMCLK_DIV] = 0x5A000000 | ((SRClock)<<12); //*2: FIXME : Because SRClock is normaly based on 500Mhz not 1GH
+		udelay(300);
+		clk_reg[PWMCLK_CNTL] = 0x5A000010 | (0 << 9) | PLL_192;
+		printf("Real SR = %d KSymbol / Clock Divider =%d \n",PLLFREQ_192/(SRClock*1000),SRClock);
+	}
+	else
+	{
+		SRClock=PLLFREQ_PCM/(1000*SymbolRate);
+		clk_reg[PWMCLK_CNTL] = 0x5A000000 | (0 << 9) |PLL_PCM ;
+		udelay(300);
+		clk_reg[PWMCLK_DIV] = 0x5A000000 | ((SRClock)<<12); //*2: FIXME : Because SRClock is normaly based on 500Mhz not 1GH
+		udelay(300);
+		clk_reg[PWMCLK_CNTL] = 0x5A000010 | (0 << 9) | PLL_PCM;
+		printf("Real SR = %d KSymbol / Clock Divider =%d \n",PLLFREQ_PCM/(SRClock*1000),SRClock);
+	}
 	pwm_reg[PWM_RNG1] = 32;// 32 Mandatory for Serial Mode without gap
 	udelay(100);
 	pwm_reg[PWM_RNG2] = 32;// 32 Mandatory for Serial Mode without gap
@@ -548,7 +562,7 @@ int InitIQ(int DigithinMode)
 	pwm_reg[PWM_CTL] = PWMCTL_CLRF;
 	udelay(100);
 
-	printf("Real SR = %d KSymbol / Clock Divider =%d \n",PLLFREQ_192/(SRClock*1000),SRClock);
+	
 	//printf("Playing File =%s at %d KSymbol FEC=%d  ",argv[1],PLLFREQ_PCM/SRClock/1000,abs(FEC));
 
 	// --------------------- INIT DMA IQ ------------------------------
