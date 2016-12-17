@@ -16,7 +16,7 @@ sudo rpi-update
 
 # Get the source software and copy to the Pi
 cd /home/pi
-wget https://github.com/davecrump/rpidatv/archive/master.zip
+wget https://github.com/F5OEO/rpidatv/archive/master.zip
 unzip -o master.zip 
 mv rpidatv-master rpidatv
 rm master.zip
