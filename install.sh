@@ -159,10 +159,11 @@ then
   cp configs/rpidatvconfig.fr rpidatvconfig.txt
   cd /home/pi
   echo "Autostart install"
-  sudo mkdir -pv /etc/systemd/system/getty@tty1.service.d/
-  sudo cp "/home/pi/rpidatv/scripts/configs/autologin.conf" /etc/systemd/system/getty@tty1.service.d/
-  sudo systemctl enable getty@tty1.service
-  cp "/home/pi/rpidatv/scripts/configs/console_tx.bashrc" /home/pi/.bashrc;;
+#get from http://raspberrypi.stackexchange.com/questions/38025/disable-console-autologin-on-raspbian-jessie
+  sudo ln -fs /etc/systemd/system/autologin@.service \
+ /etc/systemd/system/getty.target.wants/getty@tty1.service
+
+  cp "/home/pi/rpidatv/scripts/configs/console_tx.bashrc" /home/pi/.bashrc
   echo "Completed French Install Auto"
 fi
 

@@ -732,14 +732,12 @@ do_autostart_setup()
                 sudo rm /etc/systemd/system/getty@tty1.service.d/autologin.conf /dev/null 2>/dev/null
                 cp $PATHCONFIGS"/button.bashrc" /home/pi/.bashrc;;
             TX_boot)
-                sudo mkdir -pv /etc/systemd/system/getty@tty1.service.d/
-		sudo cp $PATHCONFIGS"/autologin.conf" /etc/systemd/system/getty@tty1.service.d/
-                sudo systemctl enable getty@tty1.service
+                 sudo ln -fs /etc/systemd/system/autologin@.service \
+ /etc/systemd/system/getty.target.wants/getty@tty1.service
                 cp $PATHCONFIGS"/console_tx.bashrc" /home/pi/.bashrc;;
             Display_boot)
-                sudo mkdir -pv /etc/systemd/system/getty@tty1.service.d/
-                sudo cp $PATHCONFIGS"/autologin.conf" /etc/systemd/system/getty@tty1.service.d/
-                sudo systemctl enable getty@tty1.service
+                 sudo ln -fs /etc/systemd/system/autologin@.service \
+ /etc/systemd/system/getty.target.wants/getty@tty1.service
                 MODE_DISPLAY=$(get_config_var display $CONFIGFILE)
                 case "$MODE_DISPLAY" in
                     Waveshare)
@@ -748,9 +746,8 @@ do_autostart_setup()
                         cp $PATHCONFIGS"/display.bashrc" /home/pi/.bashrc;; #>/dev/null 2>/dev/null;;
                 esac;;
             Button_boot)
-                sudo mkdir -pv /etc/systemd/system/getty@tty1.service.d/
-                sudo cp $PATHCONFIGS"/autologin.conf" /etc/systemd/system/getty@tty1.service.d/
-                sudo systemctl enable getty@tty1.service
+                sudo ln -fs /etc/systemd/system/autologin@.service \
+ /etc/systemd/system/getty.target.wants/getty@tty1.service
                 cp $PATHCONFIGS"/button.bashrc" /home/pi/.bashrc;;
         esac
         set_config_var startup "$chstartup" $CONFIGFILE
