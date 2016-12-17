@@ -151,15 +151,31 @@ else
   echo "Completed English Install"
 fi
 
-# Offer reboot
-printf "A reboot will be required before using the software."
-printf "Do you want to reboot now? (y/n)\n"
-read -n 1
-printf "\n"
-if [[ "$REPLY" = "y" || "$REPLY" = "Y" ]]; then
-  echo "rebooting"
-  sudo reboot now
+if [ "$1" == "frstart" ];
+then
+  echo "Installing French Language and Keyboard"
+  cd /home/pi/rpidatv/scripts/
+  sudo cp configs/keyfr /etc/default/keyboard
+  cp configs/rpidatvconfig.fr rpidatvconfig.txt
+  cd /home/pi
+  echo "Autostart install"
+  sudo mkdir -pv /etc/systemd/system/getty@tty1.service.d/
+  sudo cp "/home/pi/rpidatv/scripts/configs/autologin.conf" /etc/systemd/system/getty@tty1.service.d/
+  sudo systemctl enable getty@tty1.service
+  cp "/home/pi/rpidatv/scripts/configs/console_tx.bashrc" /home/pi/.bashrc;;
+  echo "Completed French Install Auto"
 fi
-exit
+
+
+# Offer reboot
+#printf "A reboot will be required before using the software."
+#printf "Do you want to reboot now? (y/n)\n"
+#read -n 1
+#printf "\n"
+#if [[ "$REPLY" = "y" || "$REPLY" = "Y" ]]; then
+#  echo "rebooting"
+#  sudo reboot now
+#fi
+#exit
 
 
