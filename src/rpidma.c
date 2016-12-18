@@ -32,7 +32,7 @@ char InitDma(void *FunctionTerminate)
 		printf("Failed to open mailbox\n");
 		return(0);
 	}
-	
+	printf("DMA used : %x\n",get_dma_channels(mbox.handle));
 	mbox.mem_ref = mem_alloc(mbox.handle, NUM_PAGES* PAGE_SIZE, PAGE_SIZE, mem_flag);
 	/* TODO: How do we know that succeeded? */
 	//printf("mem_ref %x\n", mbox.mem_ref);
