@@ -710,16 +710,13 @@ do_autostart_setup()
     if [ $? -eq 0 ]; then
         case "$chstartup" in
             Prompt)
-                sudo systemctl disable getty@tty1.service
-                sudo rm /etc/systemd/system/getty@tty1.service.d/autologin.conf >/dev/null 2>/dev/null
+                sudo rm /etc/systemd/system/getty.target.wants/getty@tty1.service >/dev/null 2>/dev/null
                 cp $PATHCONFIGS"/prompt.bashrc" /home/pi/.bashrc;;
             Console)
-                sudo systemctl disable getty@tty1.service
-                sudo rm /etc/systemd/system/getty@tty1.service.d/autologin.conf >/dev/null 2>/dev/null
+                sudo rm /etc/systemd/system/getty.target.wants/getty@tty1.service >/dev/null 2>/dev/null
                 cp $PATHCONFIGS"/console.bashrc" /home/pi/.bashrc;;
             Display)
-                sudo systemctl disable getty@tty1.service
-                sudo rm /etc/systemd/system/getty@tty1.service.d/autologin.conf >/dev/null 2>/dev/null
+                sudo rm /etc/systemd/system/getty.target.wants/getty@tty1.service >/dev/null 2>/dev/null
                 MODE_DISPLAY=$(get_config_var display $CONFIGFILE)
                 case "$MODE_DISPLAY" in
                     Waveshare)
@@ -728,29 +725,25 @@ do_autostart_setup()
                         cp $PATHCONFIGS"/display.bashrc" /home/pi/.bashrc;;
                 esac;;
             Button)
-                sudo systemctl disable getty@tty1.service
-                sudo rm /etc/systemd/system/getty@tty1.service.d/autologin.conf /dev/null 2>/dev/null
+                sudo rm /etc/systemd/system/getty.target.wants/getty@tty1.service /dev/null 2>/dev/null
                 cp $PATHCONFIGS"/button.bashrc" /home/pi/.bashrc;;
             TX_boot)
-                sudo mkdir -pv /etc/systemd/system/getty@tty1.service.d/
-		sudo cp $PATHCONFIGS"/autologin.conf" /etc/systemd/system/getty@tty1.service.d/
-                sudo systemctl enable getty@tty1.service
+                sudo ln -fs /etc/systemd/system/autologin@.service \
+/etc/systemd/system/getty.target.wants/getty@tty1.service
                 cp $PATHCONFIGS"/console_tx.bashrc" /home/pi/.bashrc;;
             Display_boot)
-                sudo mkdir -pv /etc/systemd/system/getty@tty1.service.d/
-                sudo cp $PATHCONFIGS"/autologin.conf" /etc/systemd/system/getty@tty1.service.d/
-                sudo systemctl enable getty@tty1.service
+                sudo ln -fs /etc/systemd/system/autologin@.service \
+/etc/systemd/system/getty.target.wants/getty@tty1.service
                 MODE_DISPLAY=$(get_config_var display $CONFIGFILE)
                 case "$MODE_DISPLAY" in
                     Waveshare)
-                        cp $PATHCONFIGS"/displaywaveshare.bashrc" /home/pi/.bashrc;; #>/dev/null 2>/dev/null;;
+                        cp $PATHCONFIGS"/displaywaveshare.bashrc" /home/pi/.bashrc >/dev/null 2>/dev/null;;
                     *)
-                        cp $PATHCONFIGS"/display.bashrc" /home/pi/.bashrc;; #>/dev/null 2>/dev/null;;
+                        cp $PATHCONFIGS"/display.bashrc" /home/pi/.bashrc >/dev/null 2>/dev/null;;
                 esac;;
             Button_boot)
-                sudo mkdir -pv /etc/systemd/system/getty@tty1.service.d/
-                sudo cp $PATHCONFIGS"/autologin.conf" /etc/systemd/system/getty@tty1.service.d/
-                sudo systemctl enable getty@tty1.service
+                sudo ln -fs /etc/systemd/system/autologin@.service \
+/etc/systemd/system/getty.target.wants/getty@tty1.service
                 cp $PATHCONFIGS"/button.bashrc" /home/pi/.bashrc;;
         esac
         set_config_var startup "$chstartup" $CONFIGFILE
@@ -863,11 +856,6 @@ do_Enable_DigiThin()
 whiptail --title "Not implemented yet" --msgbox "Not Implemented yet.  Please press enter to continue" 8 78
 }
 
-do_125KS()
-{
-whiptail --title "Not implemented yet" --msgbox "Not Implemented yet.  Please press enter to continue" 8 78
-}
-
 do_EasyCap()
 {
 whiptail --title "Not implemented yet" --msgbox "Not Implemented yet.  Please press enter to continue" 8 78
@@ -875,7 +863,8 @@ whiptail --title "Not implemented yet" --msgbox "Not Implemented yet.  Please pr
 
 do_Update()
 {
-whiptail --title "Not implemented yet" --msgbox "Not Implemented yet.  Please press enter to continue" 8 78
+reset
+$PATHSCRIPT"/check_for_update.sh"
 }
 
 do_system_setup()
@@ -887,9 +876,8 @@ menuchoice=$(whiptail --title "$StrSystemTitle" --menu "$StrSystemContext" 16 78
     "4 WiFi Set-up" "SSID and password"  \
     "5 WiFi Off" "Turn the WiFi Off" \
     "6 Enable DigiThin" "Not Implemented Yet" \
-    "7 Enable 125KS" "Not implemented yet" \
-    "8 Set EasyCap" "Not implemented yet"  \
-    "9 Update" "Not implemented yet"  \
+    "7 Set EasyCap" "Not implemented yet"  \
+    "8 Update" "Check for Updated rpidatv Software"  \
     3>&2 2>&1 1>&3)
     case "$menuchoice" in
         1\ *) do_autostart_setup ;;
@@ -898,9 +886,8 @@ menuchoice=$(whiptail --title "$StrSystemTitle" --menu "$StrSystemContext" 16 78
         4\ *) do_WiFi_setup ;;
         5\ *) do_WiFi_Off   ;;
         6\ *) do_Enable_DigiThin ;;
-        7\ *) do_125KS ;;
-        8\ *) do_EasyCap ;;
-        9\ *) do_Update ;;
+        7\ *) do_EasyCap ;;
+        8\ *) do_Update ;;
      esac
 }
 
@@ -952,6 +939,8 @@ sudo shutdown now
 do_TouchScreen()
 {
 reset
+sudo killall fbcp
+fbcp &
 ~/rpidatv/bin/rpidatvgui 1
 }
 
