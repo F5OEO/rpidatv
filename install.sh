@@ -124,6 +124,7 @@ sudo cp ./waveshare35a.dtbo /boot/overlays/
 sudo bash -c 'echo -e "\nprofile static_eth0\nstatic ip_address=192.168.1.60/24\nstatic routers=192.168.1.1\nstatic domain_name_servers=192.168.1.1\ninterface eth0\nfallback static_eth0" >> /etc/dhcpcd.conf'
 
 # Enable camera
+sudo bash -c 'echo -e "\n##Enable Pi Camera" >> /boot/config.txt'
 sudo bash -c 'echo -e "\ngpu_mem=128\nstart_x=1\n" >> /boot/config.txt'
 
 # Disable sync option for usbmount
@@ -132,6 +133,9 @@ sudo sed -i 's/sync,//g' /etc/usbmount/usbmount.conf
 # Install executable for hardware shutdown button
 wget 'https://github.com/philcrump/pi-sdn/releases/download/v1.0/pi-sdn' -O /home/pi/pi-sdn
 chmod +x /home/pi/pi-sdn
+
+# Create directory for Autologin link
+sudo mkdir -p /etc/systemd/system/getty.target.wants
 
 # Record Version Number
 cd /home/pi/rpidatv/scripts/
