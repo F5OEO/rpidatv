@@ -137,6 +137,9 @@ chmod +x /home/pi/pi-sdn
 # Create directory for Autologin link
 sudo mkdir -p /etc/systemd/system/getty.target.wants
 
+# Show console menu at first user log-in
+cp /home/pi/rpidatv/scripts/configs/console.bashrc" /home/pi/.bashrc
+
 # Record Version Number
 cd /home/pi/rpidatv/scripts/
 cp latest_version.txt installed_version.txt
