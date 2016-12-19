@@ -1,12 +1,15 @@
 #!/bin/bash
 
-# Updated by davecrump 20161216
+# Updated by davecrump 20161219
 
 # Modified to overwrite ~/rpidatv/scripts and
 # ~/rpidatv/src, then compile
 # rpidatv, rpidatv gui avc2ts and adf4351
 
 printf "\nCommencing update.\n"
+
+# Note previous version number
+cp -f -r /home/pi/rpidatv/scripts/installed_version.txt /home/pi/prev_installed_version.txt
 
 set -e  # Don't report errors
 
@@ -92,6 +95,8 @@ cd /home/pi
 # Update the version number
 rm /home/pi/rpidatv/scripts/installed_version.txt
 cp /home/pi/rpidatv/scripts/latest_version.txt /home/pi/rpidatv/scripts/installed_version.txt
+cp -f -r /home/pi/prev_installed_version.txt /home/pi/rpidatv/scripts/prev_installed_version.txt
+rm /home/pi/prev_installed_version.txt
 
 # Offer reboot
 printf "A reboot will be required before using the update.\n"
