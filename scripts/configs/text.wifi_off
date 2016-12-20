@@ -1,0 +1,6 @@
+## called by .bashrc at log-on to diable wifi
+## If this file is not in ~, then wifi is allowed to start
+
+sudo ifconfig wlan0 down
+
+## Only way to restart wifi is to reboot

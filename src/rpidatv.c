@@ -52,6 +52,7 @@
 
 #include <sys/prctl.h>
 #include <sys/timex.h>
+#include <sys/ioctl.h>
 
 extern void 	dvbsenco_init	(void) ;
 extern uchar*	dvbsenco	(uchar*) ;	
@@ -63,7 +64,7 @@ extern uchar*	interleave 	(uchar* packetin) ;
 #define PROGRAM_VERSION "2.0.0"
 
 //Minimum Time in us to sleep
-#define KERNEL_GRANULARITY 20000 
+#define KERNEL_GRANULARITY 10000 
 
 #define SCHED_PRIORITY 30 //Linux scheduler priority. Higher = more realtime
 
@@ -81,6 +82,8 @@ extern uchar*	interleave 	(uchar* packetin) ;
 #define PLLFREQ_PWM             1000000000	//PLLC = 1GHZ , 1.2GHZ ON PIZERO ! But Unstable -> Go back to PLL_D
 #define PLL_PWM			0x6
 
+#define PLLFREQ_192             19200000	//PLLA = 19.2MHZ
+#define PLL_192			0x1
 
 #define CARRIERFREQ		100000000	// Carrier frequency is 100MHz
 
@@ -129,29 +132,32 @@ terminate(int dummy)
 	
 	gpio_reg[0x28/4]=1<<21; // Set PTT OFF
 
-	if (dma_reg) {
+	if (dma_reg)
+	 {
 		dma_reg[DMA_CS+DMA_CHANNEL*0x40] = BCM2708_DMA_INT | BCM2708_DMA_END;
 		udelay(100);
 		dma_reg[DMA_CS+DMA_CHANNEL*0x40] = BCM2708_DMA_RESET;
 		udelay(100);
-		//printf("Reset DMA Done\n");
-	clk_reg[GPCLK_CNTL] = 0x5A << 24  | 0 << 9 | 1 << 4 | 6; //NO MASH !!!
-	udelay(500);
+		printf("Reset DMA Done\n");
+	//clk_reg[GPCLK_CNTL] = 0x5A << 24  | 0 << 9 | 1 << 4 | 6; //NO MASH !!!
+	//udelay(500);
 	gpio_reg[GPFSEL0] = (gpio_reg[GPFSEL0] & ~(7 << 12)) | (0 << 12); //DISABLE CLOCK - In case used by digilite
-	clk_reg[PWMCLK_CNTL] = 0x5A000006 | (0 << 9) ;
+	//clk_reg[PWMCLK_CNTL] = 0x5A000006 | (0 << 9) ;
+	clk_reg[PWMCLK_CNTL] = 0x5A000000|PLL_PWM;
 	udelay(500);	
-	clk_reg[PCMCLK_CNTL] = 0x5A000006;	
+	clk_reg[PCMCLK_CNTL] = 0x5A000000|PLL_PWM;
 	udelay(500);
 	//printf("Resetpcm Done\n");
 	pwm_reg[PWM_DMAC] = 0;
 	udelay(100);
 	pwm_reg[PWM_CTL] = PWMCTL_CLRF;
 	udelay(100);
+	pwm_reg[PWM_FIFO]=0L;
 	//printf("Reset pwm Done\n");
 	}
 	if (mbox.virt_addr != NULL) {
 		unmapmem(mbox.virt_addr, NUM_PAGES * PAGE_SIZE);
-		//printf("Unmapmem Done\n");
+		printf("Unmapmem Done\n");
 		mem_unlock(mbox.handle, mbox.mem_ref);
 		//printf("Unmaplock Done\n");
 		mem_free(mbox.handle, mbox.mem_ref);
@@ -327,7 +333,7 @@ pwm_reg[PWM_CTL] = 0;
 		
 			// Write a frequency sample
 
-			cbp->info = BCM2708_DMA_NO_WIDE_BURSTS | BCM2708_DMA_WAIT_RESP |BCM2708_DMA_D_DREQ /*| BCM2708_DMA_PER_MAP(5)*/;
+			cbp->info = BCM2708_DMA_NO_WIDE_BURSTS /* BCM2708_DMA_WAIT_RESP |BCM2708_DMA_D_DREQ | BCM2708_DMA_PER_MAP(5)*/;
 			cbp->src = mem_virt_to_phys(ctl->sample + samplecnt);
 			cbp->dst = phys_pwm_fifo_addr;
 			cbp->length = 4;
@@ -339,7 +345,7 @@ pwm_reg[PWM_CTL] = 0;
 					
 			// Delay
 			
-			cbp->info =  /*BCM2708_DMA_SRC_IGNOR  |*/ BCM2708_DMA_NO_WIDE_BURSTS | BCM2708_DMA_WAIT_RESP | BCM2708_DMA_D_DREQ  | BCM2708_DMA_PER_MAP(2);
+			cbp->info =  BCM2708_DMA_SRC_IGNOR  |/* BCM2708_DMA_NO_WIDE_BURSTS | BCM2708_DMA_WAIT_RESP |*/ BCM2708_DMA_D_DREQ  | BCM2708_DMA_PER_MAP(2);
 			cbp->src = mem_virt_to_phys(virtbase);
 			cbp->dst = phys_fifo_addr;//Delay with PCM
 			cbp->length = 4;
@@ -393,20 +399,20 @@ int InitIQ(int DigithinMode)
 	gpioSetMode(21,1); // GPIO 21 - PIN 40 is output for PTT
 	gpio_reg[0x1C/4]=1<<21; // Set PTT ON
 
-	unsigned int SRClock=PLLFREQ_PCM/(1000*SymbolRate);
+	unsigned int SRClock;
 	//unsigned int SRClockPCM=(PLLFREQ_PCM/(SymbolRate*1000*64))*64;
 	
 	//SymbolRate = PLLFREQ/(SRClockPCM*1000);
 
 	
-	uint32_t DigiThin_ClockBySymbol=0;
+	
 	// CLK_DIGITHIN 500MHZ(PLLD)/4MHZ = 125
 	int CLK_DIGITHIN=PLLFREQ_PCM/4E6;
 
 	//#define CLK_4MHZ 125
 	if(DigithinMode==1)
 	{
-				
+		uint32_t DigiThin_ClockBySymbol;		
 	
 		// GPIO4 needs to be ALT FUNC 0 to otuput the clock
 		gpio_reg[GPFSEL0] = (gpio_reg[GPFSEL0] & ~(7 << 12)) | (4 << 12); //ENABLE CLOCK - In case used by digilite
@@ -417,7 +423,7 @@ int InitIQ(int DigithinMode)
 		usleep(100);
 		DigiThin_ClockBySymbol=( PLLFREQ_PCM/(CLK_DIGITHIN));
 		//SRClock=DigiThin_ClockBySymbol*CLK_4MHZ;
-		printf("Digithin Clock at 4MHZ:%ld clock by Symbol (SR=%d)\n",(long int)DigiThin_ClockBySymbol,4000000/(SymbolRate*1000L));
+		printf("Digithin Clock at 4MHZ:%d clock by Symbol (SR=%ld)\n",DigiThin_ClockBySymbol,4000000/(SymbolRate*1000L));
 		udelay(500);
 		clk_reg[GPCLK_CNTL] = 0x5A << 24  | 0 << 9 | 1 << 4 | PLL_PCM; //NO MASH !!!
 		udelay(500);
@@ -490,7 +496,7 @@ int InitIQ(int DigithinMode)
 		        
 			
 			
-			
+			SRClock=PLLFREQ_PCM/(1000*SymbolRate);
 			#ifdef DIGILITE_CLOCK_MODE
 			printf("\n ******** DIGILITE CLOCK MODE*********** \n");
 			printf("SRClok=%d SYmbolRate=%dKSymb\n",SRClock,500000/SRClock);
@@ -527,11 +533,26 @@ int InitIQ(int DigithinMode)
 	}
 
 	pwm_reg[PWM_CTL] = 0;
-	clk_reg[PWMCLK_CNTL] = 0x5A000000 | (0 << 9) |PLL_PCM ;
-	udelay(300);
-	clk_reg[PWMCLK_DIV] = 0x5A000000 | ((SRClock)<<12); //*2: FIXME : Because SRClock is normaly based on 500Mhz not 1GH
-	udelay(300);
-	clk_reg[PWMCLK_CNTL] = 0x5A000010 | (0 << 9) | PLL_PCM;
+	if(SymbolRate<250)
+	{
+		SRClock=PLLFREQ_192/(1000*SymbolRate);
+		clk_reg[PWMCLK_CNTL] = 0x5A000000 | (0 << 9) |PLL_192 ;
+		udelay(300);
+		clk_reg[PWMCLK_DIV] = 0x5A000000 | ((SRClock)<<12); //*2: FIXME : Because SRClock is normaly based on 500Mhz not 1GH
+		udelay(300);
+		clk_reg[PWMCLK_CNTL] = 0x5A000010 | (0 << 9) | PLL_192;
+		printf("Real SR = %d KSymbol / Clock Divider =%d \n",PLLFREQ_192/(SRClock*1000),SRClock);
+	}
+	else
+	{
+		SRClock=PLLFREQ_PCM/(1000*SymbolRate);
+		clk_reg[PWMCLK_CNTL] = 0x5A000000 | (0 << 9) |PLL_PCM ;
+		udelay(300);
+		clk_reg[PWMCLK_DIV] = 0x5A000000 | ((SRClock)<<12); //*2: FIXME : Because SRClock is normaly based on 500Mhz not 1GH
+		udelay(300);
+		clk_reg[PWMCLK_CNTL] = 0x5A000010 | (0 << 9) | PLL_PCM;
+		printf("Real SR = %d KSymbol / Clock Divider =%d \n",PLLFREQ_PCM/(SRClock*1000),SRClock);
+	}
 	pwm_reg[PWM_RNG1] = 32;// 32 Mandatory for Serial Mode without gap
 	udelay(100);
 	pwm_reg[PWM_RNG2] = 32;// 32 Mandatory for Serial Mode without gap
@@ -541,7 +562,7 @@ int InitIQ(int DigithinMode)
 	pwm_reg[PWM_CTL] = PWMCTL_CLRF;
 	udelay(100);
 
-	printf("Real SR = %d KSymbol / Clock Divider =%d \n",PLLFREQ_PCM/(SRClock*1000),SRClock);
+	
 	//printf("Playing File =%s at %d KSymbol FEC=%d  ",argv[1],PLLFREQ_PCM/SRClock/1000,abs(FEC));
 
 	// --------------------- INIT DMA IQ ------------------------------
@@ -551,7 +572,7 @@ int InitIQ(int DigithinMode)
 
 	uint32_t phys_pwm_fifo_addr = 0x7e20c000 + 0x18;//PWM
 	int samplecnt;
-	NUM_SAMPLES = NUM_SAMPLES_MAX/4; // Minize the buffer in IQ Mode
+	NUM_SAMPLES = NUM_SAMPLES_MAX/2; // Minize the buffer in IQ Mode
 			for (samplecnt = 0; samplecnt < NUM_SAMPLES; samplecnt++) {
 		
 				// Write a PWM sample
@@ -697,8 +718,9 @@ int InitDTX1()
 }
 
 
-#define BIG_BUFFER_SIZE (18800*4)
-#define BURST_MEM_SIZE 188
+//#define BIG_BUFFER_SIZE ((int)((NUM_SAMPLES*4*1.5)/188)*188)
+#define BIG_BUFFER_SIZE (18800*8*2)
+#define BURST_MEM_SIZE (188)
 typedef struct circular_buffer
 {
   unsigned char *buffer;
@@ -734,13 +756,17 @@ void store_in_buffer(unsigned char data)
 void store_in_buffer_1880(unsigned char *data)
 {
   
-  //while(((unsigned int)(my_circular_buffer.head + 18800) % BIG_BUFFER_SIZE)==my_circular_buffer.tail)
-  //	 usleep(50000);
-  
+  while(((unsigned int)(my_circular_buffer.head + BURST_MEM_SIZE) % BIG_BUFFER_SIZE)==my_circular_buffer.tail)
+	{
+		//printf("Bigbuffer plein\n");
+  	 usleep(50000);
+	}
+  pthread_mutex_lock(&my_circular_buffer.lock);
+		
   memcpy(my_circular_buffer.buffer+my_circular_buffer.head,data,BURST_MEM_SIZE);
   unsigned int next = (unsigned long)(my_circular_buffer.head + BURST_MEM_SIZE) % BIG_BUFFER_SIZE;
   my_circular_buffer.head = next;
-  
+  pthread_mutex_unlock(&my_circular_buffer.lock);
 	
 }
 
@@ -763,11 +789,11 @@ char read_from_buffer()
 
 void read_from_buffer_188(unsigned char *Dest)
 {
-	while(BufferAvailable()<188) usleep(0);
-	//pthread_mutex_lock(&my_circular_buffer.lock);
+	while(BufferAvailable()<188) {usleep(5000);printf("B");} // Carefull of deadlock ! BE sure to have available
+	pthread_mutex_lock(&my_circular_buffer.lock);
 	memcpy(Dest,my_circular_buffer.buffer+my_circular_buffer.tail,188);
 	my_circular_buffer.tail = (unsigned int)(my_circular_buffer.tail + 188) % BIG_BUFFER_SIZE;
-	//pthread_mutex_unlock(&my_circular_buffer.lock);
+	pthread_mutex_unlock(&my_circular_buffer.lock);
 }
 
 void *FillBigBuffer (void * arg)
@@ -784,14 +810,29 @@ void *FillBigBuffer (void * arg)
   prctl(PR_SET_NAME, name, 0, 0, 0);
  pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
  pthread_setcanceltype (PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
-
+struct stat bufstat;
+int ret;
+ret=fstat(fdts,&bufstat);
+	if(S_ISFIFO(bufstat.st_mode)) 
+		printf("Using a Pipe\n");
+	else
+		 printf("Using a File %d %d\n",ret,bufstat.st_mode); 
   while(EndOfApp==0)
   {
 	TotalByteRead=0;
 	//usleep(200);
 	do
 	{
-		
+		int n;
+		if(S_ISFIFO(bufstat.st_mode))
+		{
+			do
+			{
+				ioctl(fdts, FIONREAD, &n);
+				if(n<(BURST_MEM_SIZE)) {usleep(10000);}
+			} 
+			while(n<(BURST_MEM_SIZE));
+		}
 		ByteRead=read(fdts,buff188+TotalByteRead,BURST_MEM_SIZE-TotalByteRead);
 		
 		if(ByteRead<=0)
@@ -813,6 +854,11 @@ void *FillBigBuffer (void * arg)
 		}
 		else
 		{
+			if(ByteRead!=(BURST_MEM_SIZE-TotalByteRead))
+			{
+				//usleep(25000);
+				
+			}
 			TotalByteRead+=ByteRead;
 		
 			//usleep(2000);
@@ -821,17 +867,25 @@ void *FillBigBuffer (void * arg)
 	}
 	while (TotalByteRead<BURST_MEM_SIZE); // Read should be around 20us
 
-	while(((BIG_BUFFER_SIZE-BufferAvailable())<=BURST_MEM_SIZE))
-	{
-		usleep(1000);
+	if(((BIG_BUFFER_SIZE-BufferAvailable())<=BIG_BUFFER_SIZE/8))
+	{ 
+		unsigned char Dummy[188];
+		
+		if(S_ISFIFO(bufstat.st_mode))
+		{
+			printf("PIdatv ov=%d/%d\n",BufferAvailable(),BIG_BUFFER_SIZE);
+			while(BufferAvailable()>BIG_BUFFER_SIZE/8)
+				read_from_buffer_188(Dummy);
+		}
+		//usleep(1000);
 		
 	}
 	
 	        //printf("Lock BigBuffer\n");
 		
-		pthread_mutex_lock(&my_circular_buffer.lock);
 		
 		 store_in_buffer_1880(buff188);
+
 		//printf("#");
 		/*
 		for(NbWrite=0;NbWrite<1880;NbWrite++)
@@ -839,7 +893,8 @@ void *FillBigBuffer (void * arg)
 			store_in_buffer(buff188[NbWrite]);
 		}
 		*/
-		pthread_mutex_unlock(&my_circular_buffer.lock);
+		
+		
 		// printf("UNLock BigBuffer\n");
 	
   }
@@ -952,7 +1007,7 @@ main(int argc, char **argv)
 			if(strcmp("3/4",optarg)==0) FEC=3;
 			if(strcmp("5/6",optarg)==0) FEC=5;
 			if(strcmp("7/8",optarg)==0) FEC=7;
-			if(strcmp("carrier",optarg)==0) FEC=0;//CARRIER MODE
+			if(strcmp("carrier",optarg)==0) {printf("Rpidatv:Carrier mode\n");FEC=0;}//CARRIER MODE
 			if(strcmp("test",optarg)==0) FEC=-1;//TEST MODE
 			break;
 		case 'h': // help
@@ -1017,7 +1072,7 @@ main(int argc, char **argv)
 	//data=malloc(DATA_FILE_SIZE);
 	
 	
-	CalibrateSystem();
+	//CalibrateSystem();
 	
 	dvbsenco_init() ;
 	
@@ -1059,7 +1114,7 @@ main(int argc, char **argv)
 	dma_reg[DMA_CS+DMA_CHANNEL*0x40] = BCM2708_DMA_RESET;
 	udelay(1000);
 	dma_reg[DMA_CS+DMA_CHANNEL*0x40] = BCM2708_DMA_INT | BCM2708_DMA_END;
-	udelay(100);
+	udelay(1000);
 
 	
 
@@ -1140,10 +1195,14 @@ else
 #endif 
 
 
-//uchar PacketNULL[188];
-//PacketNULL[0]=0x47;
-//PacketNULL[1]=0x00;
-//for(i=2;i<188;i++) PacketNULL[i]=0xFF;
+uchar PacketNULL[BURST_MEM_SIZE];
+int k;
+for(k=0;k<BURST_MEM_SIZE/188;k++)
+{
+	PacketNULL[0+k*188]=0x47;
+	PacketNULL[1+k*188]=0x00;
+	for(i=2;i<188;i++) PacketNULL[i+k*188]=0xFF;
+}
 
 
 if(ModeIQ==0) //UGLY
@@ -1201,12 +1260,14 @@ if(ModeIQ==2)
 	pthread_create (&th1,NULL, &FillBigBuffer,NULL);
 	pthread_attr_destroy (&attr);
 	
-	
-	while(BufferAvailable()<(TSRate/10)&&(BufferAvailable()<(BIG_BUFFER_SIZE*8/10))) // 1/10 SECOND BUFFERING DEPEND ON SYMBOLRATE OR 80% BUFFERSIZE
+	if(FEC>0)
 	{
-		//printf("Init Filling Memory buffer %d\n",BufferAvailable());
-		//printf(".");
-		 usleep(500);
+		while(BufferAvailable()<(BIG_BUFFER_SIZE*5/10)) // 1/10 SECOND BUFFERING DEPEND ON SYMBOLRATE OR 80% BUFFERSIZE
+		{
+			//printf("Init Filling Memory buffer %d\n",BufferAvailable());
+			//printf(".");
+			 usleep(10000);
+		}
 	}
 	/*
 	int NbByteInitRead=0;
@@ -1249,36 +1310,36 @@ for (;;)
 			}
 
 			
-			if(Init==0)
-			{
+			
 				TimeToSleep=((NUM_SAMPLES-free_slots-204*2*4)*1000)/((float)SymbolRate*2);//-22000; // 22ms de Switch process
 				//TimeToSleep=15000+KERNEL_GRANULARITY;
 				//TimeToSleep=25000;
-			}
-			else
-				TimeToSleep=30000;
+			
+			
 			
 	
 			//printf("cur_cb %lx FreeSlots = %d Time to sleep=%d\n",cur_cb,free_slots,TimeToSleep);
 			//printf("Buffer Available=%d\n",BufferAvailable());
 			
 			clock_gettime(CLOCK_REALTIME, &gettime_now);
-			start_time = gettime_now.tv_nsec;		
-			if(TimeToSleep>=(2200+KERNEL_GRANULARITY)) // 2ms : Time to process File/Canal Coding
-			{
-				
-				udelay(TimeToSleep-(2200+KERNEL_GRANULARITY));
-				TimeToSleep=0;
-			}
+			start_time = gettime_now.tv_nsec;
+			if(Init==0)
+			{		
+				if(TimeToSleep>=(2200+KERNEL_GRANULARITY)) // 2ms : Time to process File/Canal Coding
+				{
+					if(TimeToSleep>=20000) TimeToSleep=20000;
+					udelay(TimeToSleep-(2200+KERNEL_GRANULARITY));
+					TimeToSleep=0;
+				}
 	
-			else
-			{
+				else
+				{
 				
-				//udelay(TimeToSleep);
-				sched_yield();
-				//TimeToSleep=0;
-				if(free_slots>(NUM_SAMPLES*9/10))
-					 printf("Buffer nearly empty...%d/%d\n",free_slots,NUM_SAMPLES);
+					printf("!");
+					usleep(1000);//20 ms mini !!
+					if(free_slots>(NUM_SAMPLES*9/10))
+						 printf("Buffer nearly empty...%d/%d\n",free_slots,NUM_SAMPLES);
+				}
 			}
 			
 			
@@ -1307,7 +1368,7 @@ for (;;)
 
 			free_slots=free_slots_now;
 			// FIX IT : Max(freeslot et Numsample/8)
-			if((Init==1)&&(free_slots <= 204*2*4 /*NUM_SAMPLES/8*/))
+			if(((Init==1)&&(free_slots <= 204*2*4 /*NUM_SAMPLES/8*/))||(FEC==0))
 			{
 				printf("%ld:%ld : End of Fulling buffer \n",gettime_now.tv_sec,gettime_now.tv_nsec);
 				dma_reg[DMA_CS+DMA_CHANNEL*0x40] = 0x10880001;	// go, mid priority, wait for outstanding writes :7 Seems Max Priority
@@ -1317,14 +1378,18 @@ for (;;)
 			clock_gettime(CLOCK_REALTIME, &gettime_now);
 			start_time = gettime_now.tv_nsec;
 			
-		
-			//printf("Process LOCK\n");
 			#ifdef WITH_MEMORY_BUFFER
-			pthread_mutex_lock(&my_circular_buffer.lock);
-			
+			if((Init==0)&&(free_slots > (NUM_SAMPLES*9/10))&&(BufferAvailable()<=188*2))
+			{
+				int k;
+				store_in_buffer_1880(PacketNULL);
+				
+				
+				 printf("Underflow\n"); 
+			}
 			#endif
 			
-			while ((free_slots>204*2*4)&&(BufferAvailable()>188*2)) //204Bytes*2(IQ)*4 paires/octet
+			while (((free_slots>204*2*4)&&(BufferAvailable()>188*2))||(FEC==0)) //204Bytes*2(IQ)*4 paires/octet
 			{
 				
 				static uint32_t BuffAligned[256];
@@ -1352,7 +1417,7 @@ for (;;)
 							if(Loop==1)
 								{
 									close(fdts);
-									 fdts = open(argv[1], 'r');
+									 fdts = open(FileName, 'r');
 								}
 								else
 								{	
@@ -1363,17 +1428,9 @@ for (;;)
 								}						
 						}
 						#else
-						int ii;
-						while(BufferAvailable()<188) 
-						{
-							//printf("!");
-							sleep(0);
-						}
-						//pthread_mutex_lock(&my_circular_buffer.lock);
+						
 						read_from_buffer_188(buff);
-						//for(ii=0;ii<188;ii++) buff[ii]=read_from_buffer();
-						//pthread_mutex_unlock(&my_circular_buffer.lock);
-						//TotalByteRead+=188;
+						
 						#endif
 					}
 					else
@@ -1454,9 +1511,7 @@ for (;;)
 			*/
 			}
 			//printf("Process UNLOCK\n");
-			#ifdef WITH_MEMORY_BUFFER
-			pthread_mutex_unlock(&my_circular_buffer.lock);
-			#endif
+			
 			clock_gettime(CLOCK_REALTIME, &gettime_now);
 			time_difference = gettime_now.tv_nsec - start_time;
 			if(time_difference<0) time_difference+=1E9;
@@ -1476,7 +1531,7 @@ for (;;)
 		//********************************* MODE IQ **************************************
 		if(ModeIQ==1)
 		{
-			
+			static int StatusCompteur=0;
 			cur_cb = mem_phys_to_virt(dma_reg[DMA_CONBLK_AD+DMA_CHANNEL*0x40]);
 			this_sample = (cur_cb - (uint32_t)virtbase) / (sizeof(dma_cb_t) );
 			last_sample = (last_cb - (uint32_t)virtbase) / (sizeof(dma_cb_t) );
@@ -1489,16 +1544,23 @@ for (;;)
 				//printf("FreeSlots = %d Time to sleep=%d\n",free_slots,TimeToSleep);
 
 				clock_gettime(CLOCK_REALTIME, &gettime_now);
-				start_time = gettime_now.tv_nsec;		
-				if(TimeToSleep>=(2000+KERNEL_GRANULARITY)){
-					if(TimeToSleep>=150000) TimeToSleep=150000; //Digithin should be every 250ms
-					udelay(TimeToSleep-(2000+KERNEL_GRANULARITY));
-				}
-				else
-				{
-					//usleep(0);//20 ms mini !!
-					if(free_slots>(NUM_SAMPLES*9/10))
-						 printf("Buffer nearly empty...%d/%d\n",free_slots,NUM_SAMPLES);
+				start_time = gettime_now.tv_nsec;
+				if(Init==0)
+				{			
+					if(TimeToSleep>=(2000+KERNEL_GRANULARITY)){
+						if(TimeToSleep>=20000) TimeToSleep=20000; //Digithin should be every 250ms
+						udelay(TimeToSleep-(2000+KERNEL_GRANULARITY));
+					}
+					else
+					{	
+						printf("!");
+						usleep(1000);//20 ms mini !!
+						if(free_slots>(NUM_SAMPLES*9/10))
+						{
+							 //printf("Buffer nearly empty...%d/%d\n",free_slots,NUM_SAMPLES);
+							//printf("$");
+						}
+					}
 				}
 				//printf("FreeSlots = %d Time to sleep=%d\n",free_slots,TimeToSleep);
 				
@@ -1543,12 +1605,21 @@ for (;;)
 				clock_gettime(CLOCK_REALTIME, &gettime_now);
 				time_difference = gettime_now.tv_nsec - start_time;
 				if(time_difference<0) time_difference+=1E9;
+				if(StatusCompteur%100==0)
+			{ 
+				
+				//SetUglyFrequency(TuneFrequency);
+				//TuneFrequency+=5000.0;
+				
+				printf("Memavailable %d/%d FreeSlot=%d/%d Bitrate : %f\n",BufferAvailable(),BIG_BUFFER_SIZE,free_slots_now,NUM_SAMPLES,(1000000.0*(free_slots_now-free_slots))/(float)time_difference);
+			}
+			StatusCompteur++;
 				
 				//printf("DiffTime = %ld FreeSlot=%ld Bitrate : %f\n",time_difference,free_slots_now-free_slots,(1000000.0*(free_slots_now-free_slots)*16.0)/(float)time_difference);
 				free_slots=free_slots_now;
 
 
-				if((Init==1)&&(free_slots <= (204*8*2)/*NUM_SAMPLES/8*/))
+				if((Init==1)&&(free_slots <= (204*8*2)))
 				{
 					printf("%ld:%ld : End of Fulling buffer \n",gettime_now.tv_sec,gettime_now.tv_nsec);
 					dma_reg[DMA_CS+DMA_CHANNEL*0x40] = 0x10880001;	// go, mid priority, wait for outstanding writes :7 Seems Max Priority
@@ -1567,7 +1638,32 @@ for (;;)
 						
 			clock_gettime(CLOCK_REALTIME, &gettime_now);
 			start_time = gettime_now.tv_nsec;
-			while ((free_slots > (204*8*2))&&(BufferAvailable()>188*8)) //204Bytes*2(IQ)/32
+			#ifdef WITH_MEMORY_BUFFER
+			if((Init==0)&&(free_slots > (NUM_SAMPLES*9/10))&&(BufferAvailable()<=188*8))
+			{
+				int k;
+				store_in_buffer_1880(PacketNULL);
+				/*while(BufferAvailable()<188*8) 
+						{
+							//printf("!");
+							sleep(1000);
+						}
+				*/
+				/*
+				pthread_mutex_lock(&my_circular_buffer.lock);
+				for(k=0;k<8*2;k++)
+					store_in_buffer_1880(PacketNULL);
+				pthread_mutex_unlock(&my_circular_buffer.lock);
+				*/
+				
+				 printf("Underflow\n"); 
+			}
+			#endif
+			#ifdef WITH_MEMORY_BUFFER
+			while ((free_slots > (204*8*2))&&((BufferAvailable()>=188*8)||(FEC==0))) //204Bytes*2(IQ)/32
+			#else
+			while ((free_slots > (204*8*2))||(FEC==0)) //204Bytes*2(IQ)/32
+			#endif
 			{
 				
 				//static uint32_t BuffAligned[256];
@@ -1595,31 +1691,36 @@ for (;;)
 					
 						if(FEC>0)
 						{
-							/*
-							static int ByteRead=0;
+							#ifndef WITH_MEMORY_BUFFER
+							/*static*/ int ByteRead=0;
 							if ((ByteRead=read(fdts,buff,188))!=188) // Read should be around 20us
 							{
-								printf("END OF FILE OR packet is not 188 long %d\n",data_len);
+								printf("END OF FILE OR packet is not 188 long %d\n",ByteRead);
 								if(Loop==1)
 								{
 									close(fdts);
-									 fdts = open(argv[1], 'r');
+									 fdts = open(FileName, 'r');
+									ByteRead=read(fdts,buff,188);
 								}
 								else
 								{	
 									while(ByteRead!=188)
+									{
 										ByteRead+=read(fdts,buff+ByteRead,188-ByteRead);
-									//printf("End of processing file\n");
+										usleep(1000);
+									}
+									printf("ok 188\n");
 									//terminate(0);
 								}	
 								
 							}
-							*/
+							#else
 							int ii;
-							pthread_mutex_lock(&my_circular_buffer.lock);
-							for(ii=0;ii<188;ii++) buff[ii]=read_from_buffer();
-							pthread_mutex_unlock(&my_circular_buffer.lock);
 							
+							read_from_buffer_188(buff);
+							
+
+							#endif							
 						}
 						else
 						{
@@ -1650,6 +1751,7 @@ for (;;)
 				}
 				else
 				{
+					//printf("408\n");
 					NbIQOutput=408;
 				}
 				
@@ -1686,10 +1788,11 @@ for (;;)
 					
 					if(FEC==0) //CARRIER MODE : OVERWRITE IQ previously calculated
 					{
+					 
 					  //I32=TabIQTestI[NbSymbol%4];
 					  //Q32=TabIQTestQ[NbSymbol%4];
-						I32=0xFFFFFFFF;
-					  	Q32=0;
+						I32=0x55555555;
+					  	Q32=0x55555555;
 					}
 /*	
 					if(FEC<0)
