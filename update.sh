@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Updated by davecrump 20161219
+# Updated by davecrump 20161220
 
 # Modified to overwrite ~/rpidatv/scripts and
 # ~/rpidatv/src, then compile
@@ -25,7 +25,7 @@ unzip -o master.zip
 # cp -f -r rpidatv-master/doc rpidatv
 cp -f -r rpidatv-master/scripts rpidatv
 cp -f -r rpidatv-master/src rpidatv
-# cp -f -r rpidatv-master/video rpidatv
+cp -f -r rpidatv-master/video rpidatv
 rm master.zip
 rm -rf rpidatv-master
 
