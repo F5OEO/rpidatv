@@ -75,9 +75,9 @@ char freqtxt[255];
 
 // Values to be stored in and read from rpidatvconfig.txt:
 
-int TabSR[5]= {250,333,500,1000,2000};
+int TabSR[5]= {125,250,333,1000,2000};
 int TabFec[5]={1,2,3,5,7};
-char TabModeInput[5][255]={"CAMMPEG-2","CAMH264","PATERNAUDIO","FILETS","CARRIER"};
+char TabModeInput[5][255]={"CAMMPEG-2","CAMH264","PATERNAUDIO","ANALOGCAM","CARRIER"};
 char TabFreq[5][255]={"71","146.5","437","1249","1255"};
 
 int Inversed=0;//Display is inversed (Waveshare=1)
@@ -1017,21 +1017,21 @@ int main(int argc, char **argv) {
 
 	button=AddButton(0*wbuttonsize+20,0+hbuttonsize*1+20,wbuttonsize*0.9,hbuttonsize*0.9);
 	Col.r=0;Col.g=0;Col.b=128;
-	AddButtonStatus(button,"SR 250",&Col);
+	AddButtonStatus(button,"SR 125",&Col);
 	Col.r=0;Col.g=128;Col.b=0;
-	AddButtonStatus(button,"SR 250",&Col);
+	AddButtonStatus(button,"SR 125",&Col);
 
 	button=AddButton(1*wbuttonsize+20,hbuttonsize*1+20,wbuttonsize*0.9,hbuttonsize*0.9);
 	Col.r=0;Col.g=0;Col.b=128;
-	AddButtonStatus(button,"SR 333",&Col);
+	AddButtonStatus(button,"SR 250",&Col);
 	Col.r=0;Col.g=128;Col.b=0;
-	AddButtonStatus(button,"SR 333",&Col);
+	AddButtonStatus(button,"SR 250",&Col);
 
 	button=AddButton(2*wbuttonsize+20,hbuttonsize*1+20,wbuttonsize*0.9,hbuttonsize*0.9);
 	Col.r=0;Col.g=0;Col.b=128;
-	AddButtonStatus(button,"SR 500",&Col);
+	AddButtonStatus(button,"SR 333",&Col);
 	Col.r=0;Col.g=128;Col.b=0;
-	AddButtonStatus(button,"SR 500",&Col);
+	AddButtonStatus(button,"SR 333",&Col);
 
 	button=AddButton(3*wbuttonsize+20,hbuttonsize*1+20,wbuttonsize*0.9,hbuttonsize*0.9);
 	Col.r=0;Col.g=0;Col.b=128;
@@ -1103,9 +1103,9 @@ int main(int argc, char **argv) {
 
 	button=AddButton(3*wbuttonsize+20,hbuttonsize*3+20,wbuttonsize*0.9,hbuttonsize*0.9);
 	Col.r=0;Col.g=0;Col.b=128;
-	AddButtonStatus(button,"TS File",&Col);
+	AddButtonStatus(button,"Analog",&Col);
 	Col.r=0;Col.g=128;Col.b=0;
-	AddButtonStatus(button,"TSFile",&Col);
+	AddButtonStatus(button,"Analog",&Col);
 
 	button=AddButton(4*wbuttonsize+20,hbuttonsize*3+20,wbuttonsize*0.9,hbuttonsize*0.9);
 	Col.r=0;Col.g=0;Col.b=128;
@@ -1167,9 +1167,9 @@ int main(int argc, char **argv) {
 	printf("Value=%s %s\n",Value,"SR");
 	switch(SR)
 	{
-		case 250:SelectSR(5);break;
-		case 333:SelectSR(6);break;
-		case 500:SelectSR(7);break;
+		case 125:SelectSR(5);break;
+		case 250:SelectSR(6);break;
+		case 333:SelectSR(7);break;
 		case 1000:SelectSR(8);break;
 		case 2000:SelectSR(9);break;
 	}
@@ -1195,26 +1195,30 @@ int main(int argc, char **argv) {
 	strcpy(Param,"modeinput");
 	GetConfigParam(PATH_CONFIG,Param,Value);
 	strcpy(ModeInput,Value);
-	printf("Value=%s %s\n",Value,"Input Mode"); //
+	printf("Value=%s %s\n",Value,"Input Mode");
+
+        if(strcmp(Value,"CAMMPEG-2")==0)
+        {
+            SelectSource(15,1);
+        }
 	if(strcmp(Value,"CAMH264")==0)
 	{
-	     SelectSource(16,1);
-	}
-	if(strcmp(Value,"CAMMPEG-2")==0)
-	{
-	 	SelectSource(15,1);
+	    SelectSource(16,1);
 	}
 	if(strcmp(Value,"PATERNAUDIO")==0)
 	{
-	 	SelectSource(17,1);
+	    SelectSource(17,1);
 	}
+        if(strcmp(Value,"ANALOGCAM")==0)
+        {
+            SelectSource(18,1);
+        }
 	if(strcmp(Value,"CARRIER")==0)
 	{
-		SelectSource(18,1);
+	    SelectSource(19,1);
 	}
 
 	UpdateWindow();
-
 
 	printf("Update Window\n");
 
