@@ -1,5 +1,5 @@
 modeinput=CAMH264
-symbolrate=2000
+symbolrate=333
 fec=7
 freqoutput=1249
 rfpower=7
@@ -20,4 +20,4 @@ pidaudio=257
 display=Waveshare
 menulanguage=en
 analogcamname=/dev/video0
-startup=Display
+startup=Console
