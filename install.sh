@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Updated by davecrump on 20161208 
+# Updated by davecrump on 20161221 
 
 set -e  # Don't report errors....
 
@@ -16,7 +16,7 @@ sudo rpi-update
 
 # Get the source software and copy to the Pi
 cd /home/pi
-wget https://github.com/davecrump/rpidatv/archive/master.zip
+wget https://github.com/BritishAmateurTelevisionClub/rpidatv/archive/master.zip
 unzip -o master.zip 
 mv rpidatv-master rpidatv
 rm master.zip
