@@ -6,6 +6,8 @@
 # ~/rpidatv/src, then compile
 # rpidatv, rpidatv gui avc2ts and adf4351
 
+reset
+
 printf "\nCommencing update.\n"
 
 # Note previous version number
