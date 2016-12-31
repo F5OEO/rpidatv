@@ -33,6 +33,7 @@ unzip -o master.zip
 # cp -f -r rpidatv-master/doc rpidatv
 cp -f -r rpidatv-master/scripts rpidatv
 cp -f -r rpidatv-master/src rpidatv
+rm -f rpidatv/video/*.jpg
 cp -f -r rpidatv-master/video rpidatv
 rm master.zip
 rm -rf rpidatv-master
