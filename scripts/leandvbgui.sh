@@ -42,6 +42,11 @@ sudo killall leandvb
 sudo killall ts2es
 mkfifo fifo.264
 mkfifo videots
+
+# Make sure that the screen background is all black
+sudo killall fbi
+sudo fbi -T 1 -noverbose -a $PATHSCRIPT"/images/Blank_Black.png"
+
 #--fd-pp 3 
 #sudo rtl_sdr -p 20 -g 30 -f $FreqHz -s $SR_RTLSDR - 2>/dev/null | $PATHBIN"leandvb"  --cr $FECNUM"/"$FECDEN --sr $SYMBOLRATE -f $SR_RTLSDR 2>/dev/null |buffer| $PATHBIN"ts2es" -video -stdin fifo.264 &
 sudo rtl_sdr -p 40 -g 40 -f $FreqHz -s $SR_RTLSDR - 2>/dev/null | $PATHBIN"leandvb"  --fd-pp 3 --fd-info 2 --fd-const 2  --cr $FECNUM"/"$FECDEN --fastlock --sr $SYMBOLRATE -f $SR_RTLSDR  3>fifo.iq | $PATHBIN"ts2es" -video -stdin fifo.264 & 
@@ -49,19 +54,6 @@ sudo rtl_sdr -p 40 -g 40 -f $FreqHz -s $SR_RTLSDR - 2>/dev/null | $PATHBIN"leand
 #sudo rtl_sdr  -p 20 -g 30 -f 650000000 -s 1024000 - 2>/dev/null | $PATHBIN"leandvb"  --filter --gui -d --cr 7/8 --sr 250000 -f 1024000 | $PATHBIN"ts2es" -video -stdin fifo.264 &
 #sudo rtl_sdr -p 20 -g 30 -f 650000000 -s 1024000 - 2>/dev/null | $PATHBIN"leandvb"  --filter --gui -d --cr 7/8 --sr 250000 -f 1024000 > file.ts
 $PATHBIN"hello_video.bin" fifo.264 &
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 #sudo rtl_sdr -p 20 -g 40 -f 650040000 -s 1024000 - 2>/dev/null | ./leandvb_vt100ui.sh ./leandvb --fd-info 2 --fastlock --fd-const 2  --cr 7/8 --sr 249994 -f 1024000  > file.ts

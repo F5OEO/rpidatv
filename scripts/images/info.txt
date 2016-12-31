@@ -1,0 +1,1 @@
+Images are 320*480 .pngs for Waveshare 3.5 inch touchscreen
