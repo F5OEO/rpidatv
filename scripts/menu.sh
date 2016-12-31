@@ -643,11 +643,15 @@ do_receive_status()
 	whiptail --title "RECEIVE" --msgbox "$INFO" 8 78
 	sudo killall rpidatvgui >/dev/null 2>/dev/null
 	sudo killall leandvb >/dev/null 2>/dev/null
+	sudo killall fbi >/dev/null 2>/dev/null
+	sudo fbi -T 1 -noverbose -a /home/pi/rpidatv/scripts/images/BATC_Black.png
 }
 
 do_receive()
 {
 	MODE_OUTPUT=$(get_config_var modeoutput $CONFIGFILE)
+	sudo killall -9 fbcp >/dev/null 2>/dev/null
+	fbcp &
 	case "$MODE_OUTPUT" in
 	BATC)
 	ORGINAL_MODE_INPUT=$(get_config_var modeinput $CONFIGFILE)
