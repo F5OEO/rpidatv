@@ -3,7 +3,7 @@
 ## Download the latest_version file and convert it to a variable
 cd /home/pi/rpidatv/scripts
 rm /home/pi/rpidatv/scripts/latest_version.txt  >/dev/null 2>/dev/null
-wget -q https://raw.githubusercontent.com/davecrump/rpidatv/master/scripts/latest_version.txt
+wget -q https://raw.githubusercontent.com/BritishAmateurTelevisionClub/rpidatv/master/scripts/latest_version.txt
 LATESTVERSION=$(head -c 9 latest_version.txt)
 rm /home/pi/rpidatv/scripts/latest_version.txt  >/dev/null 2>/dev/null
 
@@ -29,7 +29,7 @@ then
         printf "\nUpgrading now...\n"
         cd /home/pi
         rm update.sh >/dev/null 2>/dev/null
-        wget -q https://raw.githubusercontent.com/davecrump/rpidatv/master/update.sh
+        wget -q https://raw.githubusercontent.com/BritishAmateurTelevisionClub/rpidatv/master/update.sh
         chmod +x update.sh
         source /home/pi/update.sh 
         exit

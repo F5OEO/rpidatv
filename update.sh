@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Updated by davecrump 20161220
+# Updated by davecrump 20161221
 
 # Modified to overwrite ~/rpidatv/scripts and
 # ~/rpidatv/src, then compile
@@ -27,7 +27,7 @@ fi
 # ---------- Update rpidatv -----------
 
 cd /home/pi
-wget -q https://github.com/davecrump/rpidatv/archive/master.zip -O master.zip
+wget -q https://github.com/BritishAmateurTelevisionClub/rpidatv/archive/master.zip -O master.zip
 unzip -o master.zip 
 # cp -f -r rpidatv-master/bin rpidatv
 # cp -f -r rpidatv-master/doc rpidatv
