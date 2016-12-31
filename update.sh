@@ -45,6 +45,7 @@ make
 sudo make install
 
 # Compile rpidatv gui
+sudo killall -9 rpidatvgui
 cd gui
 make clean
 make
