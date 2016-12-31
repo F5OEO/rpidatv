@@ -6,6 +6,8 @@
 # ~/rpidatv/src, then compile
 # rpidatv, rpidatv gui avc2ts and adf4351
 
+reset
+
 printf "\nCommencing update.\n"
 
 # Note previous version number
@@ -14,7 +16,13 @@ cp -f -r /home/pi/rpidatv/scripts/installed_version.txt /home/pi/prev_installed_
 # Make a safe copy of rpidatvconfig.txt
 cp -f -r /home/pi/rpidatv/scripts/rpidatvconfig.txt /home/pi/rpidatvconfig.txt
 
-set -e  # Don't report errors
+# set -e  # Don't report errors
+
+# Check if fbi (frame buffer imager) needs to be installed
+
+if [ ! -f "/usr/bin/fbi" ]; then
+  sudo apt-get -y install fbi
+fi
 
 # ---------- Update rpidatv -----------
 
@@ -25,17 +33,20 @@ unzip -o master.zip
 # cp -f -r rpidatv-master/doc rpidatv
 cp -f -r rpidatv-master/scripts rpidatv
 cp -f -r rpidatv-master/src rpidatv
+rm -f rpidatv/video/*.jpg
 cp -f -r rpidatv-master/video rpidatv
 rm master.zip
 rm -rf rpidatv-master
 
 # Compile rpidatv core
+sudo killall -9 rpidatv
 cd rpidatv/src
 make clean
 make
 sudo make install
 
 # Compile rpidatv gui
+sudo killall -9 rpidatvgui
 cd gui
 make clean
 make
@@ -43,6 +54,7 @@ sudo make install
 cd ../
 
 # Compile avc2ts
+sudo killall -9 avc2ts
 cd avc2ts
 make clean
 make

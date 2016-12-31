@@ -515,7 +515,7 @@ void *DisplayFFT(void * arg)
 	fftwf_plan plan ;
 	plan = fftwf_plan_dft_1d(fft_size, fftin, fftout, FFTW_FORWARD, FFTW_ESTIMATE );
 
-	system("mkfifo fifo.iq");
+	system("mkfifo fifo.iq >/dev/null 2>/dev/null");
 	printf("Entering FFT thread\n");
 	pFileIQ = fopen("fifo.iq", "r");
 
@@ -756,6 +756,10 @@ void ProcessLeandvb()
 	line=NULL;
     }
 printf("End Lean - Clean\n");
+	
+system("sudo killall fbi");  // kill any previous images
+system("sudo fbi -T 1 -noverbose -a /home/pi/rpidatv/scripts/images/BATC_Black.png");  // Add logo image
+	
 usleep(5000000); // Time to FFT end reading samples
    pthread_join(thfft, NULL);
 	//pclose(fp);
