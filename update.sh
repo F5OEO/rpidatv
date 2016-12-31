@@ -16,6 +16,12 @@ cp -f -r /home/pi/rpidatv/scripts/rpidatvconfig.txt /home/pi/rpidatvconfig.txt
 
 set -e  # Don't report errors
 
+# Check if fbi (frame buffer imager) needs to be installed
+
+if [ ! -f "/usr/bin/fbi" ]; then
+  sudo apt-get -y install fbi
+fi
+
 # ---------- Update rpidatv -----------
 
 cd /home/pi
