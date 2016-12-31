@@ -756,6 +756,10 @@ void ProcessLeandvb()
 	line=NULL;
     }
 printf("End Lean - Clean\n");
+	
+system("sudo killall fbi");  // kill any previous images
+system("sudo fbi -T 1 -noverbose -a /home/pi/rpidatv/scripts/images/BATC_Black.png");  // Add logo image
+	
 usleep(5000000); // Time to FFT end reading samples
    pthread_join(thfft, NULL);
 	//pclose(fp);
