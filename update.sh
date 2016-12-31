@@ -38,6 +38,7 @@ rm master.zip
 rm -rf rpidatv-master
 
 # Compile rpidatv core
+sudo killall -9 rpidatv
 cd rpidatv/src
 make clean
 make
@@ -51,6 +52,7 @@ sudo make install
 cd ../
 
 # Compile avc2ts
+sudo killall -9 avc2ts
 cd avc2ts
 make clean
 make
