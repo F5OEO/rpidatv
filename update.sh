@@ -107,10 +107,16 @@ cd /home/pi
 #sudo install fbcp /usr/local/bin/fbcp
 #cd ../../
 
-# Restore rpidatvconfig.txt
-# Comment out if upgrade changes format of file
-cp -f -r /home/pi/rpidatvconfig.txt /home/pi/rpidatv/scripts/rpidatvconfig.txt
-rm -rf /home/pi/rpidatvconfig.txt
+# Restore or update rpidatvconfig.txt
+if ! grep -q analogcamname /home/pi/rpidatvconfig.txt; then
+  # File needs updating
+  source /home/pi/rpidatv/scripts/copy_config.sh
+else
+  # File is correct format
+  cp -f -r /home/pi/rpidatvconfig.txt /home/pi/rpidatv/scripts/rpidatvconfig.txt
+fi
+rm -f /home/pi/rpidatvconfig.txt
+rm -f /home/pi/rpidatv/scripts/copy_config.sh
 
 # Update the version number
 rm -rf /home/pi/rpidatv/scripts/installed_version.txt
@@ -119,7 +125,7 @@ cp -f -r /home/pi/prev_installed_version.txt /home/pi/rpidatv/scripts/prev_insta
 rm -rf /home/pi/prev_installed_version.txt
 
 # Offer reboot
-printf "A reboot will be required before using the update.\n"
+printf "A reboot may be required before using the update.\n"
 printf "Do you want to reboot now? (y/n)\n"
 read -n 1
 printf "\n"
