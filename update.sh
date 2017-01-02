@@ -108,7 +108,7 @@ cd /home/pi
 #cd ../../
 
 # Restore or update rpidatvconfig.txt
-if ! grep -q analogcamname /home/pi/rpidatvconfig.txt; then
+if ! grep -q analogcaminput /home/pi/rpidatvconfig.txt; then
   # File needs updating
   source /home/pi/rpidatv/scripts/copy_config.sh
 else
