@@ -3,7 +3,7 @@
 **rpidatv** is a digital television transmitter for Raspberry Pi (B,B+,PI2,PI3,Pizero) which outputs directly to GPIO.  This version has been developed for use with an external synthesized oscillator and modulator/filter board. 
 *(Created by Evariste Courjaud F5OEO. Code is GPL)*
 
-# Installation for BATC Version
+# Installation for BATC Portsdown Transmitter Version
 
 The preferred installation method only needs a Windows PC connected to the same (internet-connected) network as your Raspberry Pi.
 
@@ -22,7 +22,7 @@ The preferred installation method only needs a Windows PC connected to the same 
 - Log in (user: pi/password: raspberry) then cut and paste the following code in, one line at a time:
 
 ```sh
-wget https://raw.githubusercontent.com/davecrump/rpidatv/master/install.sh
+wget https://raw.githubusercontent.com/BritishAmateurTelevisionClub/rpidatv/master/install.sh
 chmod +x install.sh
 ./install.sh
 ```

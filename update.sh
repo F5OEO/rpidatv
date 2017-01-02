@@ -1,10 +1,12 @@
 #!/bin/bash
 
-# Updated by davecrump 20161220
+# Updated by davecrump 20161221
 
 # Modified to overwrite ~/rpidatv/scripts and
 # ~/rpidatv/src, then compile
 # rpidatv, rpidatv gui avc2ts and adf4351
+
+reset
 
 printf "\nCommencing update.\n"
 
@@ -14,28 +16,37 @@ cp -f -r /home/pi/rpidatv/scripts/installed_version.txt /home/pi/prev_installed_
 # Make a safe copy of rpidatvconfig.txt
 cp -f -r /home/pi/rpidatv/scripts/rpidatvconfig.txt /home/pi/rpidatvconfig.txt
 
-set -e  # Don't report errors
+# set -e  # Don't report errors
+
+# Check if fbi (frame buffer imager) needs to be installed
+
+if [ ! -f "/usr/bin/fbi" ]; then
+  sudo apt-get -y install fbi
+fi
 
 # ---------- Update rpidatv -----------
 
 cd /home/pi
-wget -q https://github.com/davecrump/rpidatv/archive/master.zip -O master.zip
+wget -q https://github.com/BritishAmateurTelevisionClub/rpidatv/archive/master.zip -O master.zip
 unzip -o master.zip 
 # cp -f -r rpidatv-master/bin rpidatv
 # cp -f -r rpidatv-master/doc rpidatv
 cp -f -r rpidatv-master/scripts rpidatv
 cp -f -r rpidatv-master/src rpidatv
+rm -f rpidatv/video/*.jpg
 cp -f -r rpidatv-master/video rpidatv
 rm master.zip
 rm -rf rpidatv-master
 
 # Compile rpidatv core
+sudo killall -9 rpidatv
 cd rpidatv/src
 make clean
 make
 sudo make install
 
 # Compile rpidatv gui
+sudo killall -9 rpidatvgui
 cd gui
 make clean
 make
@@ -43,6 +54,7 @@ sudo make install
 cd ../
 
 # Compile avc2ts
+sudo killall -9 avc2ts
 cd avc2ts
 make clean
 make
@@ -95,10 +107,16 @@ cd /home/pi
 #sudo install fbcp /usr/local/bin/fbcp
 #cd ../../
 
-# Restore rpidatvconfig.txt
-# Comment out if upgrade changes format of file
-cp -f -r /home/pi/rpidatvconfig.txt /home/pi/rpidatv/scripts/rpidatvconfig.txt
-rm -rf /home/pi/rpidatvconfig.txt
+# Restore or update rpidatvconfig.txt
+if ! grep -q analogcamname /home/pi/rpidatvconfig.txt; then
+  # File needs updating
+  source /home/pi/rpidatv/scripts/copy_config.sh
+else
+  # File is correct format
+  cp -f -r /home/pi/rpidatvconfig.txt /home/pi/rpidatv/scripts/rpidatvconfig.txt
+fi
+rm -f /home/pi/rpidatvconfig.txt
+rm -f /home/pi/rpidatv/scripts/copy_config.sh
 
 # Update the version number
 rm -rf /home/pi/rpidatv/scripts/installed_version.txt
@@ -107,7 +125,7 @@ cp -f -r /home/pi/prev_installed_version.txt /home/pi/rpidatv/scripts/prev_insta
 rm -rf /home/pi/prev_installed_version.txt
 
 # Offer reboot
-printf "A reboot will be required before using the update.\n"
+printf "A reboot may be required before using the update.\n"
 printf "Do you want to reboot now? (y/n)\n"
 read -n 1
 printf "\n"
