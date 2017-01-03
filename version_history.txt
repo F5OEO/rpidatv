@@ -1,3 +1,13 @@
+201701020
+Added parameters in rpidatvconfig.txt to select input and TV standard for Analog Cam
+Changes in menu.sh to store analog cam parameters
+Changes in a.sh set analog cam parameters
+
+201612310
+Added installation of fbi (frame buffer imager)
+Used fbi to blank screen behind received picture
+Added BATC logo when screen not in use.
+
 201612202
 Swapped TS File button offgui for Analog cam button
 added 125 button and removed 500 BUTTON
