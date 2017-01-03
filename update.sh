@@ -17,7 +17,7 @@ cp -f -r /home/pi/rpidatv/scripts/installed_version.txt /home/pi/prev_installed_
 cp -f -r /home/pi/rpidatv/scripts/rpidatvconfig.txt /home/pi/rpidatvconfig.txt
 
 # set -e  # Don't report errors
-set -x
+
 # Check if fbi (frame buffer imager) needs to be installed
 
 if [ ! -f "/usr/bin/fbi" ]; then
