@@ -1,7 +1,7 @@
-modeinput=CAMH264
-symbolrate=333
+modeinput=ANALOGCAM
+symbolrate=1000
 fec=7
-freqoutput=1249
+freqoutput=1255
 rfpower=7
 modeoutput=IQ
 tsvideofile=/home/pi/rpidatv/video/f4day.ts
@@ -20,4 +20,6 @@ pidaudio=257
 display=Waveshare
 menulanguage=en
 analogcamname=/dev/video0
+analogcaminput=-
+analogcamstandard=-
 startup=Console

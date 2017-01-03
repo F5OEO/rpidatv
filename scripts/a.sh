@@ -1,9 +1,13 @@
 #! /bin/bash
+# set -x #Uncomment for testing
 
+############# SET GLOBAL VARIABLES ####################
 
 PATHRPI="/home/pi/rpidatv/bin"
 PATHSCRIPT="/home/pi/rpidatv/scripts"
 CONFIGFILE=$PATHSCRIPT"/rpidatvconfig.txt"
+
+############ FUNCTION TO READ CONFIG FILE #############################
 
 get_config_var() {
 lua - "$1" "$2" <<EOF
@@ -39,7 +43,7 @@ detect_audio()
 devicea="/proc/asound/card1"
 if [ -e "$devicea" ]; then
 	AUDIO_CARD=1
-else	
+else
 	AUDIO_CARD=0
 fi
 
@@ -71,6 +75,8 @@ PIN_I=$(get_config_var gpio_i $CONFIGFILE)
 PIN_Q=$(get_config_var gpio_q $CONFIGFILE)
 
 ANALOGCAMNAME=$(get_config_var analogcamname $CONFIGFILE)
+ANALOGCAMINPUT=$(get_config_var analogcaminput $CONFIGFILE)
+ANALOGCAMSTANDARD=$(get_config_var analogcamstandard $CONFIGFILE)
 VNCADDR=$(get_config_var vncaddr $CONFIGFILE)
 
 #v4l2-ctl --overlay=0
@@ -315,6 +321,15 @@ $PATHRPI"/avc2ts" -b $BITRATE_VIDEO -m $BITRATE_TS -x $VIDEO_WIDTH -y $VIDEO_HEI
 
 #============================================ ANALOG =============================================================
 "ANALOGCAM")
+
+if [ "$ANALOGCAMINPUT" != "-" ]; then
+    v4l2-ctl -d $ANALOGCAMNAME "--set-input="$ANALOGCAMINPUT
+fi
+
+if [ "$ANALOGCAMSTANDARD" != "-" ]; then
+    v4l2-ctl -d $ANALOGCAMNAME "--set-standard="$ANALOGCAMSTANDARD
+fi
+
 sudo modprobe -r bcm2835_v4l2
 case "$MODE_OUTPUT" in
 	"BATC")
