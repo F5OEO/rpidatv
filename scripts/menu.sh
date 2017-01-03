@@ -7,6 +7,8 @@ PATHRPI=/home/pi/rpidatv/bin
 CONFIGFILE=$PATHSCRIPT"/rpidatvconfig.txt"
 PATHCONFIGS="/home/pi/rpidatv/scripts/configs"  ## Path to config files
 
+############ Function to Write to Config File ###############
+
 set_config_var() {
 lua - "$1" "$2" "$3" <<EOF > "$3.bak"
 local key=assert(arg[1])
@@ -28,6 +30,8 @@ EOF
 mv "$3.bak" "$3"
 }
 
+############ Function to Read from Config File ###############
+
 get_config_var() {
 lua - "$1" "$2" <<EOF
 local key=assert(arg[1])
@@ -42,6 +46,8 @@ end
 end
 EOF
 }
+
+############ Function to Select Files ###############
 
 Filebrowser() {
 if [ -z $1 ]; then
@@ -321,9 +327,7 @@ LOCATOR=$(whiptail --inputbox "$StrLocatorContext" 8 78 $LOCATOR --title "$StrLo
 if [ $? -eq 0 ]; then
 set_config_var locator "$LOCATOR" $CONFIGFILE
 fi
-
 }
-
 
 
 do_output_setup_mode() {
@@ -862,7 +866,17 @@ whiptail --title "Not implemented yet" --msgbox "Not Implemented yet.  Please pr
 
 do_EasyCap()
 {
-whiptail --title "Not implemented yet" --msgbox "Not Implemented yet.  Please press enter to continue" 8 78
+    ACINPUT=$(get_config_var analogcaminput $CONFIGFILE)
+    ACINPUT=$(whiptail --inputbox "Enter 0 for Composite, 1 for S-VHS, - for not set" 8 78 $ACINPUT --title "SET EASYCAP INPUT NUMBER" 3>&1 1>&2 2>&3)
+    if [ $? -eq 0 ]; then
+        set_config_var analogcaminput "$ACINPUT" $CONFIGFILE
+    fi
+
+    ACSTANDARD=$(get_config_var analogcamstandard $CONFIGFILE)
+    ACSTANDARD=$(whiptail --inputbox "Enter 0 for NTSC, 6 for PAL, - for not set" 8 78 $ACSTANDARD --title "SET EASYCAP VIDEO STANDARD" 3>&1 1>&2 2>&3)
+    if [ $? -eq 0 ]; then
+        set_config_var analogcamstandard "$ACSTANDARD" $CONFIGFILE
+    fi
 }
 
 do_Update()
@@ -880,7 +894,7 @@ menuchoice=$(whiptail --title "$StrSystemTitle" --menu "$StrSystemContext" 16 78
     "4 WiFi Set-up" "SSID and password"  \
     "5 WiFi Off" "Turn the WiFi Off" \
     "6 Enable DigiThin" "Not Implemented Yet" \
-    "7 Set EasyCap" "Not implemented yet"  \
+    "7 Set-up EasyCap" "Set input socket and PAL/NTSC"  \
     "8 Update" "Check for Updated rpidatv Software"  \
     3>&2 2>&1 1>&3)
     case "$menuchoice" in
@@ -1034,7 +1048,7 @@ FREQ_OUTPUT=$(get_config_var freqoutput $CONFIGFILE)
 GAIN_OUTPUT=$(get_config_var rfpower $CONFIGFILE)
 let FECNUM=FEC
 let FECDEN=FEC+1
-INFO=$CALL":"$MODE_INPUT"-->"$MODE_OUTPUT"("$SYMBOLRATEK"KSymbol FEC "$FECNUM"/"$FECDEN") sur "$FREQ_OUTPUT"Mhz Gain "$GAIN_OUTPUT
+INFO=$CALL":"$MODE_INPUT"-->"$MODE_OUTPUT"("$SYMBOLRATEK"KSymbol FEC "$FECNUM"/"$FECDEN") on "$FREQ_OUTPUT"Mhz Gain "$GAIN_OUTPUT
 
 
 
