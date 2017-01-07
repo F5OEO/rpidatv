@@ -1,3 +1,4 @@
+
 ## Begin LCD Driver
 dtparam=spi=on
 dtoverlay=waveshare35a
