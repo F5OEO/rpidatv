@@ -121,6 +121,10 @@ cd ../../
 cd /home/pi/rpidatv/scripts/
 sudo cp ./waveshare35a.dtbo /boot/overlays/
 
+# Install the Waveshare driver
+
+sudo bash -c 'cat /home/pi/rpidatv/scripts/configs/waveshare_mkr.txt >> /boot/config.txt'
+
 # Disable the Touchscreen Screensaver
 
 cd /boot
