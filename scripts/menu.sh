@@ -998,9 +998,9 @@ menuchoice=$(whiptail --title "Shutdown Menu" --menu "Select Choice" 16 78 7 \
 
 display_splash()
 {
-sudo killall fbcp
-fbcp &
-sudo fbi -T 1 -noverbose -a $PATHSCRIPT"/images/BATC_Black.png"
+sudo killall fbcp >/dev/null 2>/dev/null
+fbcp & >/dev/null 2>/dev/null
+sudo fbi -T 1 -noverbose -a $PATHSCRIPT"/images/BATC_Black.png" >/dev/null 2>/dev/null
 }
 
 OnStartup()
