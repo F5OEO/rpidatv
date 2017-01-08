@@ -37,6 +37,6 @@ chmod +x install.sh
 /home/pi/rpidatv/scripts/menu.sh menu
 ```
 
-You can now explore the menu options and play.
+When you reboot and log-in on the computer, the BATC logo should display on the Waveshare touchscreen and the Console Menu should be displayed on the computer.  You do not need to load any touchscreen drivers- iof the touchscreen does not work try powering off and on again.  If your touchscreen appears as if the touch sense is 90 degrees out, try selecting the TonTec display in the Setup menu.
 
-I succeeded in generating a direct RF output (from GPIO pin 32) on 437 MHz at 333KS using the on-board camera as the source; it would not work reliably at higher SRs.  The big win for me is that I could feed the I and Q signals from pins 32 and 33 directly into the LC filter on my old DigiLite modulator and generate a 2MS QPSK H264 DVB-S signal from the on-board camera.  Some adjustment of the bias is required as the I and Q signals from the Pi are 3.3v, not 5v as provided by the DigiLite encoder.
+I succeeded in generating a direct RF output (from GPIO pin 32) on 437 MHz at 333KS using the on-board camera as the source; it would not work reliably at higher SRs.  
