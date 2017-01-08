@@ -81,6 +81,8 @@ elif [ $RET -eq 0 ]; then
 fi
 }
 
+############ Function to Select Paths ###############
+
 Pathbrowser() {
 if [ -z $1 ]; then
 imgpath=$(ls -lhp / | awk -F ' ' ' { print $9 " " $5 } ')
@@ -994,7 +996,12 @@ menuchoice=$(whiptail --title "Shutdown Menu" --menu "Select Choice" 16 78 7 \
     esac
 }
 
-
+display_splash()
+{
+sudo killall fbcp >/dev/null 2>/dev/null
+fbcp & >/dev/null 2>/dev/null
+sudo fbi -T 1 -noverbose -a $PATHSCRIPT"/images/BATC_Black.png" >/dev/null 2>/dev/null
+}
 
 OnStartup()
 {
@@ -1027,6 +1034,10 @@ if [ "$MENU_LANG" == "en" ]; then
 else
     source $PATHSCRIPT"/langfr.sh"
 fi
+
+# Display Splash on Touchscreen if fitted
+
+display_splash
 
 status="0"
 
