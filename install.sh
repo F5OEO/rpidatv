@@ -121,6 +121,20 @@ cd ../../
 cd /home/pi/rpidatv/scripts/
 sudo cp ./waveshare35a.dtbo /boot/overlays/
 
+# Install the Waveshare driver
+
+sudo bash -c 'cat /home/pi/rpidatv/scripts/configs/waveshare_mkr.txt >> /boot/config.txt'
+
+# Disable the Touchscreen Screensaver
+
+cd /boot
+sudo sed -i -e 's/rootwait/rootwait consoleblank=0/' cmdline.txt
+cd /etc/kbd
+sudo sed -i 's/^BLANK_TIME.*/BLANK_TIME=0/' config
+sudo sed -i 's/^POWERDOWN_TIME.*/POWERDOWN_TIME=0/' config
+
+cd /home/pi/rpidatv/scripts/
+
 # Fallback IP to 192.168.1.60
 sudo bash -c 'echo -e "\nprofile static_eth0\nstatic ip_address=192.168.1.60/24\nstatic routers=192.168.1.1\nstatic domain_name_servers=192.168.1.1\ninterface eth0\nfallback static_eth0" >> /etc/dhcpcd.conf'
 
