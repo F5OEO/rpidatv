@@ -7,13 +7,13 @@
 
 The preferred installation method only needs a Windows PC connected to the same (internet-connected) network as your Raspberry Pi.
 
-- First download the November 2016 release of Raspbian Jessie Lite on to your Windows PC from here http://downloads.raspberrypi.org/raspbian_lite/images/raspbian_lite-2016-11-29/.  
+- First download the 25 November 2016 release of Raspbian Jessie Lite on to your Windows PC from here http://downloads.raspberrypi.org/raspbian_lite/images/raspbian_lite-2016-11-29/.  
 
 - Unzip the image and then transfer it to a Micro-SD Card using Win32diskimager https://sourceforge.net/projects/win32diskimager/
 
 - Before you remove the card from your Windows PC, look at the card with windows explorer and go to the \boot directory.  Create a new empty file called ssh in the \boot directory by right-clicking, selecting New, Text Document, and then change the name to ssh (not ssh.txt).  You should get a window warning about changing the filename extension.  Click OK.  If you do not get this warning, you have created a file called ssh.txt and you need to rename it ssh.
 
-- If you have a Pi Camera and/or touchscreen display, you can connect them now.  Power up the Pi with the new card inserted, and a network connection.  No keyboard or HDMI display are required. 
+- If you have a Pi Camera and/or touchscreen display, you can connect them now.  Power up the Pi with the new card inserted, and a network connection.  Do not connect a keyboard or HDMI display to the Raspberry Pi. 
 
 - Find the IP address of your Raspberry Pi using an IP Scanner (such as Advanced IP Scanner http://filehippo.com/download_advanced_ip_scanner/ for Windows, or Fing on an iPhone) to get the Pi's IP address 
 
@@ -37,6 +37,6 @@ chmod +x install.sh
 /home/pi/rpidatv/scripts/menu.sh menu
 ```
 
-When you reboot and log-in on the computer, the BATC logo should display on the Waveshare touchscreen and the Console Menu should be displayed on the computer.  You do not need to load any touchscreen drivers- iof the touchscreen does not work try powering off and on again.  If your touchscreen appears as if the touch sense is 90 degrees out, try selecting the TonTec display in the Setup menu.
+When you reboot and log-in on the computer, the BATC logo should display on the Waveshare touchscreen and the Console Menu should be displayed on the computer.  You do not need to load any touchscreen drivers- if the touchscreen does not work try powering off and on again.  If your touchscreen appears as if the touch sense is 90 degrees out, try selecting the TonTec display in the Setup menu.
 
 I succeeded in generating a direct RF output (from GPIO pin 32) on 437 MHz at 333KS using the on-board camera as the source; it would not work reliably at higher SRs.  
