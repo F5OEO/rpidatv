@@ -26,6 +26,12 @@ wget https://raw.githubusercontent.com/BritishAmateurTelevisionClub/rpidatv/mast
 chmod +x install.sh
 ./install.sh
 ```
+- If you receive an error after entering the wget line: 'GnuTLS: A TLS fatal alert has been received.', it may be that your ISP is blocking access to GitHub (some Virgin Media installations for example).  If (only if) you get this error, paste the following command in, and press return.
+```sh
+sudo sed -i 's/^#name_servers.*/name_servers=8.8.8.8/' /etc/resolvconf.conf
+```
+Then reboot, and try again.  The comnmand asks your RPi to use Google's DNS, not your ISP's DNS.
+
 - For French menus and keyboard, replace the last line above with 
 ```sh
 ./install.sh fr
