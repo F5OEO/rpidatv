@@ -75,7 +75,7 @@ char freqtxt[255];
 
 // Values to be stored in and read from rpidatvconfig.txt:
 
-int TabSR[5]= {125,250,333,1000,2000};
+int TabSR[5]= {125,333,1000,2000,4000};
 int TabFec[5]={1,2,3,5,7};
 char TabModeInput[5][255]={"CAMMPEG-2","CAMH264","PATERNAUDIO","ANALOGCAM","CARRIER"};
 char TabFreq[5][255]={"71","146.5","437","1249","1255"};
@@ -121,6 +121,17 @@ void GetConfigParam(char *PathConfigFile,char *Param, char *Value)
 
 }
 
+/***************************************************************************//**
+ * @brief sets the value of Param in PathConfigFile froma program variable
+ *        Used to store the configuration in rpidatvconfig.txt
+ *
+ * @param PatchConfigFile (str) the name of the configuration text file
+ * @param Param the string labeling the parameter
+ * @param Value the looked-up value of the parameter
+ *
+ * @return void
+*******************************************************************************/
+
 void SetConfigParam(char *PathConfigFile,char *Param,char *Value)
 {
 	char * line = NULL;
@@ -165,21 +176,39 @@ int mymillis()
 
 int IsButtonPushed(int NbButton,int x,int y)
 {
-	int  scaledX, scaledY;
-	if(Inversed==0)
-	{
-		scaledX = x/scaleXvalue;
-        	scaledY = hscreen-y/scaleYvalue;
-	}
-	else
-	{
-		scaledX = wscreen-y/scaleXvalue; //FOR INVERSED TOUCSCREEN (AIW)
-		scaledY = hscreen-x/scaleYvalue;
-	}
-	//printf("x=%d y=%d scaledx %d scaledy %d\n",x,y,scaledX,scaledY);
-	int margin=10;  // was 20
-	if((scaledX<=(ButtonArray[NbButton].x+ButtonArray[NbButton].w-margin))&&(scaledX>=ButtonArray[NbButton].x+margin) &&
-	(scaledY<=(ButtonArray[NbButton].y+ButtonArray[NbButton].h-margin))&&(scaledY>=ButtonArray[NbButton].y+margin)
+  int  scaledX, scaledY;
+
+  // scaledx range approx 0 - 700
+  // scaledy range approx 0 - 480
+
+  // Adjust registration of touchscreen for Waveshare
+  int shiftX, shiftY;
+  double factorX, factorY;
+
+  shiftX=30; // move touch sensitive position left (-) or right (+).  Screen is 700 wide
+  shiftY=-5; // move touch sensitive positions up (-) or down (+).  Screen is 480 high
+
+  factorX=-0.4;  // expand (+) or contract (-) horizontal button space from RHS. Screen is 5.6875 wide
+  factorY=-0.3;  // expand or contract vertical button space.  Screen is 8.53125 high
+
+  // Switch axes for normal and waveshare displays
+  if(Inversed==0) //TonTec
+  {
+    scaledX = x/scaleXvalue;
+    scaledY = hscreen-y/scaleYvalue;
+  }
+  else //Waveshare (inversed)
+  {
+    scaledX = shiftX+wscreen-y/(scaleXvalue+factorX);
+    scaledY = shiftY+hscreen-x/(scaleYvalue+factorY);
+  }
+
+  // printf("x=%d y=%d scaledx %d scaledy %d sxv %f syv %f\n",x,y,scaledX,scaledY,scaleXvalue,scaleYvalue);
+
+  int margin=10;  // was 20
+
+  if((scaledX<=(ButtonArray[NbButton].x+ButtonArray[NbButton].w-margin))&&(scaledX>=ButtonArray[NbButton].x+margin) &&
+    (scaledY<=(ButtonArray[NbButton].y+ButtonArray[NbButton].h-margin))&&(scaledY>=ButtonArray[NbButton].y+margin)
 	/*&&(mymillis()-ButtonArray[NbButton].LastEventTime>TIME_ANTI_BOUNCE)*/)
 	{
 		ButtonArray[NbButton].LastEventTime=mymillis();
@@ -484,20 +513,30 @@ void TransmitStart()
 
 void TransmitStop()
 {
-	printf("Transmit Stop\n");
-	system("sudo /home/pi/rpidatv/bin/adf4351 off");  // Turn the VCO off
-	system("sudo killall rpidatv >/dev/null 2>/dev/null");
-	system("sudo killall ffmpeg >/dev/null 2>/dev/null");
-	system("sudo killall tcanim >/dev/null 2>/dev/null");
-	system("sudo killall avc2ts >/dev/null 2>/dev/null");
-	system("v4l2-ctl --overlay=0 >/dev/null 2>/dev/null");
+  printf("Transmit Stop\n");
 
+  // Turn the VCO off
+  system("sudo /home/pi/rpidatv/bin/adf4351 off");
+
+  // Kill the key processes as nicely as possible
+  system("sudo killall rpidatv >/dev/null 2>/dev/null");
+  system("sudo killall ffmpeg >/dev/null 2>/dev/null");
+  system("sudo killall tcanim >/dev/null 2>/dev/null");
+  system("sudo killall avc2ts >/dev/null 2>/dev/null");
+  system("v4l2-ctl --overlay=0 >/dev/null 2>/dev/null");
+
+  // Then pause and make sure that avc2ts has really been stopped (needed at high SRs)
+  usleep(1000);
+  system("sudo killall -9 avc2ts >/dev/null 2>/dev/null");
+
+  // And make sure rpidatv has been stopped (required for brief transmit selections)
+  system("sudo killall -9 rpidatv >/dev/null 2>/dev/null");
 }
 
 void coordpoint(VGfloat x, VGfloat y, VGfloat size, VGfloat pcolor[4]) {
-	setfill(pcolor);
-	Circle(x, y, size);
-	setfill(pcolor);
+  setfill(pcolor);
+  Circle(x, y, size);
+  setfill(pcolor);
 }
 
 	fftwf_complex *fftout=NULL;
@@ -756,10 +795,10 @@ void ProcessLeandvb()
 	line=NULL;
     }
 printf("End Lean - Clean\n");
-	
+
 system("sudo killall fbi");  // kill any previous images
 system("sudo fbi -T 1 -noverbose -a /home/pi/rpidatv/scripts/images/BATC_Black.png");  // Add logo image
-	
+
 usleep(5000000); // Time to FFT end reading samples
    pthread_join(thfft, NULL);
 	//pclose(fp);
@@ -981,7 +1020,8 @@ int main(int argc, char **argv) {
 	//printf ("Y Scale Factor = %f\n", scaleYvalue);
 
 // Define button grid
-	int wbuttonsize=wscreen/5;
+  // -25 keeps right hand side symmetrical with left hand side
+	int wbuttonsize=(wscreen-25)/5;
 	int hbuttonsize=hscreen/6;
 
 // Frequency
@@ -1027,27 +1067,27 @@ int main(int argc, char **argv) {
 
 	button=AddButton(1*wbuttonsize+20,hbuttonsize*1+20,wbuttonsize*0.9,hbuttonsize*0.9);
 	Col.r=0;Col.g=0;Col.b=128;
-	AddButtonStatus(button,"SR 250",&Col);
+	AddButtonStatus(button,"SR 333",&Col);
 	Col.r=0;Col.g=128;Col.b=0;
-	AddButtonStatus(button,"SR 250",&Col);
+	AddButtonStatus(button,"SR 333",&Col);
 
 	button=AddButton(2*wbuttonsize+20,hbuttonsize*1+20,wbuttonsize*0.9,hbuttonsize*0.9);
 	Col.r=0;Col.g=0;Col.b=128;
-	AddButtonStatus(button,"SR 333",&Col);
+	AddButtonStatus(button,"SR1000",&Col);
 	Col.r=0;Col.g=128;Col.b=0;
-	AddButtonStatus(button,"SR 333",&Col);
+	AddButtonStatus(button,"SR1000",&Col);
 
 	button=AddButton(3*wbuttonsize+20,hbuttonsize*1+20,wbuttonsize*0.9,hbuttonsize*0.9);
 	Col.r=0;Col.g=0;Col.b=128;
-	AddButtonStatus(button,"SR1000",&Col);
+	AddButtonStatus(button,"SR2000",&Col);
 	Col.r=0;Col.g=128;Col.b=0;
-	AddButtonStatus(button,"SR1000",&Col);
+	AddButtonStatus(button,"SR2000",&Col);
 
 	button=AddButton(4*wbuttonsize+20,hbuttonsize*1+20,wbuttonsize*0.9,hbuttonsize*0.9);
 	Col.r=0;Col.g=0;Col.b=128;
-	AddButtonStatus(button,"SR2000",&Col);
+	AddButtonStatus(button,"SR4000",&Col);
 	Col.r=0;Col.g=128;Col.b=0;
-	AddButtonStatus(button,"SR2000",&Col);
+	AddButtonStatus(button,"SR4000",&Col);
 
 // FEC
 
@@ -1172,10 +1212,10 @@ int main(int argc, char **argv) {
 	switch(SR)
 	{
 		case 125:SelectSR(5);break;
-		case 250:SelectSR(6);break;
-		case 333:SelectSR(7);break;
-		case 1000:SelectSR(8);break;
-		case 2000:SelectSR(9);break;
+		case 333:SelectSR(6);break;
+		case 1000:SelectSR(7);break;
+		case 2000:SelectSR(8);break;
+		case 4000:SelectSR(9);break;
 	}
 
 	// FEC
