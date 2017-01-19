@@ -43,7 +43,7 @@ Then reboot, and try again.  The comnmand asks your RPi to use Google's DNS, not
 
 ```sh
 /home/pi/rpidatv/scripts/menu.sh menu
-...
+```
 
 When you reboot and log-in on the computer, the BATC logo should display on the Waveshare touchscreen and the Console Menu should be displayed on the computer.  You do not need to load any touchscreen drivers- if the touchscreen does not work try powering off and on again.  If your touchscreen appears as if the touch sense is 90 degrees out, try selecting the TonTec display in the Setup menu.
 
