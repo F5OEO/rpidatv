@@ -1,3 +1,11 @@
+201701190
+Reduced bit-bang delay to 10 us in adf4351.c
+Auto-killed fbi 1 second after all calls to it
+Killed transmit processes nicely and then with -9 in menu.sh and rpidatvtouch.c
+Simplified menu.sh by deleting do_status
+Adjusted touchscreen display and touch overlay for accuracy and appearance
+Added BATC SplashScreen to touchscreen Autoboot
+
 201701020
 Added parameters in rpidatvconfig.txt to select input and TV standard for Analog Cam
 Changes in menu.sh to store analog cam parameters
