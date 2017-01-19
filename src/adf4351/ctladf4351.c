@@ -12,7 +12,7 @@
 #include "adf4351.h"
 
 adf4350_init_param MyAdf=
-{.clkin=10000000,
+{.clkin=25000000,
 .channel_spacing=5000,
 .power_up_frequency=437000000,
 .reference_div_factor=0,
