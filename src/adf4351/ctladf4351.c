@@ -44,6 +44,7 @@ adf4350_init_param MyAdf=
 
 };
 uint32_t registers[6] =  {0x4580A8, 0x80080C9, 0x4E42, 0x4B3, 0xBC803C, 0x580005};
+uint32_t power = 0;
 //REG 0
 //REG1 1000000000001000000011001 001
 //REG2 100111001000 010
@@ -61,32 +62,43 @@ uint32_t registers[6] =  {0x4580A8, 0x80080C9, 0x4E42, 0x4B3, 0xBC803C, 0x580005
 
 int main(int argc, char *argv[])
 {
-	if (wiringPiSetup() == -1);
+    if (wiringPiSetup() == -1);
 
-	if (strcmp(argv[1], "off") == 0)
-	{
-		// Turn VCO Off and return
+        if (strcmp(argv[1], "off") == 0)
+        {
+	    // Turn VCO Off and return
 
-		adf4350_out_altvoltage0_powerdown(1);
+	    adf4350_out_altvoltage0_powerdown(1);
 
-		return 0;
+	    return 0;
 	}
 	else if ( atof(argv[1])>=35 && atof(argv[1])<=4400 )
 	{
-                // Valid freq, so set it
-                uint32_t adf4350_requested_frequency = 1000000 * atof(argv[1]);
+            // Valid freq, so set it
+            uint32_t adf4350_requested_frequency = 1000000 * atof(argv[1]);
 
-                adf4350_setup(0,0,MyAdf);
-                adf4350_out_altvoltage0_frequency(adf4350_requested_frequency);
+            if (argc==3 && atof(argv[2])>=0 && atof(argv[2])<=3 )
+            {
+                // VCO Power level specified, so set it
+               power = atof(argv[2]);
+            }
+            else
+            {
+                // VCO Power level not specified or invalid so set to default of 0
+                power = 0;
+            }
+            // Set up the ADF
+            adf4350_setup(0,0,MyAdf);
+            // Turn it on
+            adf4350_out_altvoltage0_frequency(adf4350_requested_frequency);
 
-                return 0;
+            return 0;
 	}
 	else
 	{
-                // Requested freq out of limits so print error and return 1
-                printf("ERROR: Requested Frequency out of limits");
+            // Requested freq out of limits so print error and return 1
+            printf("ERROR: Requested Frequency out of limits");
 
-                return 1;
-
+            return 1;
 	}
 }

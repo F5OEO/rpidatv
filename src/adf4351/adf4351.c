@@ -202,9 +202,9 @@ int32_t adf4350_write(uint32_t data)
 		// Pulse clock
 
 		digitalWrite(CLK_4351_GPIO, HIGH);
-		delay(1);
+		usleep(10);
 		digitalWrite(CLK_4351_GPIO, LOW);
-		delay(1);
+		usleep(10);
 		// shift data left so next bit will be leftmost
 
 		data <<= 1;

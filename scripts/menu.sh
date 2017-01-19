@@ -608,18 +608,41 @@ menuchoice=$(whiptail --title "$StrOutputTitle" --menu "$StrOutputContext" 16 78
 
 do_transmit() 
 {
-    $PATHSCRIPT"/a.sh" >/dev/null 2>/dev/null &
-    do_status  # Wait here transmitting until user presses a key
-    do_stop_transmit
+  # Call a.sh in a an additional process to start the transmitter
+  $PATHSCRIPT"/a.sh" >/dev/null 2>/dev/null &
+
+  # do_status was called here
+
+  # Wait here transmitting until user presses a key
+
+  # Not sure about this
+  do_display_on
+
+  # Wait here transmitting until user presses a key
+  whiptail --title "$StrStatusTitle" --msgbox "$INFO" 8 78
+
+  # Stop the transmit processes and clean up
+  do_stop_transmit
+  do_display_off
 }
 
 do_stop_transmit()
 {
-	sudo killall rpidatv >/dev/null 2>/dev/null
-	sudo killall ffmpeg >/dev/null 2>/dev/null
-	sudo killall tcanim >/dev/null 2>/dev/null
-	sudo killall avc2ts >/dev/null 2>/dev/null
-	sudo $PATHRPI"/adf4351" off
+  # Turn the Local Oscillator off
+  sudo $PATHRPI"/adf4351" off
+
+  # Kill the key processes as nicely as possible
+  sudo killall rpidatv >/dev/null 2>/dev/null
+  sudo killall ffmpeg >/dev/null 2>/dev/null
+  sudo killall tcanim >/dev/null 2>/dev/null
+  sudo killall avc2ts >/dev/null 2>/dev/null
+
+  # Then pause and make sure that avc2ts has really been stopped (needed at high SRs)
+  sleep 0.1
+  sudo killall -9 avc2ts >/dev/null 2>/dev/null
+
+  # And make sure rpidatv has been stopped (required for brief transmit selections)
+  sudo killall -9 rpidatv >/dev/null 2>/dev/null
 }
 
 do_display_on()
@@ -636,20 +659,12 @@ do_display_off()
 	#tvservice -o
 }
 
-do_status()
-{
-	do_display_on
-	whiptail --title "$StrStatusTitle" --msgbox "$INFO" 8 78
-	do_stop_transmit
-	do_display_off
-}
-
 do_receive_status()
 {
 	whiptail --title "RECEIVE" --msgbox "$INFO" 8 78
 	sudo killall rpidatvgui >/dev/null 2>/dev/null
 	sudo killall leandvb >/dev/null 2>/dev/null
-	sudo killall fbi >/dev/null 2>/dev/null
+#	sudo killall fbi >/dev/null 2>/dev/null
 	sudo fbi -T 1 -noverbose -a /home/pi/rpidatv/scripts/images/BATC_Black.png
 }
 
@@ -998,9 +1013,13 @@ menuchoice=$(whiptail --title "Shutdown Menu" --menu "Select Choice" 16 78 7 \
 
 display_splash()
 {
-sudo killall fbcp >/dev/null 2>/dev/null
-fbcp & >/dev/null 2>/dev/null
+
+sudo killall -9 fbcp >/dev/null 2>/dev/null
+fbcp & >/dev/null 2>/dev/null  ## fbcp gets started here and stays running. Not called by a.sh
 sudo fbi -T 1 -noverbose -a $PATHSCRIPT"/images/BATC_Black.png" >/dev/null 2>/dev/null
+(sleep 1; sudo killall -9 fbi >/dev/null 2>/dev/null) &  ## kill fbi once it has done its work
+
+
 }
 
 OnStartup()
@@ -1015,90 +1034,87 @@ FREQ_OUTPUT=$(get_config_var freqoutput $CONFIGFILE)
 GAIN_OUTPUT=$(get_config_var rfpower $CONFIGFILE)
 let FECNUM=FEC
 let FECDEN=FEC+1
-INFO=$CALL":"$MODE_INPUT"-->"$MODE_OUTPUT"("$SYMBOLRATEK"KSymbol FEC "$FECNUM"/"$FECDEN") sur "$FREQ_OUTPUT"Mhz Gain "$GAIN_OUTPUT
+INFO=$CALL":"$MODE_INPUT"-->"$MODE_OUTPUT"("$SYMBOLRATEK"KSymbol FEC "$FECNUM"/"$FECDEN") on "$FREQ_OUTPUT"Mhz Gain "$GAIN_OUTPUT
 
-	do_transmit
+do_transmit
 }
 
 #********************************************* MAIN MENU *********************************
 #************************* Execution of Console Menu starts here *************************
 
 # Check Language
-
 MENU_LANG=$(get_config_var menulanguage $CONFIGFILE)
 
 # Set Language
-
 if [ "$MENU_LANG" == "en" ]; then
-    source $PATHSCRIPT"/langgb.sh"
+  source $PATHSCRIPT"/langgb.sh"
 else
-    source $PATHSCRIPT"/langfr.sh"
+  source $PATHSCRIPT"/langfr.sh"
 fi
 
 # Display Splash on Touchscreen if fitted
-
 display_splash
-
 status="0"
 
+# Check whether to go straight to transmit or display the menu
 if [ "$1" != "menu" ]; then # if tx on boot
-    OnStartup               # go straight to transmit
+  OnStartup               # go straight to transmit
 fi
 
 sleep 0.2
 
-    while [ "$status" -eq 0 ] 
-    do
-CALL=$(get_config_var call $CONFIGFILE)
-MODE_INPUT=$(get_config_var modeinput $CONFIGFILE)
-MODE_OUTPUT=$(get_config_var modeoutput $CONFIGFILE)
-SYMBOLRATEK=$(get_config_var symbolrate $CONFIGFILE)
-FEC=$(get_config_var fec $CONFIGFILE)
-PATHTS=$(get_config_var pathmedia $CONFIGFILE)
-FREQ_OUTPUT=$(get_config_var freqoutput $CONFIGFILE)
-GAIN_OUTPUT=$(get_config_var rfpower $CONFIGFILE)
-let FECNUM=FEC
-let FECDEN=FEC+1
-INFO=$CALL":"$MODE_INPUT"-->"$MODE_OUTPUT"("$SYMBOLRATEK"KSymbol FEC "$FECNUM"/"$FECDEN") on "$FREQ_OUTPUT"Mhz Gain "$GAIN_OUTPUT
+# Loop round main menu
+while [ "$status" -eq 0 ] 
+  do
 
+    # Lookup parameters for Menu Info Message
+    CALL=$(get_config_var call $CONFIGFILE)
+    MODE_INPUT=$(get_config_var modeinput $CONFIGFILE)
+    MODE_OUTPUT=$(get_config_var modeoutput $CONFIGFILE)
+    SYMBOLRATEK=$(get_config_var symbolrate $CONFIGFILE)
+    FEC=$(get_config_var fec $CONFIGFILE)
+    PATHTS=$(get_config_var pathmedia $CONFIGFILE)
+    FREQ_OUTPUT=$(get_config_var freqoutput $CONFIGFILE)
+    GAIN_OUTPUT=$(get_config_var rfpower $CONFIGFILE)
+    let FECNUM=FEC
+    let FECDEN=FEC+1
+    INFO=$CALL":"$MODE_INPUT"-->"$MODE_OUTPUT"("$SYMBOLRATEK"KSymbol FEC "$FECNUM"/"$FECDEN") on "$FREQ_OUTPUT"Mhz Gain "$GAIN_OUTPUT
 
-
-#do_transmit
-#do_status
-#do_display_on
-
+    # Display main menu
     menuchoice=$(whiptail --title "$StrMainMenuTitle" --menu "$INFO" 16 82 8 \
-	"0 Transmit" "Go to transmit" \
-        "1 Source" "$StrMainMenuSource" \
-	"2 Output" "$StrMainMenuOutput" \
-	"3 Station" "$StrMainMenuCall" \
-	"4 Receive" "Receive via rtlsdr" \
-	"5 System" "$StrMainMenuSystem" \
-	"6 Language" "Set Language and Keyboard" \
-        "7 Shutdown" "Shutdown and reboot options" \
- 	3>&2 2>&1 1>&3)
+      "0 Transmit" "Go to transmit" \
+      "1 Source" "$StrMainMenuSource" \
+      "2 Output" "$StrMainMenuOutput" \
+      "3 Station" "$StrMainMenuCall" \
+      "4 Receive" "Receive via rtlsdr" \
+      "5 System" "$StrMainMenuSystem" \
+      "6 Language" "Set Language and Keyboard" \
+      "7 Shutdown" "Shutdown and reboot options" \
+      3>&2 2>&1 1>&3)
 
-        case "$menuchoice" in
-	    0\ *) do_transmit   ;;
-            1\ *) do_input_setup   ;;
-	    2\ *) do_output_setup ;;
-   	    3\ *) do_station_setup ;;
-	    4\ *) do_receive ;;
-	    5\ *) do_system_setup ;;
-	    6\ *) do_language_setup ;;
-            7\ *) do_shutdown_menu ;;
-             *)
+    # Take Action based on Menu Choice
+    case "$menuchoice" in
+      0\ *) do_transmit   ;;
+      1\ *) do_input_setup   ;;
+      2\ *) do_output_setup ;;
+      3\ *) do_station_setup ;;
+      4\ *) do_receive ;;
+      5\ *) do_system_setup ;;
+      6\ *) do_language_setup ;;
+      7\ *) do_shutdown_menu ;;
+         *)
 
-		 whiptail --title "$StrMainMenuExitTitle" --msgbox "$StrMainMenuExitContext" 8 78
-                status=1
+        # Display exit message if user jumps out of menu
+        whiptail --title "$StrMainMenuExitTitle" --msgbox "$StrMainMenuExitContext" 8 78
 
-		kill -1 $(pidof -x frmenu.sh) >/dev/null 2>/dev/null
-		kill -1 $(pidof -x gbmenu.sh) >/dev/null 2>/dev/null 
-		sleep 1
-                exit
-		;;
-        esac
-        exitstatus1=$status1
-    done
+        # Set status to exit
+        status=1
+
+        # Sleep while user reads message, then exit
+        sleep 1
+      exit ;;
+    esac
+    exitstatus1=$status1
+  done
 exit
 
