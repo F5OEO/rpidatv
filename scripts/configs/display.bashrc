@@ -118,7 +118,13 @@ if [ -f ~/.wifi_off ]; then
     . ~/.wifi_off
 fi
 
-sudo killall fbcp 
+## Clean start the framebuffer copy
+sudo killall fbcp >/dev/null 2>/dev/null
 fbcp &
-   ./rpidatv/bin/rpidatvgui
 
+## Put up the BATC Background, and then kill the process
+sudo fbi -T 1 -noverbose -a /home/pi/rpidatv/scripts/images/BATC_Black.png >/dev/null 2>/dev/null
+(sleep 1; sudo killall -9 fbi >/dev/null 2>/dev/null) &  ## kill fbi once it has done its work
+
+## Start the touchscreen program
+/home/pi/rpidatv/bin/rpidatvgui
