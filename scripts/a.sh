@@ -132,7 +132,7 @@ case "$MODE_OUTPUT" in
 	#GAIN=0
 	;;
 	DATVEXPRESS)
-	sudo nice -n -30 ./express_server & 
+	sudo nice -n -30 $PATHRPI"/express_server" & 
 	FREQUENCY_OUT=$FREQ_OUTPUT
 	let FREQ_OUTPUTHZ=FREQ_OUTPUT*1000000
 	OUTPUT="udp://127.0.0.1:1314?pkt_size=1316&buffer_size=1316"
@@ -247,6 +247,9 @@ case "$MODE_INPUT" in
 	if [ "$AUDIO_CARD" == 0 ]; then
 	# ******************************* H264 VIDEO ONLY ************************************
 	$PATHRPI"/avc2ts" -b $BITRATE_VIDEO -m $BITRATE_TS -x $VIDEO_WIDTH -y $VIDEO_HEIGHT -f $VIDEO_FPS -i 100 -p $PIDPMT -s $CHANNEL $OUTPUT_FILE $OUTPUT_IP &
+
+ echo "set ptt tx" >> /tmp/expctrl
+
 	
 	else
 	# ******************************* H264 VIDEO WITH AUDIO (TODO) ************************************
