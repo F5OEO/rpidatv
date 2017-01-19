@@ -1013,10 +1013,13 @@ menuchoice=$(whiptail --title "Shutdown Menu" --menu "Select Choice" 16 78 7 \
 
 display_splash()
 {
+
 sudo killall -9 fbcp >/dev/null 2>/dev/null
 fbcp & >/dev/null 2>/dev/null  ## fbcp gets started here and stays running. Not called by a.sh
 sudo fbi -T 1 -noverbose -a $PATHSCRIPT"/images/BATC_Black.png" >/dev/null 2>/dev/null
 (sleep 1; sudo killall -9 fbi >/dev/null 2>/dev/null) &  ## kill fbi once it has done its work
+
+
 }
 
 OnStartup()

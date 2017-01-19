@@ -107,6 +107,16 @@ cd /home/pi
 #sudo install fbcp /usr/local/bin/fbcp
 #cd ../../
 
+# Disable the Touchscreen Screensaver (201701070)
+cd /boot
+if ! grep -q consoleblank cmdline.txt; then
+  sudo sed -i -e 's/rootwait/rootwait consoleblank=0/' cmdline.txt
+fi
+cd /etc/kbd
+sudo sed -i 's/^BLANK_TIME.*/BLANK_TIME=0/' config
+sudo sed -i 's/^POWERDOWN_TIME.*/POWERDOWN_TIME=0/' config
+cd /home/pi
+
 # Restore or update rpidatvconfig.txt
 if ! grep -q analogcaminput /home/pi/rpidatvconfig.txt; then
   # File needs updating
