@@ -1,8 +1,18 @@
+20170123
+Added Advanced Setup Menu to console
+Added script to display Micro-SD Card Details including serial number
+Added Error-checking for the EasyCap input and standard parameters
+Deleted the text for fallback IP in /etc/dhcpcd.conf
+Changed Main Menu title bar to include version
+Clarified menu descriptions
+Check for update script now diagnoses basic connection problems
+
 201701190
 Reduced bit-bang delay to 10 us in adf4351.c
 Auto-killed fbi 1 second after all calls to it
 Killed transmit processes nicely and then with -9 in menu.sh and rpidatvtouch.c
 Simplified menu.sh by deleting do_status
+Loaded Waveshare touchscreen driver by default
 Adjusted touchscreen display and touch overlay for accuracy and appearance
 Added BATC SplashScreen to touchscreen Autoboot
 
