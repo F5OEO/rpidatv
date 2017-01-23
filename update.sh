@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Updated by davecrump 20170103
+# Updated by davecrump 20170122
 
 # Modified to overwrite ~/rpidatv/scripts and
 # ~/rpidatv/src, then compile
@@ -106,6 +106,16 @@ cd /home/pi
 #make
 #sudo install fbcp /usr/local/bin/fbcp
 #cd ../../
+
+# Disable fallback IP (201701230)
+
+cd /etc
+sudo sed -i '/profile static_eth0/d' dhcpcd.conf
+sudo sed -i '/static ip_address=192.168.1.60/d' dhcpcd.conf
+sudo sed -i '/static routers=192.168.1.1/d' dhcpcd.conf
+sudo sed -i '/static domain_name_servers=192.168.1.1/d' dhcpcd.conf
+sudo sed -i '/interface eth0/d' dhcpcd.conf
+sudo sed -i '/fallback static_eth0/d' dhcpcd.conf
 
 # Disable the Touchscreen Screensaver (201701070)
 cd /boot

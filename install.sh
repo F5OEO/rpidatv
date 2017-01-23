@@ -135,8 +135,8 @@ sudo sed -i 's/^POWERDOWN_TIME.*/POWERDOWN_TIME=0/' config
 
 cd /home/pi/rpidatv/scripts/
 
-# Fallback IP to 192.168.1.60
-sudo bash -c 'echo -e "\nprofile static_eth0\nstatic ip_address=192.168.1.60/24\nstatic routers=192.168.1.1\nstatic domain_name_servers=192.168.1.1\ninterface eth0\nfallback static_eth0" >> /etc/dhcpcd.conf'
+# Fallback IP to 192.168.1.60 Disabled 201701230
+#sudo bash -c 'echo -e "\nprofile static_eth0\nstatic ip_address=192.168.1.60/24\nstatic routers=192.168.1.1\nstatic domain_name_servers=192.168.1.1\ninterface eth0\nfallback static_eth0" >> /etc/dhcpcd.conf'
 
 # Enable camera
 sudo bash -c 'echo -e "\n##Enable Pi Camera" >> /boot/config.txt'
