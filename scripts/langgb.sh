@@ -2,28 +2,29 @@
 ######## INPUT MENU #####################
 StrInputSetupTitle="Input choice"
 StrInputSetupDescription="Press down/up arrows to move, space to select"
-StrInputSetupCAMH264="H264 Camera"
-StrInputSetupCAMMPEG_2="MPEG-2 Camera(for old set top box)"
+StrInputSetupCAMH264="Pi Camera, H264 Encoding"
+StrInputSetupCAMMPEG_2="Pi Camera, MPEG-2 Encoding (for old Sat RX)"
 StrInputSetupFILETS="Transport stream file (.ts)"
-StrInputSetupPATERNAUDIO="JPEG picture patern(no audio)"
+StrInputSetupPATERNAUDIO="JPEG Pictures From File (no audio)"
 StrInputSetupCARRIER="Only Carrier"
-StrInputSetupTESTMODE="Testmode carrier"
+StrInputSetupTESTMODE="Testmode for Carrier Null"
 StrInputSetupIPTSIN="Transport stream from network"
 StrInputSetupFILETSName="TS file is now"
 StrInputSetupPATERNAUDIOName="JPEG picture is now"
 StrInputSetupIPTSINName="IP address to receive (port 10000)"
 StrInputSetupIPTSINTitle="Setup IP address"
-StrInputSetupANALOGCAM="Analog input"
+StrInputSetupANALOGCAM="Analog (EasyCap) Video Input"
 StrInputSetupANALOGCAMTitle="Analog input setup"
 StrInputSetupANALOGCAMName="Input analog name (/dev/video0)"
 StrInputSetupVNC="Display PC via VNC"
 StrInputSetupVNCName="IP of PC using VNC (password datv)"
 StrInputSetupVNCTitle="VNC setup"
-StrInputSetupDESKTOP="Rasberry display"
+StrInputSetupDESKTOP="Touchscreen or Raspberry display"
 StrPIN_IContext="I GPIO {12,18,40} (12 is default:pin32)"
 StrPIN_ITitle="I output GPIO"
 StrPIN_QContext="Q GPIO {13,19,41}(13 is defaut:pin33)"
 StrPIN_QTitle="Q output GPIO"
+
 ######## CALL MENU ###################"
 StrCallContext="CALL Setup"
 StrCallTitle="CALL"
@@ -111,8 +112,13 @@ StrIPSetupContext="Example: 192.168.1.60"
 StrLanguageTitle="Language Selection"
 StrKeyboardChange="Needs reboot after setting"
 
+# Check Current Version
+INSTALLEDVERSION=$(head -c 9 /home/pi/rpidatv/scripts/installed_version.txt)
+
+
+
 ######## MAIN MENU #########
-StrMainMenuTitle="RpiDATV GUI Version 2.0 (F5OEO Evariste)"
+StrMainMenuTitle="Portsdown DATV TX Version "$INSTALLEDVERSION" By F5OEO and the BATC Team"
 StrMainMenuSource="Select Video Source"
 StrMainMenuOutput="Configure Output"
 StrMainMenuCall="Station call setup"

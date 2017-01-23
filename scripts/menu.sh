@@ -471,11 +471,6 @@ if [ $? -eq 0 ]; then
 			;;
 		    DTX1)	;;
 		    DATVEXPRESS)
-			FREQ_OUTPUT=$(get_config_var freqoutput $CONFIGFILE)
-			FREQ=$(whiptail --inputbox "$StrOutputRFFreqContext" 8 78 $FREQ_OUTPUT --title "$StrOutputRFFreqTitle" 3>&1 1>&2 2>&3)
-			if [ $? -eq 0 ]; then
-				set_config_var freqoutput "$FREQ" $CONFIGFILE
-			fi
 			GAIN_OUTPUT=$(get_config_var rfpower $CONFIGFILE)
 			GAIN=$(whiptail --inputbox "$StrOutputRFGainContext" 8 78 $GAIN_OUTPUT --title "$StrOutputRFGainTitle" 3>&1 1>&2 2>&3)
 			if [ $? -eq 0 ]; then
@@ -883,16 +878,35 @@ whiptail --title "Not implemented yet" --msgbox "Not Implemented yet.  Please pr
 
 do_EasyCap()
 {
+    ## Check and set the input
     ACINPUT=$(get_config_var analogcaminput $CONFIGFILE)
-    ACINPUT=$(whiptail --inputbox "Enter 0 for Composite, 1 for S-VHS, - for not set" 8 78 $ACINPUT --title "SET EASYCAP INPUT NUMBER" 3>&1 1>&2 2>&3)
+    ACINPUT=$(whiptail --inputbox "Enter 0 for Composite, 1 for S-Video, - for not set" 8 78 $ACINPUT --title "SET EASYCAP INPUT NUMBER" 3>&1 1>&2 2>&3)
     if [ $? -eq 0 ]; then
-        set_config_var analogcaminput "$ACINPUT" $CONFIGFILE
+        if [ "$ACINPUT" == "-" ]; then
+            set_config_var analogcaminput "$ACINPUT" $CONFIGFILE
+        else
+            if [[ $ACINPUT =~ ^[0-9]+$ ]]; then
+                set_config_var analogcaminput "$ACINPUT" $CONFIGFILE
+            else
+                whiptail --title "Error" --msgbox "Please enter only numbers or a -.  Please press enter to continue and reselect" 8 78
+            fi
+        fi
     fi
 
+    ## Check and set the standard
     ACSTANDARD=$(get_config_var analogcamstandard $CONFIGFILE)
     ACSTANDARD=$(whiptail --inputbox "Enter 0 for NTSC, 6 for PAL, - for not set" 8 78 $ACSTANDARD --title "SET EASYCAP VIDEO STANDARD" 3>&1 1>&2 2>&3)
     if [ $? -eq 0 ]; then
-        set_config_var analogcamstandard "$ACSTANDARD" $CONFIGFILE
+        if [ "$ACSTANDARD" == "-" ]; then
+            set_config_var analogcamstandard "$ACSTANDARD" $CONFIGFILE
+        else
+            if [[ $ACSTANDARD =~ ^[0-9]+$ ]]; then
+                set_config_var analogcamstandard "$ACSTANDARD" $CONFIGFILE
+            else
+                whiptail --title "Error" --msgbox "Please enter only numbers or a -.  Please press enter to continue and reselect" 8 78
+            fi
+        fi
+
     fi
 }
 
@@ -900,6 +914,40 @@ do_Update()
 {
 reset
 $PATHSCRIPT"/check_for_update.sh"
+}
+do_presets()
+{
+whiptail --title "Not implemented yet" --msgbox "Not Implemented yet.  Please press enter to continue" 8 78
+}
+
+do_4351_ref()
+{
+whiptail --title "Not implemented yet" --msgbox "Not Implemented yet.  Please press enter to continue" 8 78
+}
+
+do_4351_levels()
+{
+whiptail --title "Not implemented yet" --msgbox "Not Implemented yet.  Please press enter to continue" 8 78
+}
+
+do_SD_info()
+{
+$PATHSCRIPT"/sd_card_info.sh"
+}
+
+do_set_express()
+{
+whiptail --title "Not implemented yet" --msgbox "Not Implemented yet.  Please press enter to continue" 8 78
+}
+
+do_numbers()
+{
+whiptail --title "Not implemented yet" --msgbox "Not Implemented yet.  Please press enter to continue" 8 78
+}
+
+do_vfinder()
+{
+whiptail --title "Not implemented yet" --msgbox "Not Implemented yet.  Please press enter to continue" 8 78
 }
 
 do_system_setup()
@@ -925,6 +973,29 @@ menuchoice=$(whiptail --title "$StrSystemTitle" --menu "$StrSystemContext" 16 78
         8\ *) do_Update ;;
      esac
 }
+
+do_system_setup_2()
+{
+menuchoice=$(whiptail --title "$StrSystemTitle" --menu "$StrSystemContext" 16 78 9 \
+    "1 Set Presets" "For Touchscreen"  \
+    "2 ADF4351 Ref Freq" "Set ADF4351 Reference Freq and Cal" \
+    "3 ADF4351 Levels" "Set ADF4351 Levels for Each Band" \
+    "4 SD Card Info" "Show SD Card Information"  \
+    "5 DATV Express" "Configure Advanced DATV Express Settings" \
+    "6 Contest Numbers" "Set Contest Numbers for each band" \
+    "7 Viewfinder" "Disable or Enable Viewfinder on Touchscreen" \
+    3>&2 2>&1 1>&3)
+    case "$menuchoice" in
+        1\ *) do_presets ;;
+        2\ *) do_4351_ref  ;;
+        3\ *) do_4351_levels ;;
+        4\ *) do_SD_info ;;
+        5\ *) do_set_express ;;
+        6\ *) do_numbers ;;
+        7\ *) do_vfinder ;;
+     esac
+}
+
 
 do_language_setup()
 {
@@ -1081,28 +1152,30 @@ while [ "$status" -eq 0 ]
     INFO=$CALL":"$MODE_INPUT"-->"$MODE_OUTPUT"("$SYMBOLRATEK"KSymbol FEC "$FECNUM"/"$FECDEN") on "$FREQ_OUTPUT"Mhz Gain "$GAIN_OUTPUT
 
     # Display main menu
-    menuchoice=$(whiptail --title "$StrMainMenuTitle" --menu "$INFO" 16 82 8 \
-      "0 Transmit" "Go to transmit" \
-      "1 Source" "$StrMainMenuSource" \
-      "2 Output" "$StrMainMenuOutput" \
-      "3 Station" "$StrMainMenuCall" \
-      "4 Receive" "Receive via rtlsdr" \
-      "5 System" "$StrMainMenuSystem" \
-      "6 Language" "Set Language and Keyboard" \
-      "7 Shutdown" "Shutdown and reboot options" \
-      3>&2 2>&1 1>&3)
 
-    # Take Action based on Menu Choice
-    case "$menuchoice" in
-      0\ *) do_transmit   ;;
-      1\ *) do_input_setup   ;;
-      2\ *) do_output_setup ;;
-      3\ *) do_station_setup ;;
-      4\ *) do_receive ;;
-      5\ *) do_system_setup ;;
-      6\ *) do_language_setup ;;
-      7\ *) do_shutdown_menu ;;
-         *)
+    menuchoice=$(whiptail --title "$StrMainMenuTitle" --menu "$INFO" 16 82 9 \
+	"0 Transmit" "Go to transmit" \
+        "1 Source" "$StrMainMenuSource" \
+	"2 Output" "$StrMainMenuOutput" \
+	"3 Station" "$StrMainMenuCall" \
+	"4 Receive" "Receive via rtlsdr" \
+	"5 System" "$StrMainMenuSystem" \
+        "6 System 2" "Advanced System Setup" \
+	"7 Language" "Set Language and Keyboard" \
+        "8 Shutdown" "Shutdown and reboot options" \
+ 	3>&2 2>&1 1>&3)
+
+        case "$menuchoice" in
+	    0\ *) do_transmit   ;;
+            1\ *) do_input_setup   ;;
+	    2\ *) do_output_setup ;;
+   	    3\ *) do_station_setup ;;
+	    4\ *) do_receive ;;
+	    5\ *) do_system_setup ;;
+	    6\ *) do_system_setup_2 ;;
+            7\ *) do_language_setup ;;
+            8\ *) do_shutdown_menu ;;
+               *)
 
         # Display exit message if user jumps out of menu
         whiptail --title "$StrMainMenuExitTitle" --msgbox "$StrMainMenuExitContext" 8 78
