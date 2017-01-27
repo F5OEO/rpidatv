@@ -1,10 +1,10 @@
-modeinput=FILETS
+modeinput=DESKTOP
 symbolrate=333
 fec=7
 freqoutput=437
 rfpower=7
 modeoutput=IQ
-tsvideofile=/home/pi/rpidatv/video/G8GKQ_11_12_2016_12h50_24.TS
+tsvideofile=/home/pi/rpidatv/video/f4day.ts
 call=BATC
 paternfile=/home/pi/rpidatv/video
 udpinaddr=230.0.0.2
