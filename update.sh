@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Updated by davecrump 20170122
+# Updated by davecrump 201701270
 
 # Modified to overwrite ~/rpidatv/scripts and
 # ~/rpidatv/src, then compile
@@ -127,8 +127,8 @@ sudo sed -i 's/^BLANK_TIME.*/BLANK_TIME=0/' config
 sudo sed -i 's/^POWERDOWN_TIME.*/POWERDOWN_TIME=0/' config
 cd /home/pi
 
-# Restore or update rpidatvconfig.txt
-if ! grep -q analogcaminput /home/pi/rpidatvconfig.txt; then
+# Restore or update rpidatvconfig.txt for 201701020 and 201701270
+if ! grep -q adfref /home/pi/rpidatvconfig.txt; then
   # File needs updating
   source /home/pi/rpidatv/scripts/copy_config.sh
 else

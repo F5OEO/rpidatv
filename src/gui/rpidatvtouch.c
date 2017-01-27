@@ -454,6 +454,11 @@ void SelectFreq(int NoButton)  //Frequency
 	char Param[]="freqoutput";
         printf("************** Set Frequency = %s\n",freqtxt);
 	SetConfigParam(PATH_CONFIG,Param,freqtxt);
+
+  // Set the Band (and filter) Switching
+
+  system ("sudo /home/pi/rpidatv/scripts/ctlfilter.sh");
+
 }
 
 
@@ -988,6 +993,10 @@ int main(int argc, char **argv) {
         GetConfigParam(PATH_CONFIG,Param,Value);
         if(strcmp(Value,"Waveshare")==0)
         	Inversed=1;
+
+// Set the Band (and filter) Switching
+
+  system ("sudo /home/pi/rpidatv/scripts/ctlfilter.sh");
 
 // Determine if ReceiveDirect 2nd argument 
 	if(argc>2)
