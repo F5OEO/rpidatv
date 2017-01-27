@@ -1,3 +1,5 @@
+#!/bin/bash
+
 ########## ctlfilter.sh ############
 
 # Called by a.sh in IQ mode to switch in correct
@@ -12,8 +14,8 @@
 # <550   011
 # <1100  100
 # <2200  101
-# >=2200 110 
- 
+# >=2200 110
+
 # Band Outputs:
 
 # <100   00  (71 MHz)
