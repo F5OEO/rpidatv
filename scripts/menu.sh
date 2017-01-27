@@ -579,7 +579,8 @@ do_freq_setup()
 FREQ_OUTPUT=$(get_config_var freqoutput $CONFIGFILE)
 FREQ=$(whiptail --inputbox "$StrOutputRFFreqContext" 8 78 $FREQ_OUTPUT --title "$StrOutputRFFreqTitle" 3>&1 1>&2 2>&3)
 if [ $? -eq 0 ]; then
-    set_config_var freqoutput "$FREQ" $CONFIGFILE
+  set_config_var freqoutput "$FREQ" $CONFIGFILE
+  $PATHSCRIPT"/ctlfilter.sh" ## Refresh the band switching
 fi
 }
 
@@ -910,24 +911,108 @@ do_EasyCap()
     fi
 }
 
+do_audio_switch()
+{
+  AUDIO=$(get_config_var audio $CONFIGFILE)
+  case "$AUDIO" in
+  usb)
+    Radio1=ON
+    Radio2=OFF
+  ;;
+  easycap)
+    Radio1=OFF
+    Radio2=ON
+  esac
+
+  AUDIO=$(whiptail --title "SELECT AUDIO SOURCE" --radiolist \
+    "Select one" 20 78 8 \
+    "usb" "Use the USB Audio Dongle Input" $Radio1 \
+    "easycap" "Use the EasyCap Audio Input" $Radio2 \
+    3>&2 2>&1 1>&3)
+
+  if [ $? -eq 0 ]; then                     ## If the selection has changed
+    set_config_var audio "$AUDIO" $CONFIGFILE
+  fi
+
+  whiptail --title "Not implemented yet" --msgbox "Not Implemented yet.  Please press enter to continue" 8 78
+}
+
 do_Update()
 {
 reset
 $PATHSCRIPT"/check_for_update.sh"
 }
+
 do_presets()
 {
-whiptail --title "Not implemented yet" --msgbox "Not Implemented yet.  Please press enter to continue" 8 78
+  whiptail --title "Not implemented yet" --msgbox "Not Implemented yet.  Please press enter to continue" 8 78
+
+  PFREQ1=$(get_config_var pfreq1 $CONFIGFILE)
+  PFREQ1=$(whiptail --inputbox "Enter Preset Frequency 1 in MHz" 8 78 $PFREQ1 --title "SET TOUCHSCREEN PRESETS" 3>&1 1>&2 2>&3)
+  if [ $? -eq 0 ]; then
+    set_config_var pfreq1 "$PFREQ1" $CONFIGFILE
+  fi
+
+  PFREQ2=$(get_config_var pfreq2 $CONFIGFILE)
+  PFREQ2=$(whiptail --inputbox "Enter Preset Frequency 2 in MHz" 8 78 $PFREQ2 --title "SET TOUCHSCREEN PRESETS" 3>&1 1>&2 2>&3)
+  if [ $? -eq 0 ]; then
+    set_config_var pfreq2 "$PFREQ2" $CONFIGFILE
+  fi
+
+  PFREQ3=$(get_config_var pfreq3 $CONFIGFILE)
+  PFREQ3=$(whiptail --inputbox "Enter Preset Frequency 3 in MHz" 8 78 $PFREQ3 --title "SET TOUCHSCREEN PRESETS" 3>&1 1>&2 2>&3)
+  if [ $? -eq 0 ]; then
+    set_config_var pfreq3 "$PFREQ3" $CONFIGFILE
+  fi
+
+  PFREQ4=$(get_config_var pfreq4 $CONFIGFILE)
+  PFREQ4=$(whiptail --inputbox "Enter Preset Frequency 4 in MHz" 8 78 $PFREQ4 --title "SET TOUCHSCREEN PRESETS" 3>&1 1>&2 2>&3)
+  if [ $? -eq 0 ]; then
+    set_config_var pfreq4 "$PFREQ4" $CONFIGFILE
+  fi
+
+  PFREQ5=$(get_config_var pfreq5 $CONFIGFILE)
+  PFREQ5=$(whiptail --inputbox "Enter Preset Frequency 5 in MHz" 8 78 $PFREQ5 --title "SET TOUCHSCREEN PRESETS" 3>&1 1>&2 2>&3)
+  if [ $? -eq 0 ]; then
+    set_config_var pfreq5 "$PFREQ5" $CONFIGFILE
+  fi
+
 }
 
 do_4351_ref()
 {
-whiptail --title "Not implemented yet" --msgbox "Not Implemented yet.  Please press enter to continue" 8 78
+  ADFREF=$(get_config_var adfref $CONFIGFILE)
+  ADFREF=$(whiptail --inputbox "Enter oscillator frequency in Hz" 8 78 $ADFREF --title "SET ADF4351 REFERENCE OSCILLATOR" 3>&1 1>&2 2>&3)
+  if [ $? -eq 0 ]; then
+    set_config_var adfref "$ADFREF" $CONFIGFILE
+  fi
 }
 
 do_4351_levels()
 {
-whiptail --title "Not implemented yet" --msgbox "Not Implemented yet.  Please press enter to continue" 8 78
+  ADFLEVEL0=$(get_config_var adflevel0 $CONFIGFILE)
+  ADFLEVEL0=$(whiptail --inputbox "Enter 0 to 3 = plus 0, 3, 6 or 9 dB" 8 78 $ADFLEVEL0 --title "SET ADF4351 LEVEL FOR THE 71 MHz BAND" 3>&1 1>&2 2>&3)
+  if [ $? -eq 0 ]; then
+    set_config_var adflevel0 "$ADFLEVEL0" $CONFIGFILE
+  fi
+
+  ADFLEVEL1=$(get_config_var adflevel1 $CONFIGFILE)
+  ADFLEVEL1=$(whiptail --inputbox "Enter 0 to 3 = plus 0, 3, 6 or 9 dB" 8 78 $ADFLEVEL1 --title "SET ADF4351 LEVEL FOR THE 146 MHz BAND" 3>&1 1>&2 2>&3)
+  if [ $? -eq 0 ]; then
+    set_config_var adflevel1 "$ADFLEVEL1" $CONFIGFILE
+  fi
+
+  ADFLEVEL2=$(get_config_var adflevel2 $CONFIGFILE)
+  ADFLEVEL2=$(whiptail --inputbox "Enter 0 to 3 = plus 0, 3, 6 or 9 dB" 8 78 $ADFLEVEL2 --title "SET ADF4351 LEVEL FOR THE 437MHz BAND" 3>&1 1>&2 2>&3)
+  if [ $? -eq 0 ]; then
+    set_config_var adflevel2 "$ADFLEVEL2" $CONFIGFILE
+  fi
+
+  ADFLEVEL3=$(get_config_var adflevel3 $CONFIGFILE)
+  ADFLEVEL3=$(whiptail --inputbox "Enter 0 to 3 = plus 0, 3, 6 or 9 dB" 8 78 $ADFLEVEL3 --title "SET ADF4351 LEVEL FOR THE 1255 MHz BAND" 3>&1 1>&2 2>&3)
+  if [ $? -eq 0 ]; then
+    set_config_var adflevel3 "$ADFLEVEL3" $CONFIGFILE
+  fi
 }
 
 do_SD_info()
@@ -937,17 +1022,116 @@ $PATHSCRIPT"/sd_card_info.sh"
 
 do_set_express()
 {
-whiptail --title "Not implemented yet" --msgbox "Not Implemented yet.  Please press enter to continue" 8 78
+  whiptail --title "Not implemented yet" --msgbox "Not Implemented yet.  Please press enter to continue" 8 78
+
+  EXPLEVEL0=$(get_config_var explevel0 $CONFIGFILE)
+  EXPLEVEL0=$(whiptail --inputbox "Enter 0 to 47" 8 78 $EXPLEVEL0 --title "SET DATV EXPRESS OUTPUT LEVEL FOR THE 71 MHz BAND" 3>&1 1>&2 2>&3)
+  if [ $? -eq 0 ]; then
+    set_config_var explevel0 "$EXPLEVEL0" $CONFIGFILE
+  fi
+
+  EXPLEVEL1=$(get_config_var explevel1 $CONFIGFILE)
+  EXPLEVEL1=$(whiptail --inputbox "Enter 0 to 47" 8 78 $EXPLEVEL1 --title "SET DATV EXPRESS OUTPUT LEVEL FOR THE 146 MHz BAND" 3>&1 1>&2 2>&3)
+  if [ $? -eq 0 ]; then
+    set_config_var explevel1 "$EXPLEVEL1" $CONFIGFILE
+  fi
+
+  EXPLEVEL2=$(get_config_var explevel2 $CONFIGFILE)
+  EXPLEVEL2=$(whiptail --inputbox "Enter 0 to 47" 8 78 $EXPLEVEL2 --title "SET DATV EXPRESS OUTPUT LEVEL FOR THE 437 MHz BAND" 3>&1 1>&2 2>&3)
+  if [ $? -eq 0 ]; then
+    set_config_var explevel2 "$EXPLEVEL2" $CONFIGFILE
+  fi
+
+  EXPLEVEL3=$(get_config_var explevel3 $CONFIGFILE)
+  EXPLEVEL3=$(whiptail --inputbox "Enter 0 to 47" 8 78 $EXPLEVEL3 --title "SET DATV EXPRESS OUTPUT LEVEL FOR THE 1255 MHz BAND" 3>&1 1>&2 2>&3)
+  if [ $? -eq 0 ]; then
+    set_config_var explevel3 "$EXPLEVEL3" $CONFIGFILE
+  fi
 }
 
 do_numbers()
 {
-whiptail --title "Not implemented yet" --msgbox "Not Implemented yet.  Please press enter to continue" 8 78
+  whiptail --title "Not implemented yet" --msgbox "Not Implemented yet.  Please press enter to continue" 8 78
+
+  NUMBERS0=$(get_config_var numbers0 $CONFIGFILE)
+  NUMBERS0=$(whiptail --inputbox "Enter 4 digits" 8 78 $NUMBERS0 --title "SET CONTEST NUMBERS FOR THE 71 MHz BAND" 3>&1 1>&2 2>&3)
+  if [ $? -eq 0 ]; then
+    set_config_var numbers0 "$NUMBERS0" $CONFIGFILE
+  fi
+
+  NUMBERS1=$(get_config_var numbers1 $CONFIGFILE)
+  NUMBERS1=$(whiptail --inputbox "Enter 4 digits" 8 78 $NUMBERS1 --title "SET CONTEST NUMBERS FOR THE 146 MHz BAND" 3>&1 1>&2 2>&3)
+  if [ $? -eq 0 ]; then
+    set_config_var numbers1 "$NUMBERS1" $CONFIGFILE
+  fi
+
+  NUMBERS2=$(get_config_var numbers2 $CONFIGFILE)
+  NUMBERS2=$(whiptail --inputbox "Enter 4 digits" 8 78 $NUMBERS2 --title "SET CONTEST NUMBERS FOR THE 437 MHz BAND" 3>&1 1>&2 2>&3)
+  if [ $? -eq 0 ]; then
+    set_config_var numbers2 "$NUMBERS2" $CONFIGFILE
+  fi
+
+  NUMBERS3=$(get_config_var numbers3 $CONFIGFILE)
+  NUMBERS3=$(whiptail --inputbox "Enter 4 digits" 8 78 $NUMBERS3 --title "SET CONTEST NUMBERS FOR THE 1255 MHz BAND" 3>&1 1>&2 2>&3)
+  if [ $? -eq 0 ]; then
+    set_config_var numbers3 "$NUMBERS3" $CONFIGFILE
+  fi
 }
 
 do_vfinder()
 {
-whiptail --title "Not implemented yet" --msgbox "Not Implemented yet.  Please press enter to continue" 8 78
+  whiptail --title "Not implemented yet" --msgbox "Not Implemented yet.  Please press enter to continue" 8 78
+
+  VFINDER=$(get_config_var vfinder $CONFIGFILE)
+  case "$VFINDER" in
+  on)
+    Radio1=ON
+    Radio2=OFF
+  ;;
+  off)
+    Radio1=OFF
+    Radio2=ON
+  esac
+
+  VFINDER=$(whiptail --title "SET VIEWFINDER ON OR OFF" --radiolist \
+    "Select one" 20 78 8 \
+    "on" "Transmitted image displayed on Touchscreen" $Radio1 \
+    "off" "Buttons displayed on touchscreen during transmit" $Radio2 \
+    3>&2 2>&1 1>&3)
+
+  if [ $? -eq 0 ]; then                     ## If the selection has changed
+    set_config_var vfinder "$VFINDER" $CONFIGFILE
+  fi
+
+  whiptail --title "Not implemented yet" --msgbox "Not Implemented yet.  Please press enter to continue" 8 78
+}
+
+do_beta()
+{
+  whiptail --title "Not implemented yet" --msgbox "Not Implemented yet.  Please press enter to continue" 8 78
+
+  BETA=$(get_config_var beta $CONFIGFILE)
+  case "$BETA" in
+  no)
+    Radio1=ON
+    Radio2=OFF
+  ;;
+  yes)
+    Radio1=OFF
+    Radio2=ON
+  esac
+
+  BETA=$(whiptail --title "USE BETA (EXPERIMENTAL) ENCODING?" --radiolist \
+    "Select one" 20 78 8 \
+    "no" "Stable software with core features" $Radio1 \
+    "yes" "Experimental software with new features" $Radio2 \
+    3>&2 2>&1 1>&3)
+
+  if [ $? -eq 0 ]; then                     ## If the selection has changed
+    set_config_var beta "$BETA" $CONFIGFILE
+  fi
+
+  whiptail --title "Not implemented yet" --msgbox "Not Implemented yet.  Please press enter to continue" 8 78
 }
 
 do_system_setup()
@@ -960,7 +1144,8 @@ menuchoice=$(whiptail --title "$StrSystemTitle" --menu "$StrSystemContext" 16 78
     "5 WiFi Off" "Turn the WiFi Off" \
     "6 Enable DigiThin" "Not Implemented Yet" \
     "7 Set-up EasyCap" "Set input socket and PAL/NTSC"  \
-    "8 Update" "Check for Updated rpidatv Software"  \
+    "8 Audio Input" "Select USB Dongle or EasyCap"  \
+    "9 Update" "Check for Updated rpidatv Software"  \
     3>&2 2>&1 1>&3)
     case "$menuchoice" in
         1\ *) do_autostart_setup ;;
@@ -970,7 +1155,8 @@ menuchoice=$(whiptail --title "$StrSystemTitle" --menu "$StrSystemContext" 16 78
         5\ *) do_WiFi_Off   ;;
         6\ *) do_Enable_DigiThin ;;
         7\ *) do_EasyCap ;;
-        8\ *) do_Update ;;
+        8\ *) do_audio_switch;;
+        9\ *) do_Update ;;
      esac
 }
 
@@ -984,6 +1170,7 @@ menuchoice=$(whiptail --title "$StrSystemTitle" --menu "$StrSystemContext" 16 78
     "5 DATV Express" "Configure Advanced DATV Express Settings" \
     "6 Contest Numbers" "Set Contest Numbers for each band" \
     "7 Viewfinder" "Disable or Enable Viewfinder on Touchscreen" \
+    "8 Beta Software" "Choose whether to use experimental software" \
     3>&2 2>&1 1>&3)
     case "$menuchoice" in
         1\ *) do_presets ;;
@@ -993,7 +1180,8 @@ menuchoice=$(whiptail --title "$StrSystemTitle" --menu "$StrSystemContext" 16 78
         5\ *) do_set_express ;;
         6\ *) do_numbers ;;
         7\ *) do_vfinder ;;
-     esac
+        8\ *) do_beta ;;
+      esac
 }
 
 
@@ -1068,7 +1256,7 @@ menuchoice=$(whiptail --title "Shutdown Menu" --menu "Select Choice" 16 78 7 \
     "1 Shutdown now" "Immediate Shutdown"  \
     "2 Reboot now" "Immediate reboot" \
     "3 Exit to Linux" "Exit menu to Command Prompt" \
-    "4 Restore TouchScreen" "Exit Menu, restart LCD" \
+    "4 Restore TouchScreen" "Exit to LCD.  Use ctrl-C to return" \
     "5 Button Enable" "Enable Shutdown Button" \
     "6 Button Disable" "Disable Shutdown Button" \
       3>&2 2>&1 1>&3)
@@ -1127,6 +1315,10 @@ fi
 display_splash
 status="0"
 
+# Set Band (and Filter) Switching
+
+$PATHSCRIPT"/ctlfilter.sh"
+
 # Check whether to go straight to transmit or display the menu
 if [ "$1" != "menu" ]; then # if tx on boot
   OnStartup               # go straight to transmit
@@ -1154,9 +1346,9 @@ while [ "$status" -eq 0 ]
     # Display main menu
 
     menuchoice=$(whiptail --title "$StrMainMenuTitle" --menu "$INFO" 16 82 9 \
-	"0 Transmit" "Go to transmit" \
-        "1 Source" "$StrMainMenuSource" \
-	"2 Output" "$StrMainMenuOutput" \
+	"0 Transmit" $FREQ_OUTPUT" Mhz, "$SYMBOLRATEK" KS, FEC "$FECNUM"/"$FECDEN"." \
+        "1 Source" "$StrMainMenuSource"" ("$MODE_INPUT" selected)" \
+	"2 Output" "$StrMainMenuOutput"" ("$MODE_OUTPUT" selected)" \
 	"3 Station" "$StrMainMenuCall" \
 	"4 Receive" "Receive via rtlsdr" \
 	"5 System" "$StrMainMenuSystem" \

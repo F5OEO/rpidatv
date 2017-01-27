@@ -1,3 +1,5 @@
+## Updated for version 201701270
+
 ####### Set Environment Variables ###############
 
 PATHSCRIPT=/home/pi/rpidatv/scripts
@@ -92,6 +94,9 @@ set_config_var gpio_q "$TRANSFER" $NEWCONFIGFILE
 TRANSFER=$(get_config_var pathmedia $OLDCONFIGFILE)
 set_config_var pathmedia "$TRANSFER" $NEWCONFIGFILE
 
+TRANSFER=$(get_config_var locator $OLDCONFIGFILE)
+set_config_var locator "$TRANSFER" $NEWCONFIGFILE
+
 TRANSFER=$(get_config_var pidstart $OLDCONFIGFILE)
 set_config_var pidstart "$TRANSFER" $NEWCONFIGFILE
 
@@ -110,5 +115,14 @@ set_config_var analogcamname "$TRANSFER" $NEWCONFIGFILE
 TRANSFER=$(get_config_var startup $OLDCONFIGFILE)
 set_config_var startup "$TRANSFER" $NEWCONFIGFILE
 
-TRANSFER=$(get_config_var modeinput $OLDCONFIGFILE)
-set_config_var modeinput "$TRANSFER" $NEWCONFIGFILE
+if grep -q analogcaminput /home/pi/rpidatvconfig.txt; then
+  # File includes analogcaminput and analogcammname
+  # Which were added in 201701020
+
+  TRANSFER=$(get_config_var analogcaminput $OLDCONFIGFILE)
+  set_config_var analogcaminput "$TRANSFER" $NEWCONFIGFILE
+
+  TRANSFER=$(get_config_var analogcamstandard $OLDCONFIGFILE)
+  set_config_var analogcamstandard "$TRANSFER" $NEWCONFIGFILE
+fi
+
