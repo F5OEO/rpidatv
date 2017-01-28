@@ -1,7 +1,8 @@
 ![rpidatv banner](/doc/img/spectreiq.jpg)
 # rpidatv
-**rpidatv** is a digital television transmitter for Raspberry Pi (B,B+,PI2,PI3,Pizero) which outputs directly to GPIO.  This version has been developed for use with an external synthesized oscillator and modulator/filter board. 
-*(Created by Evariste Courjaud F5OEO. Code is GPL)*
+**rpidatv** is a digital television transmitter for Raspberry Pi 3.  The core of the transmitter was written by Evariste Courjaud F5OEO and is maintained by him.  This version has been developed by a team of BATC members for use with an external synthesized oscillator and modulator/filter board to produce a signal suitable for driving a high power amateur television transmitter on the 146, 432 or 1296 MHz bands.  The idea is that the design should be reproducible by someone who has never used Linux before.  Detailed instructions on loading the software are listed below, and further details of the complete transmitter design and build are on the BATC Wiki at https://wiki.batc.tv/The_Portsdown_Transmitter.  There is a Forum for discussion of the project here: http://www.batc.org.uk/forum/viewforum.php?f=103
+
+Our thanks to Evariste and all the other contributors to this community project.  All code within the project is GPL.
 
 # Installation for BATC Portsdown Transmitter Version
 
@@ -19,7 +20,7 @@ The preferred installation method only needs a Windows PC connected to the same 
 
 - From your windows PC use Putty (http://www.chiark.greenend.org.uk/~sgtatham/putty/download.html) to log in to the IP address that you noted earlier.  You will get a Security warning the first time you try; this is normal.
 
-- Log in (user: pi/password: raspberry) then cut and paste the following code in, one line at a time:
+- Log in (user: pi, password: raspberry) then cut and paste the following code in, one line at a time:
 
 ```sh
 wget https://raw.githubusercontent.com/BritishAmateurTelevisionClub/rpidatv/master/install.sh
