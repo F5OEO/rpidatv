@@ -50,6 +50,7 @@ sudo make install
 
 # Compile adf4351
 cd /home/pi/rpidatv/src/adf4351
+touch adf4351.c
 make
 cp adf4351 ../../bin/
 
