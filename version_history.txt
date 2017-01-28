@@ -1,3 +1,15 @@
+201701280
+Corrected a bug in the upgrade script that did not enable the new ADF4351 functionality
+
+201701270
+Changed ADF4351 control so that the reference frequency and power for each 
+band could be set from the advanced setup menu.
+Ensured that band switching was activated at switch-on and frequency change.
+Corrected the carrier and null-test mode selections.
+Added more information about current selections to the top-level console menu
+Added more detail to the Advanced set-up menu selections in preparation for future functionality.
+
+
 20170123
 Added Advanced Setup Menu to console
 Added script to display Micro-SD Card Details including serial number
