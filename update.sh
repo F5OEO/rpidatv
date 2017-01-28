@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Updated by davecrump 201701270
+# Updated by davecrump 201701280
 
 # Modified to overwrite ~/rpidatv/scripts and
 # ~/rpidatv/src, then compile
@@ -62,6 +62,7 @@ sudo make install
 
 #install adf4351
 cd /home/pi/rpidatv/src/adf4351
+touch adf4351.c
 make
 cp adf4351 ../../bin/
 cd /home/pi
