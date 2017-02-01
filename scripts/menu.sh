@@ -418,9 +418,8 @@ choutput=$(whiptail --title "$StrOutputSetupTitle" --radiolist \
 		"DATVEXPRESS" "$StrOutputSetupDATVExpress" $Radio6 \
 	 	"IP" "$StrOutputSetupIP" $Radio7 3>&2 2>&1 1>&3)
 if [ $? -eq 0 ]; then
-
-		case "$choutput" in
-		    IQ)
+  case "$choutput" in
+  IQ)
 				PIN_I=$(get_config_var gpio_i $CONFIGFILE)
 				PIN_I=$(whiptail --inputbox "$StrPIN_IContext" 8 78 $PIN_I --title "$StrPIN_ITitle" 3>&1 1>&2 2>&3)
 			if [ $? -eq 0 ]; then
@@ -432,7 +431,7 @@ if [ $? -eq 0 ]; then
 				set_config_var gpio_q "$PIN_Q" $CONFIGFILE
 			fi
 				;;
-		    QPSKRF)
+  QPSKRF)
 			FREQ_OUTPUT=$(get_config_var freqoutput $CONFIGFILE)
 			##FREQ=$(whiptail --inputbox "$StrOutputRFFreqContext" 8 78 $FREQ_OUTPUT --title "$StrOutputRFFreqTitle" 3>&1 1>&2 2>&3)
 			##if [ $? -eq 0 ]; then
@@ -444,14 +443,14 @@ if [ $? -eq 0 ]; then
 				set_config_var rfpower "$GAIN" $CONFIGFILE
 			fi
 		    ;;
-	            BATC)
+  BATC)
 			BATC_OUTPUT=$(get_config_var batcoutput $CONFIGFILE)
 			ADRESS=$(whiptail --inputbox "$StrOutputBATCContext" 8 78 $BATC_OUTPUT --title "$StrOutputBATCTitle" 3>&1 1>&2 2>&3)
 			if [ $? -eq 0 ]; then
 				set_config_var batcoutput "$ADRESS" $CONFIGFILE
 			fi
 			;;
-		    DIGITHIN)
+  DIGITHIN)
 			PIN_I=$(get_config_var gpio_i $CONFIGFILE)
 				PIN_I=$(whiptail --inputbox "$StrPIN_IContext" 8 78 $PIN_I --title "$StrPIN_ITitle" 3>&1 1>&2 2>&3)
 			if [ $? -eq 0 ]; then
@@ -469,14 +468,23 @@ if [ $? -eq 0 ]; then
 			fi
 		        sudo ./si570 -f $FREQ -m off
 			;;
-		    DTX1)	;;
-		    DATVEXPRESS)
-			GAIN_OUTPUT=$(get_config_var rfpower $CONFIGFILE)
-			GAIN=$(whiptail --inputbox "$StrOutputRFGainContext" 8 78 $GAIN_OUTPUT --title "$StrOutputRFGainTitle" 3>&1 1>&2 2>&3)
-			if [ $? -eq 0 ]; then
-				set_config_var rfpower "$GAIN" $CONFIGFILE
-			fi
-		    ;;
+  DTX1)	;;
+
+  DATVEXPRESS)
+    if pgrep -x "express_server" > /dev/null; then
+      # Express already running
+      sudo killall express_server  >/dev/null 2>/dev/null
+    fi
+      # Start it from its own folder otherwise it doesnt read the config file
+      cd /home/pi/express_server
+      if (( $SYMBOLRATEK \< 999 )); then
+        sudo nice -n -40 /home/pi/express_server/express_server -nb  >/dev/null 2>/dev/null &
+      else
+        sudo nice -n -40 /home/pi/express_server/express_server  >/dev/null 2>/dev/null &
+      fi
+      cd /home/pi
+      sleep 5
+  ;;
 		    IP)
 			UDPOUTADDR=$(get_config_var udpoutaddr $CONFIGFILE)
 
@@ -485,18 +493,20 @@ if [ $? -eq 0 ]; then
 			set_config_var udpoutaddr "$UDPOUTADDR" $CONFIGFILE
 		    fi
 		    ;;
-		esac
-		set_config_var modeoutput "$choutput" $CONFIGFILE
+  esac
+  set_config_var modeoutput "$choutput" $CONFIGFILE
 fi
 }
 
 do_symbolrate_setup()
 {
-	SYMBOLRATE=$(get_config_var symbolrate $CONFIGFILE)
-	SYMBOLRATE=$(whiptail --inputbox "$StrOutputSymbolrateContext" 8 78 $SYMBOLRATE --title "$StrOutputSymbolrateTitle" 3>&1 1>&2 2>&3)
-	if [ $? -eq 0 ]; then
-		set_config_var symbolrate "$SYMBOLRATE" $CONFIGFILE
-	fi
+  SYMBOLRATE=$(get_config_var symbolrate $CONFIGFILE)
+  SYMBOLRATE=$(whiptail --inputbox "$StrOutputSymbolrateContext" 8 78 $SYMBOLRATE --title "$StrOutputSymbolrateTitle" 3>&1 1>&2 2>&3)
+  if [ $? -eq 0 ]; then
+    set_config_var symbolrate "$SYMBOLRATE" $CONFIGFILE
+    # Kill express server because it might need to restart in narrowband
+    sudo killall express_server  >/dev/null 2>/dev/null
+  fi
 }
 
 do_fec_setup()
@@ -624,6 +634,12 @@ do_transmit()
 
 do_stop_transmit()
 {
+  # Stop DATV Express transmitting if required
+
+  echo "set car off" >> /tmp/expctrl
+  echo "set ptt rx" >> /tmp/expctrl
+  sudo killall netcat >/dev/null 2>/dev/null
+
   # Turn the Local Oscillator off
   sudo $PATHRPI"/adf4351" off
 
@@ -1022,8 +1038,6 @@ $PATHSCRIPT"/sd_card_info.sh"
 
 do_set_express()
 {
-  whiptail --title "Not implemented yet" --msgbox "Not Implemented yet.  Please press enter to continue" 8 78
-
   EXPLEVEL0=$(get_config_var explevel0 $CONFIGFILE)
   EXPLEVEL0=$(whiptail --inputbox "Enter 0 to 47" 8 78 $EXPLEVEL0 --title "SET DATV EXPRESS OUTPUT LEVEL FOR THE 71 MHz BAND" 3>&1 1>&2 2>&3)
   if [ $? -eq 0 ]; then
@@ -1315,8 +1329,29 @@ fi
 display_splash
 status="0"
 
-# Set Band (and Filter) Switching
+# Start DATV Express Server if required
+MODE_OUTPUT=$(get_config_var modeoutput $CONFIGFILE)
+if [ "$MODE_OUTPUT" == "DATVEXPRESS" ]; then
+  if pgrep -x "express_server" > /dev/null; then
+    # Express already running
+    echo > null
+  else
+    # Not running and needed, so start it
+    echo "Starting the DATV Express Server.  Please wait."
+    # From its own folder otherwise it doesn't read the config file
+    cd /home/pi/express_server
+    if (( $SYMBOLRATEK \< 999 )); then
+      sudo nice -n -40 /home/pi/express_server/express_server -nb  >/dev/null 2>/dev/null &
+    else
+      sudo nice -n -40 /home/pi/express_server/express_server  >/dev/null 2>/dev/null &
+    fi
+    cd /home/pi
+    sleep 5                # Give it time to start
+    reset                  # Clear message from screen
+  fi
+fi
 
+# Set Band (and Filter) Switching
 $PATHSCRIPT"/ctlfilter.sh"
 
 # Check whether to go straight to transmit or display the menu
