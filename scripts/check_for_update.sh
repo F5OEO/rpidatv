@@ -3,7 +3,7 @@
 ## Download the latest_version file
 cd /home/pi/rpidatv/scripts
 rm /home/pi/rpidatv/scripts/latest_version.txt  >/dev/null 2>/dev/null
-wget --timeout=2 -q https://raw.githubusercontent.com/BritishAmateurTelevisionClub/rpidatv/master/scripts/latest_version.txt
+wget --timeout=2 https://raw.githubusercontent.com/BritishAmateurTelevisionClub/rpidatv/master/scripts/latest_version.txt
 
 ## Create the file if it doesn't exist
 if  [ ! -f "latest_version.txt" ]; then
@@ -51,7 +51,7 @@ then
         printf "\nUpgrading now...\n"
         cd /home/pi
         rm update.sh >/dev/null 2>/dev/null
-        wget -q https://raw.githubusercontent.com/BritishAmateurTelevisionClub/rpidatv/master/update.sh
+        wget https://raw.githubusercontent.com/BritishAmateurTelevisionClub/rpidatv/master/update.sh
         chmod +x update.sh
         source /home/pi/update.sh
         exit
@@ -73,7 +73,7 @@ then
         printf "\nUpgrading now...\n"
         cd /home/pi
         rm update.sh >/dev/null 2>/dev/null
-        wget -q https://raw.githubusercontent.com/BritishAmateurTelevisionClub/rpidatv/master/update.sh
+        wget https://raw.githubusercontent.com/BritishAmateurTelevisionClub/rpidatv/master/update.sh
         chmod +x update.sh
         source /home/pi/update.sh 
         exit
