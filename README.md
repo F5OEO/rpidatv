@@ -1,7 +1,8 @@
 ![rpidatv banner](/doc/img/spectreiq.jpg)
 # rpidatv
-**rpidatv** is a digital television transmitter for Raspberry Pi (B,B+,PI2,PI3,Pizero) which outputs directly to GPIO.  This version has been developed for use with an external synthesized oscillator and modulator/filter board. 
-*(Created by Evariste Courjaud F5OEO. Code is GPL)*
+**rpidatv** is a digital television transmitter for Raspberry Pi 3.  The core of the transmitter was written by Evariste Courjaud F5OEO and is maintained by him.  This version has been developed by a team of BATC members for use with an external synthesized oscillator and modulator/filter board to produce a signal suitable for driving a high power amateur television transmitter on the 146, 432 or 1296 MHz bands.  The idea is that the design should be reproducible by someone who has never used Linux before.  Detailed instructions on loading the software are listed below, and further details of the complete transmitter design and build are on the BATC Wiki at https://wiki.batc.tv/The_Portsdown_Transmitter.  There is a Forum for discussion of the project here: http://www.batc.org.uk/forum/viewforum.php?f=103
+
+Our thanks to Evariste and all the other contributors to this community project.  All code within the project is GPL.
 
 # Installation for BATC Portsdown Transmitter Version
 
@@ -11,15 +12,15 @@ The preferred installation method only needs a Windows PC connected to the same 
 
 - Unzip the image and then transfer it to a Micro-SD Card using Win32diskimager https://sourceforge.net/projects/win32diskimager/
 
-- Before you remove the card from your Windows PC, look at the card with windows explorer; the volume should be labelled "boot".  Create a new empty file called ssh in the top-level (root) directory by right-clicking, selecting New, Text Document, and then change the name to ssh (not ssh.txt).  You should get a window warning about changing the filename extension.  Click OK.  If you do not get this warning, you have created a file called ssh.txt and you need to rename it ssh.
+- Before you remove the card from your Windows PC, look at the card with windows explorer; the volume should be labelled "boot".  Create a new empty file called ssh in the top-level (root) directory by right-clicking, selecting New, Text Document, and then change the name to ssh (not ssh.txt).  You should get a window warning about changing the filename extension.  Click OK.  If you do not get this warning, you have created a file called ssh.txt and you need to rename it ssh.  IMPORTANT NOTE: by default, Windows (all versions) hides the .txt extension on the ssh file.  To change this, in Windows Explorer, select File, Options, click the View tab, and then untick "Hide extensions for known file types". Then click OK.
 
 - If you have a Pi Camera and/or touchscreen display, you can connect them now.  Power up the Pi with the new card inserted, and a network connection.  Do not connect a keyboard or HDMI display to the Raspberry Pi. 
 
 - Find the IP address of your Raspberry Pi using an IP Scanner (such as Advanced IP Scanner http://filehippo.com/download_advanced_ip_scanner/ for Windows, or Fing on an iPhone) to get the Pi's IP address 
 
-- From your windows PC use Putty (http://www.chiark.greenend.org.uk/~sgtatham/putty/download.html) to log in to the IP address that you noted earlier.
+- From your windows PC use Putty (http://www.chiark.greenend.org.uk/~sgtatham/putty/download.html) to log in to the IP address that you noted earlier.  You will get a Security warning the first time you try; this is normal.
 
-- Log in (user: pi/password: raspberry) then cut and paste the following code in, one line at a time:
+- Log in (user: pi, password: raspberry) then cut and paste the following code in, one line at a time:
 
 ```sh
 wget https://raw.githubusercontent.com/BritishAmateurTelevisionClub/rpidatv/master/install.sh
@@ -43,8 +44,17 @@ Then reboot, and try again.  The comnmand asks your RPi to use Google's DNS, not
 
 ```sh
 /home/pi/rpidatv/scripts/menu.sh menu
-...
+```
 
-When you reboot and log-in on the computer, the BATC logo should display on the Waveshare touchscreen and the Console Menu should be displayed on the computer.  You do not need to load any touchscreen drivers- if the touchscreen does not work try powering off and on again.  If your touchscreen appears as if the touch sense is 90 degrees out, try selecting the TonTec display in the Setup menu.
+When you reboot and log-in on the computer, the BATC logo should display on the Waveshare touchscreen and the Console Menu should be displayed on the computer.  You do not need to load any touchscreen drivers - if the touchscreen does not work try powering off and on again.  If your touchscreen appears as if the touch sense is 90 degrees out, try selecting the TonTec display in the Setup menu.
 
-I succeeded in generating a direct RF output (from GPIO pin 32) on 437 MHz at 333KS using the on-board camera as the source; it would not work reliably at higher SRs.  
+I succeeded in generating a direct RF output (from GPIO pin 32) on 437 MHz at 333KS using the on-board camera as the source; direct RF output does not work reliably at higher SRs.  
+
+Advanced notes:  To load the development and staging versions, use the following lines:
+```sh
+wget https://raw.githubusercontent.com/davecrump/rpidatv/master/install.sh  #OR#
+wget https://raw.githubusercontent.com/BritishAmateurTelevisionClub/rpidatv/batc_staging/install.sh
+chmod +x install.sh
+./install.sh -d    #OR#
+./install.sh -s
+```

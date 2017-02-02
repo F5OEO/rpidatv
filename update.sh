@@ -171,7 +171,6 @@ sed -i 's/^     express_handle_events( 32 ).*/     express_handle_events( 1 );/'
 make
 sudo make install
 
-
 # Update pi-sdn (201702020)
 rm -f /home/pi/pi-sdn
 wget 'https://github.com/philcrump/pi-sdn/releases/download/v1.1/pi-sdn' -O /home/pi/pi-sdn
