@@ -96,10 +96,12 @@ then
         printf "Not upgrading\n"
         printf "The installed version is "$INSTALLEDVERSION".\n"
         printf "The latest version is    "$LATESTVERSION".\n"
+        sleep 2
     fi
 else                                            ## Version Error 
     printf "There has been an error, or the installed version is newer than the published version\n"
     printf "The installed version is "$INSTALLEDVERSION".\n"
     printf "The latest version is    "$LATESTVERSION".\n"
+    sleep 2
 fi
 
