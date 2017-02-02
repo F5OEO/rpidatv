@@ -464,13 +464,16 @@ void SelectFreq(int NoButton)  //Frequency
 
 void SelectSR(int NoButton)  // Symbol Rate
 {
-	SelectInGroup(5,9,NoButton,1);
-	SR=TabSR[NoButton-5];
-	char Param[]="symbolrate";
-	char Value[255];
- 	sprintf(Value,"%d",SR);
-        printf("************** Set SR = %s\n",Value);
- 	SetConfigParam(PATH_CONFIG,Param,Value);
+  SelectInGroup(5,9,NoButton,1);
+  SR=TabSR[NoButton-5];
+  char Param[]="symbolrate";
+  char Value[255];
+  sprintf(Value,"%d",SR);
+  printf("************** Set SR = %s\n",Value);
+  SetConfigParam(PATH_CONFIG,Param,Value);
+
+  // Kill express_server in case SR has gone from nb to wb or vice versa
+  system("sudo killall express_server >/dev/null 2>/dev/null");
 }
 
 void SelectFec(int NoButton)  // FEC
@@ -522,6 +525,14 @@ void TransmitStop()
 
   // Turn the VCO off
   system("sudo /home/pi/rpidatv/bin/adf4351 off");
+
+  // Stop DATV Express transmitting
+  char expressrx[50];
+  strcpy( expressrx, "echo \"set ptt rx\" >> /tmp/expctrl" );
+  system(expressrx);
+  strcpy( expressrx, "echo \"set car off\" >> /tmp/expctrl" );
+  system(expressrx);
+  system("sudo killall netcat >/dev/null 2>/dev/null");
 
   // Kill the key processes as nicely as possible
   system("sudo killall rpidatv >/dev/null 2>/dev/null");
