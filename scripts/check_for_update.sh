@@ -3,7 +3,7 @@
 ## Download the latest_version file
 cd /home/pi/rpidatv/scripts
 rm /home/pi/rpidatv/scripts/latest_version.txt  >/dev/null 2>/dev/null
-wget --timeout=2 -q https://raw.githubusercontent.com/BritishAmateurTelevisionClub/rpidatv/master/scripts/latest_version.txt
+wget --timeout=2 https://raw.githubusercontent.com/BritishAmateurTelevisionClub/rpidatv/master/scripts/latest_version.txt
 
 ## Create the file if it doesn't exist
 if  [ ! -f "latest_version.txt" ]; then
@@ -46,14 +46,29 @@ then
     printf "Do you want to force an upgrade now? (y/n)\n"
     read -n 1
     printf "\n"
-    if [[ "$REPLY" = "y" || "$REPLY" = "Y" ]];  ## Force upgrade requested
-    then
+    if [[ "$REPLY" = "y" || "$REPLY" = "Y" ]]; then  ## Force upgrade requested
         printf "\nUpgrading now...\n"
         cd /home/pi
         rm update.sh >/dev/null 2>/dev/null
-        wget -q https://raw.githubusercontent.com/BritishAmateurTelevisionClub/rpidatv/master/update.sh
+        wget https://raw.githubusercontent.com/BritishAmateurTelevisionClub/rpidatv/master/update.sh
         chmod +x update.sh
-        source /home/pi/update.sh
+        /home/pi/update.sh
+        exit
+    elif [[ "$REPLY" = "d" || "$REPLY" = "D" ]]; then  ## Development upgrade requested
+        printf "\nUpgrading now to the Development Version...\n"
+        cd /home/pi
+        rm update.sh >/dev/null 2>/dev/null
+        wget https://raw.githubusercontent.com/davecrump/rpidatv/master/update.sh
+        chmod +x update.sh
+        /home/pi/update.sh -d
+        exit
+    elif [[ "$REPLY" = "s" || "$REPLY" = "F" ]]; then  ## Staging upgrade requested
+        printf "\nUpgrading now to the BATC Staging Version...\n"
+        cd /home/pi
+        rm update.sh >/dev/null 2>/dev/null
+        wget https://raw.githubusercontent.com/BritishAmateurTelevisionClub/rpidatv/batc_staging/update.sh
+        chmod +x update.sh
+        /home/pi/update.sh -s
         exit
     else                                        ## Force upgrade not required
         printf "Not upgrading\n"
@@ -73,7 +88,7 @@ then
         printf "\nUpgrading now...\n"
         cd /home/pi
         rm update.sh >/dev/null 2>/dev/null
-        wget -q https://raw.githubusercontent.com/BritishAmateurTelevisionClub/rpidatv/master/update.sh
+        wget https://raw.githubusercontent.com/BritishAmateurTelevisionClub/rpidatv/master/update.sh
         chmod +x update.sh
         source /home/pi/update.sh 
         exit
