@@ -1,8 +1,6 @@
 #!/bin/bash
 
-# Updated by davecrump on 20161221 
-
-set -e  # Don't report errors....
+# Updated by davecrump on 20170202
 
 # Update the package manager, then install the packages we need
 sudo dpkg --configure -a
@@ -10,16 +8,33 @@ sudo apt-get clean
 sudo apt-get update
 sudo apt-get -y install apt-transport-https git rpi-update
 sudo apt-get -y install cmake libusb-1.0-0-dev g++ libx11-dev buffer libjpeg-dev indent libfreetype6-dev ttf-dejavu-core bc usbmount fftw3-dev wiringpi libvncserver-dev
-sudo apt-get -y install fbi
+sudo apt-get -y install fbi netcat
 
 # rpi-update to get latest firmware
 sudo rpi-update
-
-# Get the source software and copy to the Pi
 cd /home/pi
-wget https://github.com/BritishAmateurTelevisionClub/rpidatv/archive/master.zip
-unzip -o master.zip 
-mv rpidatv-master rpidatv
+
+# Check which source to download.  Default is production
+# option d is development from davecrump
+# option s is staging from batc/staging
+if [ "$1" == "-d" ]; then
+  echo "Installing development load"
+  wget https://github.com/davecrump/rpidatv/archive/master.zip
+elif [ "$1" == "-s" ]; then
+  echo "Installing BATC Staging load"
+  wget https://github.com/BritishAmateurTelevisionClub/rpidatv/archive/batc_staging.zip -O master.zip
+else
+  echo "Installing BATC Production load"
+  wget https://github.com/BritishAmateurTelevisionClub/rpidatv/archive/master.zip
+fi
+
+# Unzip the source software and copy to the Pi
+unzip -o master.zip
+if [ "$1" == "-s" ]; then
+  mv rpidatv-batc_staging rpidatv
+else
+  mv rpidatv-master rpidatv
+fi
 rm master.zip
 
 # Compile rpidatv core
@@ -133,6 +148,18 @@ cd /etc/kbd
 sudo sed -i 's/^BLANK_TIME.*/BLANK_TIME=0/' config
 sudo sed -i 's/^POWERDOWN_TIME.*/POWERDOWN_TIME=0/' config
 
+# Download, amend, compile and install DATV Express-server
+
+cd /home/pi
+wget https://github.com/G4GUO/express_server/archive/master.zip
+unzip master.zip
+mv express_server-master express_server
+rm master.zip
+cd /home/pi/express_server
+sed -i 's/^     express_handle_events( 32 ).*/     express_handle_events( 1 );/' express.cpp
+make
+sudo make install
+
 cd /home/pi/rpidatv/scripts/
 
 # Fallback IP to 192.168.1.60 Disabled 201701230
@@ -146,7 +173,7 @@ sudo bash -c 'echo -e "\ngpu_mem=128\nstart_x=1\n" >> /boot/config.txt'
 sudo sed -i 's/sync,//g' /etc/usbmount/usbmount.conf
 
 # Install executable for hardware shutdown button
-wget 'https://github.com/philcrump/pi-sdn/releases/download/v1.0/pi-sdn' -O /home/pi/pi-sdn
+wget 'https://github.com/philcrump/pi-sdn/releases/download/v1.1/pi-sdn' -O /home/pi/pi-sdn
 chmod +x /home/pi/pi-sdn
 
 # Create directory for Autologin link
