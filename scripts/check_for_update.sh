@@ -58,7 +58,7 @@ then
         printf "\nUpgrading now to the Development Version...\n"
         cd /home/pi
         rm update.sh >/dev/null 2>/dev/null
-        wget https://raw.githubusercontent.com/davecrump/rpidatv/master/update.sh
+        wget https://raw.githubusercontent.com/davecrump/rpidatv/master/update.
         chmod +x update.sh
         /home/pi/update.sh -d
         exit
