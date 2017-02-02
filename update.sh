@@ -1,6 +1,7 @@
 #!/bin/bash
 
-# Updated by davecrump 201701280
+
+# Updated by davecrump 201702020
 
 # Modified to overwrite ~/rpidatv/scripts and
 # ~/rpidatv/src, then compile
@@ -16,8 +17,6 @@ cp -f -r /home/pi/rpidatv/scripts/installed_version.txt /home/pi/prev_installed_
 # Make a safe copy of rpidatvconfig.txt
 cp -f -r /home/pi/rpidatv/scripts/rpidatvconfig.txt /home/pi/rpidatvconfig.txt
 
-# set -e  # Don't report errors
-
 # Check if fbi (frame buffer imager) needs to be installed
 
 if [ ! -f "/usr/bin/fbi" ]; then
@@ -27,16 +26,43 @@ fi
 # ---------- Update rpidatv -----------
 
 cd /home/pi
-wget https://github.com/BritishAmateurTelevisionClub/rpidatv/archive/master.zip -O master.zip
-unzip -o master.zip 
-# cp -f -r rpidatv-master/bin rpidatv
-# cp -f -r rpidatv-master/doc rpidatv
-cp -f -r rpidatv-master/scripts rpidatv
-cp -f -r rpidatv-master/src rpidatv
-rm -f rpidatv/video/*.jpg
-cp -f -r rpidatv-master/video rpidatv
-rm master.zip
-rm -rf rpidatv-master
+
+# Check which source to download.  Default is production
+# option -d is development from davecrump
+# option -s is staging from batc/staging
+if [ "$1" == "-d" ]; then
+  echo "Installing development load"
+  wget https://github.com/davecrump/rpidatv/archive/master.zip -O master.zip
+elif [ "$1" == "-s" ]; then
+  echo "Installing BATC Staging load"
+  wget https://github.com/BritishAmateurTelevisionClub/rpidatv/archive/batc_staging.zip -O master.zip
+else
+  echo "Installing BATC Production load"
+  wget https://github.com/BritishAmateurTelevisionClub/rpidatv/archive/master.zip -O master.zip
+fi
+
+# Unzip and overwrite where we need to
+unzip -o master.zip
+
+if [ "$1" == "-s" ]; then
+  # cp -f -r rpidatv-batc_staging/bin rpidatv
+  # cp -f -r rpidatv-batc_staging/doc rpidatv
+  cp -f -r rpidatv-batc_staging/scripts rpidatv
+  cp -f -r rpidatv-batc_staging/src rpidatv
+  rm -f rpidatv/video/*.jpg
+  cp -f -r rpidatv-batc_staging/video rpidatv
+  rm master.zip
+  rm -rf rpidatv-batc_staging
+else
+  # cp -f -r rpidatv-master/bin rpidatv
+  # cp -f -r rpidatv-master/doc rpidatv
+  cp -f -r rpidatv-master/scripts rpidatv
+  cp -f -r rpidatv-master/src rpidatv
+  rm -f rpidatv/video/*.jpg
+  cp -f -r rpidatv-master/video rpidatv
+  rm master.zip
+  rm -rf rpidatv-master
+fi
 
 # Compile rpidatv core
 sudo killall -9 rpidatv
@@ -127,6 +153,16 @@ cd /etc/kbd
 sudo sed -i 's/^BLANK_TIME.*/BLANK_TIME=0/' config
 sudo sed -i 's/^POWERDOWN_TIME.*/POWERDOWN_TIME=0/' config
 cd /home/pi
+
+# Update pi-sdn (201702020)
+rm -f /home/pi/pi-sdn
+wget 'https://github.com/philcrump/pi-sdn/releases/download/v1.1/pi-sdn' -O /home/pi/pi-sdn
+chmod +x /home/pi/pi-sdn
+# Update the call to pi-sdn if it is enabled (201702020)
+if [ -f /home/pi/.pi-sdn ]; then
+  rm -f /home/pi/.pi-sdn
+  cp /home/pi/rpidatv/scripts/configs/text.pi-sdn /home/pi/.pi-sdn
+fi
 
 # Restore or update rpidatvconfig.txt for 201701020 and 201701270
 if ! grep -q adfref /home/pi/rpidatvconfig.txt; then
