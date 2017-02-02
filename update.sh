@@ -162,7 +162,7 @@ sudo rm -f -r /lib/firmware/datvexpress
 sudo rm -f /usr/bin/express_server
 sudo rm -f /etc/udev/rules.d/10-datvexpress.rules
 cd /home/pi
-wget https://github.com/G4GUO/express_server/archive/master.zip -O
+wget https://github.com/G4GUO/express_server/archive/master.zip -O master.zip
 unzip master.zip
 mv express_server-master express_server
 rm master.zip
