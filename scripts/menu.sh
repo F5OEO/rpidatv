@@ -1247,7 +1247,7 @@ sudo shutdown now
 do_TouchScreen()
 {
 reset
-sudo killall fbcp
+sudo killall fbcp >/dev/null 2>/dev/null
 fbcp &
 ~/rpidatv/bin/rpidatvgui 1
 }
