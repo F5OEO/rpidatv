@@ -1331,6 +1331,7 @@ status="0"
 
 # Start DATV Express Server if required
 MODE_OUTPUT=$(get_config_var modeoutput $CONFIGFILE)
+SYMBOLRATEK=$(get_config_var symbolrate $CONFIGFILE)
 if [ "$MODE_OUTPUT" == "DATVEXPRESS" ]; then
   if pgrep -x "express_server" > /dev/null; then
     # Express already running
