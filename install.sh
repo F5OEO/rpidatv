@@ -143,6 +143,7 @@ if [ "$1" == "fr" ];
 then
   echo "Installing French Language and Keyboard"
   cd /home/pi/rpidatv/scripts/
+  sudo mv /etc/default/keyboard /etc/default/keyboard.old
   sudo cp configs/keyfr /etc/default/keyboard
   cp configs/rpidatvconfig.fr rpidatvconfig.txt
   cd /home/pi
@@ -155,6 +156,7 @@ if [ "$1" == "frstart" ];
 then
   echo "Installing French Language and Keyboard"
   cd /home/pi/rpidatv/scripts/
+  sudo mv /etc/default/keyboard /etc/default/keyboard.old
   sudo cp configs/keyfr /etc/default/keyboard
   cp configs/rpidatvconfig.fr rpidatvconfig.txt
   cd /home/pi
@@ -163,6 +165,7 @@ then
   sudo ln -fs /etc/systemd/system/autologin@.service \
  /etc/systemd/system/getty.target.wants/getty@tty1.service
 
+  mv /home/pi/.bashrc /home/pi/.bashrc_old
   cp "/home/pi/rpidatv/scripts/configs/console_tx.bashrc" /home/pi/.bashrc
   echo "Completed French Install Auto"
 fi
