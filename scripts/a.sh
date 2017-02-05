@@ -160,7 +160,8 @@ case "$MODE_OUTPUT" in
     # Set output for ffmpeg (avc2ts uses netcat to pipe output from videots)
     OUTPUT="udp://127.0.0.1:1314?pkt_size=1316&buffer_size=1316"
     FREQUENCY_OUT=0  # Not used in this mode?
-    let FREQ_OUTPUTHZ=FREQ_OUTPUT*1000000
+    # Calculate frequency in Hz using floating point
+    FREQ_OUTPUTHZ=`echo - | awk '{print '$FREQ_OUTPUT' * 1000000}'`
     echo "set freq "$FREQ_OUTPUTHZ >> /tmp/expctrl
     echo "set fec "$FECNUM"/"$FECDEN >> /tmp/expctrl
     echo "set srate "$SYMBOLRATE >> /tmp/expctrl
