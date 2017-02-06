@@ -72,6 +72,7 @@ int fec;
 int SR;
 char ModeInput[255];
 char freqtxt[255];
+char ModeOutput[255];
 
 // Values to be stored in and read from rpidatvconfig.txt:
 
@@ -134,37 +135,37 @@ void GetConfigParam(char *PathConfigFile,char *Param, char *Value)
 
 void SetConfigParam(char *PathConfigFile,char *Param,char *Value)
 {
-	char * line = NULL;
-	 size_t len = 0;
-	int read;
-	char BackupConfigName[255];
-	strcpy(BackupConfigName,PathConfigFile);
-	strcat(BackupConfigName,".bak");
-	//printf("Read %s\n",PathConfigFile);
-	 FILE *fp=fopen(PathConfigFile,"r");
-
-	 FILE *fw=fopen(BackupConfigName,"w+");
-	if(fp!=0)
-	{
-		while ((read = getline(&line, &len, fp)) != -1)
-		{
-		      	//printf("%s", line);
-			if(strncmp (line,Param,strlen(Param)) == 0)
-			{
-				fprintf(fw,"%s=%s\n",Param,Value);
-			}
-			else
-				fprintf(fw,line);
-			//strncpy(Value,line+strlen(Param)+1,strlen(line)-strlen(Param)-1-1/* pour retour chariot*/);
-	    	}
-	}
-	else
-		printf("Config file not found \n");
-	fclose(fp);
-	fclose(fw);
-	char Command[255];
-	sprintf(Command,"cp %s %s",BackupConfigName,PathConfigFile);
-	system(Command);
+  char * line = NULL;
+  size_t len = 0;
+  int read;
+  char Command[255];
+  char BackupConfigName[255];
+  strcpy(BackupConfigName,PathConfigFile);
+  strcat(BackupConfigName,".bak");
+  FILE *fp=fopen(PathConfigFile,"r");
+  FILE *fw=fopen(BackupConfigName,"w+");
+  if(fp!=0)
+  {
+    while ((read = getline(&line, &len, fp)) != -1)
+    {
+      if(strncmp (line,Param,strlen(Param)) == 0)
+      {
+        fprintf(fw,"%s=%s\n",Param,Value);
+      }
+      else
+        fprintf(fw,line);
+    }
+    fclose(fp);
+    fclose(fw);
+    sprintf(Command,"cp %s %s",BackupConfigName,PathConfigFile);
+    system(Command);
+  }
+  else
+  {
+    printf("Config file not found \n");
+    fclose(fp);
+    fclose(fw);
+  }
 }
 
 int mymillis()
@@ -464,13 +465,16 @@ void SelectFreq(int NoButton)  //Frequency
 
 void SelectSR(int NoButton)  // Symbol Rate
 {
-	SelectInGroup(5,9,NoButton,1);
-	SR=TabSR[NoButton-5];
-	char Param[]="symbolrate";
-	char Value[255];
- 	sprintf(Value,"%d",SR);
-        printf("************** Set SR = %s\n",Value);
- 	SetConfigParam(PATH_CONFIG,Param,Value);
+  SelectInGroup(5,9,NoButton,1);
+  SR=TabSR[NoButton-5];
+  char Param[]="symbolrate";
+  char Value[255];
+  sprintf(Value,"%d",SR);
+  printf("************** Set SR = %s\n",Value);
+  SetConfigParam(PATH_CONFIG,Param,Value);
+
+  // Kill express_server in case SR has gone from nb to wb or vice versa
+  system("sudo killall express_server >/dev/null 2>/dev/null");
 }
 
 void SelectFec(int NoButton)  // FEC
@@ -518,10 +522,27 @@ void TransmitStart()
 
 void TransmitStop()
 {
+  char Param[255];
+  char Value[255];
   printf("Transmit Stop\n");
 
   // Turn the VCO off
   system("sudo /home/pi/rpidatv/bin/adf4351 off");
+
+  // Stop DATV Express transmitting
+  char expressrx[50];
+  strcpy(Param,"modeoutput");
+  GetConfigParam(PATH_CONFIG,Param,Value);
+  strcpy(ModeOutput,Value);
+  if(strcmp(ModeOutput,"DATVEXPRESS")==0)
+  {
+    strcpy( expressrx, "echo \"set ptt rx\" >> /tmp/expctrl" );
+    system(expressrx);
+    strcpy( expressrx, "echo \"set car off\" >> /tmp/expctrl" );
+    system(expressrx);
+  }
+
+  system("sudo killall netcat >/dev/null 2>/dev/null");
 
   // Kill the key processes as nicely as possible
   system("sudo killall rpidatv >/dev/null 2>/dev/null");
@@ -952,6 +973,8 @@ terminate(int dummy)
 	printf("Terminate\n");
         char Commnd[255];
         sprintf(Commnd,"stty echo");
+        system(Commnd);
+        sprintf(Commnd,"reset");
         system(Commnd);
 
 	/*restoreterm();

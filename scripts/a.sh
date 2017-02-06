@@ -7,6 +7,10 @@ PATHRPI="/home/pi/rpidatv/bin"
 PATHSCRIPT="/home/pi/rpidatv/scripts"
 CONFIGFILE=$PATHSCRIPT"/rpidatvconfig.txt"
 
+############# MAKE SURE THAT WE KNOW WHERE WE ARE ##################
+
+cd /home/pi
+
 ############ FUNCTION TO READ CONFIG FILE #############################
 
 get_config_var() {
@@ -29,9 +33,13 @@ sudo killall -9 ffmpeg >/dev/null 2>/dev/null
 sudo killall rpidatv >/dev/null 2>/dev/null
 sudo killall hello_encode.bin >/dev/null 2>/dev/null
 sudo killall h264yuv >/dev/null 2>/dev/null
-sudo killall avc2ts >/dev/null 2>/dev/null
-sudo killall express_server >/dev/null 2>/dev/null
+sudo killall -9 avc2ts >/dev/null 2>/dev/null
+#sudo killall express_server >/dev/null 2>/dev/null
+# Leave Express Server running
 sudo killall tcanim >/dev/null 2>/dev/null
+# Kill netcat that night have been started for Express Srver
+sudo killall netcat >/dev/null 2>/dev/null
+sudo killall -9 netcat >/dev/null 2>/dev/null
 #---- Launch FBCP ----
 #sudo killall fbcp 
 #fbcp &
@@ -124,27 +132,63 @@ case "$MODE_OUTPUT" in
         $PATHSCRIPT"/ctlvco.sh"
  	#GAIN=0
 	;;
-	DTX1) 
-	MODE=PARALLEL
-	FREQUENCY_OUT=2
-	OUTPUT=videots
-	DIGITHIN_MODE=0
-	#GAIN=0
-	;;
-	DATVEXPRESS)
-	sudo nice -n -30 $PATHRPI"/express_server" & 
-	FREQUENCY_OUT=$FREQ_OUTPUT
-	let FREQ_OUTPUTHZ=FREQ_OUTPUT*1000000
-	OUTPUT="udp://127.0.0.1:1314?pkt_size=1316&buffer_size=1316"
-	echo "set freq "$FREQ_OUTPUTHZ >> /tmp/expctrl
-	echo "set fec "$FECNUM"/"$FECDEN >> /tmp/expctrl
-	echo "set srate "$SYMBOLRATE >> /tmp/expctrl
-	echo "set level "$GAIN >> /tmp/expctrl
-	;;
+  DTX1) 
+    MODE=PARALLEL
+    FREQUENCY_OUT=2
+    OUTPUT=videots
+    DIGITHIN_MODE=0
+    #GAIN=0
+  ;;
 
+  DATVEXPRESS)
+    if pgrep -x "express_server" > /dev/null
+    then
+      # Express already running
+      echo > null
+    else
+      # Stopped, so make sure the control file is not locked and start it
+      # From its own folder otherwise it doesnt read the config file
+      sudo rm /tmp/expctrl >/dev/null 2>/dev/null
+      cd /home/pi/express_server
+      if (( $SYMBOLRATEK \< 999 )); then
+        sudo nice -n -40 /home/pi/express_server/express_server -nb  >/dev/null 2>/dev/null &
+      else
+        sudo nice -n -40 /home/pi/express_server/express_server  >/dev/null 2>/dev/null &
+      fi
+      cd /home/pi
+      sleep 5
+    fi
+    # Set output for ffmpeg (avc2ts uses netcat to pipe output from videots)
+    OUTPUT="udp://127.0.0.1:1314?pkt_size=1316&buffer_size=1316"
+    FREQUENCY_OUT=0  # Not used in this mode?
+    # Calculate output freq in Hz using floating point
+    FREQ_OUTPUTHZ=`echo - | awk '{print '$FREQ_OUTPUT' * 1000000}'`
+    echo "set freq "$FREQ_OUTPUTHZ >> /tmp/expctrl
+    echo "set fec "$FECNUM"/"$FECDEN >> /tmp/expctrl
+    echo "set srate "$SYMBOLRATE >> /tmp/expctrl
 
+    # Set the output level based on the band
+    INT_FREQ_OUTPUT=${FREQ_OUTPUT%.*}
+    if (( $INT_FREQ_OUTPUT \< 100 )); then
+      GAIN=$(get_config_var explevel0 $CONFIGFILE);
+    elif (( $INT_FREQ_OUTPUT \< 250 )); then
+      GAIN=$(get_config_var explevel1 $CONFIGFILE);
+    elif (( $INT_FREQ_OUTPUT \< 950 )); then
+      GAIN=$(get_config_var explevel2 $CONFIGFILE);
+    elif (( $INT_FREQ_OUTPUT \< 4400 )); then
+      GAIN=$(get_config_var explevel3 $CONFIGFILE);
+    else
+      GAIN="30";
+    fi
+
+    # Gain nees to be in range 6 - 100 step 2,
+    #  so translate from Windows levels of 0-47
+    GAINC=`echo - | awk '{print '$GAIN' * 2 +6}'`
+    echo "set level "$GAINC >> /tmp/expctrl
+    # Make sure that carrier mode is off
+    echo "set car off" >> /tmp/expctrl
+  ;;
 esac
-
 
 #CALL="F5OEO"
 #CHANNEL="rpidatv"
@@ -171,7 +215,6 @@ VIDEO_FPS=15
 #OUTPUT_IP="-n 230.0.0.1:10000"
 OUTPUT_QPSK="videots"
 
-
 # ************************ OUTPUT MODE DEFINITION ******************
 #OUTPUT=$OUTPUT_IP
 #OUTPUT=$OUTPUT_QPSK
@@ -180,7 +223,7 @@ MODE_DEBUG=quiet
 
 #BITRATE AVEC 5%
 # BITRATE TS THEORIC
-let BITRATE_TS=SYMBOLRATE*2*188*FECNUM/204/FECDEN 
+let BITRATE_TS=SYMBOLRATE*2*188*FECNUM/204/FECDEN
 #let BITRATE_TS=SYMBOLRATE*2*188*FECNUM/204/FECDEN+1000
 
 
@@ -201,7 +244,7 @@ else
 	else
 		VIDEO_WIDTH=720
 		VIDEO_HEIGHT=576
-	fi	
+	fi
 fi
 
 if [ "$BITRATE_VIDEO" -lt 300000 ]; then
@@ -210,15 +253,12 @@ else
 VIDEO_FPS=25
 fi
 
-
 sudo rm videoes
 sudo rm videots
 sudo rm netfifo
 mkfifo videoes
 mkfifo videots
-mkfifo netfifo 
-
-
+mkfifo netfifo
 
 echo "************************************"
 echo Bitrate TS $BITRATE_TS
@@ -227,59 +267,85 @@ echo Size $VIDEO_WIDTH x $VIDEO_HEIGHT at $VIDEO_FPS fps
 echo "************************************"
 echo "ModeINPUT="$MODE_INPUT
 
-
 OUTPUT_FILE="-o videots"
 
 case "$MODE_INPUT" in
-#============================================ H264 INPUT MODE =========================================================
-"CAMH264")
-	sudo modprobe -r bcm2835_v4l2
- 	#$PATHRPI"/mnc" -l -i loopback -p 10000 230.0.0.1 > videots &
-	case "$MODE_OUTPUT" in
-	"BATC")
-		sudo nice -n -30 $PATHRPI"/ffmpeg" -loglevel $MODE_DEBUG -i videots -y $OUTPUT_BATC & ;;
-	"IP")
-		OUTPUT_FILE="" ;;
-	*)
-		sudo $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c $FECNUM"/"$FECDEN -f $FREQUENCY_OUT -p $GAIN -m $MODE -x $PIN_I -y $PIN_Q & ;;
-	esac
 
-	if [ "$AUDIO_CARD" == 0 ]; then
-	# ******************************* H264 VIDEO ONLY ************************************
-	$PATHRPI"/avc2ts" -b $BITRATE_VIDEO -m $BITRATE_TS -x $VIDEO_WIDTH -y $VIDEO_HEIGHT -f $VIDEO_FPS -i 100 -p $PIDPMT -s $CHANNEL $OUTPUT_FILE $OUTPUT_IP &
+  #============================================ H264 INPUT MODE =========================================================
+  "CAMH264")
+    # Start Pi Camera
+    sudo modprobe -r bcm2835_v4l2
 
- echo "set ptt tx" >> /tmp/expctrl
+    case "$MODE_OUTPUT" in
+      "BATC")
+        # sudo nice -n -30 $PATHRPI"/ffmpeg" -i videots -y $OUTPUT_BATC & 
+        echo > null
+      ;;
+      "IP")
+        OUTPUT_FILE=""
+      ;;
+      "DATVEXPRESS")
+        echo "set ptt tx" >> /tmp/expctrl
+        sudo nice -n -30 netcat -u -4 127.0.0.1 1314 < videots & 
+     ;;
+      *)
+        # For IQ, QPSKRF, DIGITHIN and DTX1
+        sudo $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c $FECNUM"/"$FECDEN -f $FREQUENCY_OUT -p $GAIN -m $MODE -x $PIN_I -y $PIN_Q &
+      ;;
+    esac
 
-	
-	else
-	# ******************************* H264 VIDEO WITH AUDIO (TODO) ************************************
-	$PATHRPI"/avc2ts" -b $BITRATE_VIDEO -m $BITRATE_TS -x $VIDEO_WIDTH -y $VIDEO_HEIGHT -f $VIDEO_FPS -i 100 -p $PIDPMT -s $CHANNEL $OUTPUT_FILE $OUTPUT_IP &
-	
-	fi
-	;;
+    if [ "$AUDIO_CARD" == 0 ]; then
+      # ******************************* H264 VIDEO, NO AUDIO ************************************
+      $PATHRPI"/avc2ts" -b $BITRATE_VIDEO -m $BITRATE_TS -x $VIDEO_WIDTH -y $VIDEO_HEIGHT -f $VIDEO_FPS -i 100 -p $PIDPMT -s $CHANNEL $OUTPUT_FILE $OUTPUT_IP > /dev/null &
+    else
+      # ******************************* H264 VIDEO WITH AUDIO (TODO) ************************************
+      $PATHRPI"/avc2ts" -b $BITRATE_VIDEO -m $BITRATE_TS -x $VIDEO_WIDTH -y $VIDEO_HEIGHT -f $VIDEO_FPS -i 100 -p $PIDPMT -s $CHANNEL $OUTPUT_FILE $OUTPUT_IP  > /dev/null &
+    fi
+  ;;
 
+  #============================================ MPEG-2 INPUT MODE =============================================================
+  "CAMMPEG-2")
+    # Start the Camera
+    #VIDEO_WIDTH=352
+    #VIDEO_HEIGHT=288
+    #VIDEO_FPS=25
+    let OVERLAY_VIDEO_WIDTH=$VIDEO_WIDTH-64
+    let OVERLAY_VIDEO_HEIGHT=$VIDEO_HEIGHT-64
+    echo "Overlay width is $OVERLAY_VIDEO_WIDTH"
+    v4l2-ctl --get-fmt-overlay
+    sudo modprobe bcm2835-v4l2
+    v4l2-ctl --set-fmt-video=width=$VIDEO_WIDTH,height=$VIDEO_HEIGHT,pixelformat=0
+    v4l2-ctl --set-fmt-overlay=left=0,top=0,width=$OVERLAY_VIDEO_WIDTH,height=$OVERLAY_VIDEO_HEIGHT
+    v4l2-ctl -p $VIDEO_FPS
+    let DELAY=(BITRATE_VIDEO*8)/10
 
-#============================================ MPEG-2 INPUT MODE =============================================================
-"CAMMPEG-2")
-VIDEO_WIDTH=352
-VIDEO_HEIGHT=288
-VIDEO_FPS=25
-sudo modprobe bcm2835-v4l2
-v4l2-ctl --set-fmt-video=width=$VIDEO_WIDTH,height=$VIDEO_HEIGHT,pixelformat=0
-v4l2-ctl -p $VIDEO_FPS
-let DELAY=(BITRATE_VIDEO*8)/10
+    case "$MODE_OUTPUT" in
+      "BATC")
+        # ffmpeg sends the stream directly to the BATC Server
+        echo > null
+      ;;
+      "IP")
+        # ffmpeg sends the stream directly to the IP output
+        echo > null
+      ;;
+      "DATVEXPRESS")
+        echo "set ptt tx" >> /tmp/expctrl
+        # ffmpeg sends the stream directly to DATVEXPRESS
+      ;;
+      *)
+        # For IQ, QPSKRF, DIGITHIN and DTX1 rpidatv generates the IQ (and RF for QPSKRF)
+        sudo $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c $FECNUM"/"$FECDEN -f $FREQUENCY_OUT -p $GAIN -m $MODE -x $PIN_I -y $PIN_Q &
+      ;;
+    esac
 
-sudo $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c $FECNUM"/"$FECDEN -f $FREQUENCY_OUT -p $GAIN -m $MODE -x $PIN_I -y $PIN_Q &
-
-if [ "$AUDIO_CARD" == 0 ]; then
-# ******************************* MPEG-2 VIDEO WITH BEEP ************************************
-sudo $PATHRPI"/ffmpeg"  -loglevel $MODE_DEBUG -itsoffset -00:00:0.2 -analyzeduration 0 -probesize 2048  -fpsprobesize 0 -re -ac 1 -f lavfi -thread_queue_size 512 -i "sine=frequency=500:beep_factor=4:sample_rate=48000:duration=3600" -f v4l2 -framerate $VIDEO_FPS -video_size "$VIDEO_WIDTH"x"$VIDEO_HEIGHT" -i /dev/video0 -fflags nobuffer -vcodec mpeg2video -s "$VIDEO_WIDTH"x"$VIDEO_HEIGHT" -b:v $BITRATE_VIDEO -minrate:v $BITRATE_VIDEO -maxrate:v  $BITRATE_VIDEO -f mpegts  -blocksize 1880 -strict experimental  -acodec mp2 -ab 64K -ar 48k -ac 1  -mpegts_original_network_id 1 -mpegts_transport_stream_id 1 -mpegts_service_id $SERVICEID -mpegts_pmt_start_pid $PIDPMT -mpegts_start_pid $PIDVIDEO -metadata service_provider=$CALL -metadata service_name=$CHANNEL -muxrate $BITRATE_TS -y $OUTPUT &
-else
-# ******************************* MPEG-2 VIDEO WITH AUDIO ************************************
-sudo nice -n -30 arecord -f S16_LE -r 48000 -c 1 -M -D hw:1 |sudo nice -n -30 $PATHRPI"/ffmpeg" -loglevel $MODE_DEBUG -itsoffset -00:00:0.8 -analyzeduration 0 -probesize 2048  -fpsprobesize 0 -ac 1 -thread_queue_size 512 -i -  -f v4l2 -framerate $VIDEO_FPS -video_size "$VIDEO_WIDTH"x"$VIDEO_HEIGHT" -i /dev/video0 -fflags nobuffer -vcodec mpeg2video -s "$VIDEO_WIDTH"x"$VIDEO_HEIGHT" -b:v $BITRATE_VIDEO -minrate:v $BITRATE_VIDEO -maxrate:v  $BITRATE_VIDEO -f mpegts  -blocksize 1880 -strict experimental  -acodec mp2 -ab 64K -ar 48k -ac 1 -mpegts_original_network_id 1 -mpegts_transport_stream_id 1 -mpegts_service_id $SERVICEID -mpegts_pmt_start_pid $PIDPMT -mpegts_start_pid $PIDVIDEO -metadata service_provider=$CALL -metadata service_name=$CHANNEL -muxrate $BITRATE_TS -y $OUTPUT &
-fi
-;;
-
+    if [ "$AUDIO_CARD" == 0 ]; then
+      # ******************************* MPEG-2 VIDEO WITH BEEP ************************************
+      sudo $PATHRPI"/ffmpeg"  -loglevel $MODE_DEBUG -itsoffset -00:00:0.2 -analyzeduration 0 -probesize 2048  -fpsprobesize 0 -re -ac 1 -f lavfi -thread_queue_size 512 -i "sine=frequency=500:beep_factor=4:sample_rate=48000:duration=3600" -f v4l2 -framerate $VIDEO_FPS -video_size "$VIDEO_WIDTH"x"$VIDEO_HEIGHT" -i /dev/video0 -fflags nobuffer -vcodec mpeg2video -s "$VIDEO_WIDTH"x"$VIDEO_HEIGHT" -aspect 4:3 -b:v $BITRATE_VIDEO -minrate:v $BITRATE_VIDEO -maxrate:v  $BITRATE_VIDEO -f mpegts  -blocksize 1880 -strict experimental  -acodec mp2 -ab 64K -ar 48k -ac 1  -mpegts_original_network_id 1 -mpegts_transport_stream_id 1 -mpegts_service_id $SERVICEID -mpegts_pmt_start_pid $PIDPMT -mpegts_start_pid $PIDVIDEO -metadata service_provider=$CALL -metadata service_name=$CHANNEL -muxrate $BITRATE_TS -y $OUTPUT &
+    else
+      # ******************************* MPEG-2 VIDEO WITH AUDIO ************************************
+      sudo nice -n -30 arecord -f S16_LE -r 48000 -c 1 -M -D hw:1 |sudo nice -n -30 $PATHRPI"/ffmpeg" -loglevel $MODE_DEBUG -itsoffset -00:00:0.8 -analyzeduration 0 -probesize 2048  -fpsprobesize 0 -ac 1 -thread_queue_size 512 -i -  -f v4l2 -framerate $VIDEO_FPS -video_size "$VIDEO_WIDTH"x"$VIDEO_HEIGHT" -i /dev/video0 -fflags nobuffer -vcodec mpeg2video -s "$VIDEO_WIDTH"x"$VIDEO_HEIGHT" -aspect 4:3 -b:v $BITRATE_VIDEO -minrate:v $BITRATE_VIDEO -maxrate:v  $BITRATE_VIDEO -f mpegts  -blocksize 1880 -strict experimental  -acodec mp2 -ab 64K -ar 48k -ac 1 -mpegts_original_network_id 1 -mpegts_transport_stream_id 1 -mpegts_service_id $SERVICEID -mpegts_pmt_start_pid $PIDPMT -mpegts_start_pid $PIDVIDEO -metadata service_provider=$CALL -metadata service_name=$CHANNEL -muxrate $BITRATE_TS -y $OUTPUT &
+    fi
+  ;;
 
 #============================================ H264 PATERN =============================================================
 
@@ -292,6 +358,9 @@ case "$MODE_OUTPUT" in
 		sudo nice -n -30 $PATHRPI"/ffmpeg" -loglevel $MODE_DEBUG -i videots -y $OUTPUT_BATC & ;;
 	"IP")
 		OUTPUT_FILE="" ;;
+	"DATVEXPRESS")
+                echo "set ptt tx" >> /tmp/expctrl
+		sudo nice -n -30 netcat -u -4 127.0.0.1 1314 < videots & ;;
 	*)
 		sudo  $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c $FECNUM"/"$FECDEN -f $FREQUENCY_OUT -p $GAIN -m $MODE -x $PIN_I -y $PIN_Q &;;
 	esac
@@ -313,6 +382,10 @@ case "$MODE_OUTPUT" in
 		sudo nice -n -30 $PATHRPI"/ffmpeg" -loglevel $MODE_DEBUG -i videots -y $OUTPUT_BATC & ;;
 	"IP")
 		OUTPUT_FILE="" ;;
+	"DATVEXPRESS")
+          echo "set ptt tx" >> /tmp/expctrl
+	  sudo nice -n -30 netcat -u -4 127.0.0.1 1314 < videots &
+        ;;
 	*)
 		sudo $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c $FECNUM"/"$FECDEN -f $FREQUENCY_OUT -p $GAIN -m $MODE -x $PIN_I -y $PIN_Q &;;
 	esac
@@ -322,26 +395,32 @@ $PATHRPI"/avc2ts" -b $BITRATE_VIDEO -m $BITRATE_TS -x $VIDEO_WIDTH -y $VIDEO_HEI
 
 ;;
 
-#============================================ ANALOG =============================================================
-"ANALOGCAM")
+  #============================================ ANALOG =============================================================
+  "ANALOGCAM")
 
-if [ "$ANALOGCAMINPUT" != "-" ]; then
+  if [ "$ANALOGCAMINPUT" != "-" ]; then
     v4l2-ctl -d $ANALOGCAMNAME "--set-input="$ANALOGCAMINPUT
-fi
+  fi
 
-if [ "$ANALOGCAMSTANDARD" != "-" ]; then
+  if [ "$ANALOGCAMSTANDARD" != "-" ]; then
     v4l2-ctl -d $ANALOGCAMNAME "--set-standard="$ANALOGCAMSTANDARD
-fi
+  fi
 
-sudo modprobe -r bcm2835_v4l2
-case "$MODE_OUTPUT" in
-	"BATC")
-		sudo nice -n -30 $PATHRPI"/ffmpeg" -loglevel $MODE_DEBUG -i videots -y $OUTPUT_BATC & ;;
-	"IP")
-		OUTPUT_FILE="" ;;
-	*)
-		sudo $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c $FECNUM"/"$FECDEN -f $FREQUENCY_OUT -p $GAIN -m $MODE -x $PIN_I -y $PIN_Q &;;
-	esac
+  sudo modprobe -r bcm2835_v4l2
+  case "$MODE_OUTPUT" in
+  "BATC")
+    sudo nice -n -30 $PATHRPI"/ffmpeg" -loglevel $MODE_DEBUG -i videots -y $OUTPUT_BATC & 
+  ;;
+  "IP")
+    OUTPUT_FILE=""
+  ;;
+  "DATVEXPRESS")
+    echo "set ptt tx" >> /tmp/expctrl
+    sudo nice -n -30 netcat -u -4 127.0.0.1 1314 < videots &
+  ;;
+  *)
+    sudo $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c $FECNUM"/"$FECDEN -f $FREQUENCY_OUT -p $GAIN -m $MODE -x $PIN_I -y $PIN_Q &;;
+  esac
 
 $PATHRPI"/avc2ts" -b $BITRATE_VIDEO -m $BITRATE_TS -x $VIDEO_WIDTH -y $VIDEO_HEIGHT -f $VIDEO_FPS -i 100 $OUTPUT_FILE -t 2 -e $ANALOGCAMNAME -p $PIDPMT -s $CHANNEL $OUTPUT_IP  &
 
@@ -355,6 +434,10 @@ case "$MODE_OUTPUT" in
 		sudo nice -n -30 $PATHRPI"/ffmpeg" -loglevel $MODE_DEBUG -i videots -y $OUTPUT_BATC & ;;
 	"IP")
 		OUTPUT_FILE="" ;;
+	"DATVEXPRESS")
+          echo "set ptt tx" >> /tmp/expctrl
+	  sudo nice -n -30 netcat -u -4 127.0.0.1 1314 < videots &
+        ;;
 	*)
 		sudo nice -n -30 $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c $FECNUM"/"$FECDEN -f $FREQUENCY_OUT -p $GAIN -m $MODE -x $PIN_I -y $PIN_Q &;;
 	esac
@@ -368,48 +451,56 @@ $PATHRPI"/avc2ts" -b $BITRATE_VIDEO -m $BITRATE_TS -x $VIDEO_WIDTH -y $VIDEO_HEI
 case "$MODE_OUTPUT" in
 	"BATC")
 		sudo nice -n -30 $PATHRPI"/ffmpeg" -loglevel $MODE_DEBUG -i videots -y $OUTPUT_BATC & ;;
+	"DATVEXPRESS")
+		nice -n -30 nc -u -4 127.0.0.1 1314 < videots & ;;
 	*)
 		sudo $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c $FECNUM"/"$FECDEN -f $FREQUENCY_OUT -p $GAIN -m $MODE -x $PIN_I -y $PIN_Q &;;
 	esac
 
 PORT=10000
-$PATHRPI"/mnc" -l -i eth0 -p $PORT $UDPINADDR > videots &
+# $PATHRPI"/mnc" -l -i eth0 -p $PORT $UDPINADDR > videots &
+# Unclear why Evariste uses multicast address here - my BT router dislikes routing multicast intensely so
+# I have changed it to just listen on the predefined port number for a UDP stream
+	netcat -u -4 -l $PORT > videots &
 ;;
 
-# *********************************** TRANSPORT STREAM INPUT FILE ******************************************
-"FILETS")
+  # *********************************** TRANSPORT STREAM INPUT FILE ******************************************
+  "FILETS")
+    case "$MODE_OUTPUT" in
+      "BATC")
+        sudo nice -n -30 $PATHRPI"/ffmpeg" -loglevel $MODE_DEBUG -i $TSVIDEOFILE -y $OUTPUT_BATC &
+      ;;
+      "DATVEXPRESS")
+        echo "set ptt tx" >> /tmp/expctrl
+        sudo nice -n -30 netcat -u -4 127.0.0.1 1314 < $TSVIDEOFILE &
+        #sudo nice -n -30 cat $TSVIDEOFILE | sudo nice -n -30 netcat -u -4 127.0.0.1 1314 & 
+      ;;
+      *)
+        sudo $PATHRPI"/rpidatv" -i $TSVIDEOFILE -s $SYMBOLRATE_K -c $FECNUM"/"$FECDEN -f $FREQUENCY_OUT -p $GAIN -m $MODE -l -x $PIN_I -y $PIN_Q &;;
+    esac
+  ;;
 
-case "$MODE_OUTPUT" in
-	"BATC")
-		sudo nice -n -30 $PATHRPI"/ffmpeg" -loglevel $MODE_DEBUG -i $TSVIDEOFILE -y $OUTPUT_BATC & ;;
+  # *********************************** CARRIER  ******************************************
+  "CARRIER")
+    case "$MODE_OUTPUT" in
+      "DATVEXPRESS")
+        echo "set car on" >> /tmp/expctrl
+        echo "set ptt tx" >> /tmp/expctrl
+      ;;
+      *)
+        # sudo $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c "carrier" -f $FREQUENCY_OUT -p $GAIN -m $MODE -x $PIN_I -y $PIN_Q &
 
-	*)
-		sudo $PATHRPI"/rpidatv" -i $TSVIDEOFILE -s $SYMBOLRATE_K -c $FECNUM"/"$FECDEN -f $FREQUENCY_OUT -p $GAIN -m $MODE -l -x $PIN_I -y $PIN_Q &;;
-	esac
+        # Temporary fix for swapped carrier and test modes:
+        sudo $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c "tesmode" -f $FREQUENCY_OUT -p $GAIN -m $MODE -x $PIN_I -y $PIN_Q &
+      ;;
+    esac
+  ;;
 
-;;
+  # *********************************** TESTMODE  ******************************************
+  "TESTMODE")
+    # sudo $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c "tesmode" -f $FREQUENCY_OUT -p $GAIN -m $MODE -x $PIN_I -y $PIN_Q &
 
-# *********************************** CARRIER  ******************************************
-"CARRIER")
-echo ====================== CARRIER ==========================
-
-# sudo $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c "carrier" -f $FREQUENCY_OUT -p $GAIN -m $MODE -x $PIN_I -y $PIN_Q &
-
-# Temporary fix for swapped carrier and test modes:
-sudo $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c "tesmode" -f $FREQUENCY_OUT -p $GAIN -m $MODE -x $PIN_I -y $PIN_Q &
-
-;;
-
-# *********************************** TESTMODE  ******************************************
-"TESTMODE")
-
-# sudo $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c "tesmode" -f $FREQUENCY_OUT -p $GAIN -m $MODE -x $PIN_I -y $PIN_Q &
-
-# Temporary fix for swapped carrier and test modes:
-sudo $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c "carrier" -f $FREQUENCY_OUT -p $GAIN -m $MODE -x $PIN_I -y $PIN_Q &
-;;
-
+    # Temporary fix for swapped carrier and test modes:
+    sudo $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c "carrier" -f $FREQUENCY_OUT -p $GAIN -m $MODE -x $PIN_I -y $PIN_Q &
+  ;;
 esac
-
-
-

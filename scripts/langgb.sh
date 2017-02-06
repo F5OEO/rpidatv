@@ -55,7 +55,7 @@ StrOutputBATCContext="BATC Stream name"
 StrOutputBATCTitle="BATC Setup"
 
 ######### SYMBOLRATE AND FEC ##########
-StrOutputSymbolrateContext="Symbol Rate (KSymbols/s):125-2000"
+StrOutputSymbolrateContext="Symbol Rate (KSymbols/s):125-4000"
 StrOutputSymbolrateTitle="Symbol Rate"
 
 StrOutputFECTitle="FEC Setup"

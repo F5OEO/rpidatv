@@ -1,7 +1,7 @@
 #!/bin/bash
 
+# Updated by davecrump 201702021
 
-# Updated by davecrump 201702020
 
 # Modified to overwrite ~/rpidatv/scripts and
 # ~/rpidatv/src, then compile
@@ -153,6 +153,26 @@ cd /etc/kbd
 sudo sed -i 's/^BLANK_TIME.*/BLANK_TIME=0/' config
 sudo sed -i 's/^POWERDOWN_TIME.*/POWERDOWN_TIME=0/' config
 cd /home/pi
+
+# Delete, download, amend, compile and install DATV Express-server (201702021)
+
+if [ ! -f "/bin/netcat" ]; then
+  sudo apt-get -y install netcat
+fi
+
+sudo rm -f -r /lib/firmware/datvexpress
+sudo rm -f /usr/bin/express_server
+sudo rm -f /etc/udev/rules.d/10-datvexpress.rules
+cd /home/pi
+wget https://github.com/G4GUO/express_server/archive/master.zip -O master.zip
+unzip master.zip
+mv express_server-master express_server
+rm master.zip
+cd /home/pi/express_server
+sed -i 's/^     express_handle_events( 32 ).*/     express_handle_events( 1 );/' express.cpp
+sed -i 's/^set ptt tx.*/set ptt rx/' datvexpress.txt
+make
+sudo make install
 
 # Update pi-sdn (201702020)
 rm -f /home/pi/pi-sdn
