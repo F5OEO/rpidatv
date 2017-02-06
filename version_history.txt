@@ -1,3 +1,6 @@
+201702060
+Adds support for the DATV Express modulator.  See https://wiki.batc.tv/Controlling_a_DATVExpress
+Minor stability improvements
 
 201702020
 Updated to latest version of pi-sdn and suppressed error messages

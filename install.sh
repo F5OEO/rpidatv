@@ -8,7 +8,7 @@ sudo apt-get clean
 sudo apt-get update
 sudo apt-get -y install apt-transport-https git rpi-update
 sudo apt-get -y install cmake libusb-1.0-0-dev g++ libx11-dev buffer libjpeg-dev indent libfreetype6-dev ttf-dejavu-core bc usbmount fftw3-dev wiringpi libvncserver-dev
-sudo apt-get -y install fbi
+sudo apt-get -y install fbi netcat
 
 # rpi-update to get latest firmware
 sudo rpi-update
@@ -148,6 +148,19 @@ sudo sed -i -e 's/rootwait/rootwait consoleblank=0/' cmdline.txt
 cd /etc/kbd
 sudo sed -i 's/^BLANK_TIME.*/BLANK_TIME=0/' config
 sudo sed -i 's/^POWERDOWN_TIME.*/POWERDOWN_TIME=0/' config
+
+# Download, amend, compile and install DATV Express-server
+
+cd /home/pi
+wget https://github.com/G4GUO/express_server/archive/master.zip
+unzip master.zip
+mv express_server-master express_server
+rm master.zip
+cd /home/pi/express_server
+sed -i 's/^     express_handle_events( 32 ).*/     express_handle_events( 1 );/' express.cpp
+sed -i 's/^set ptt tx.*/set ptt rx/' datvexpress.txt
+make
+sudo make install
 
 cd /home/pi/rpidatv/scripts/
 
