@@ -168,6 +168,7 @@ mv express_server-master express_server
 rm master.zip
 cd /home/pi/express_server
 sed -i 's/^     express_handle_events( 32 ).*/     express_handle_events( 1 );/' express.cpp
+sed -i 's/^set ptt tx.*/set ptt rx/' datvexpress.txt
 make
 sudo make install
 

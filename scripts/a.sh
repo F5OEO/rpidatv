@@ -146,8 +146,9 @@ case "$MODE_OUTPUT" in
       # Express already running
       echo > null
     else
-      # Stopped, so start it
+      # Stopped, so make sure the control file is not locked and start it
       # From its own folder otherwise it doesnt read the config file
+      sudo rm /tmp/expctrl >/dev/null 2>/dev/null
       cd /home/pi/express_server
       if (( $SYMBOLRATEK \< 999 )); then
         sudo nice -n -40 /home/pi/express_server/express_server -nb  >/dev/null 2>/dev/null &
@@ -160,7 +161,7 @@ case "$MODE_OUTPUT" in
     # Set output for ffmpeg (avc2ts uses netcat to pipe output from videots)
     OUTPUT="udp://127.0.0.1:1314?pkt_size=1316&buffer_size=1316"
     FREQUENCY_OUT=0  # Not used in this mode?
-    # Calculate frequency in Hz using floating point
+    # Calculate output freq in Hz using floating point
     FREQ_OUTPUTHZ=`echo - | awk '{print '$FREQ_OUTPUT' * 1000000}'`
     echo "set freq "$FREQ_OUTPUTHZ >> /tmp/expctrl
     echo "set fec "$FECNUM"/"$FECDEN >> /tmp/expctrl
@@ -177,14 +178,17 @@ case "$MODE_OUTPUT" in
     elif (( $INT_FREQ_OUTPUT \< 4400 )); then
       GAIN=$(get_config_var explevel3 $CONFIGFILE);
     else
-      GAIN="10";
+      GAIN="30";
     fi
 
-    echo "set level "$GAIN >> /tmp/expctrl
-    echo "set ptt tx" >> /tmp/expctrl
+    # Gain nees to be in range 6 - 100 step 2,
+    #  so translate from Windows levels of 0-47
+    GAINC=`echo - | awk '{print '$GAIN' * 2 +6}'`
+    echo "set level "$GAINC >> /tmp/expctrl
+    # Make sure that carrier mode is off
+    echo "set car off" >> /tmp/expctrl
   ;;
 esac
-
 
 #CALL="F5OEO"
 #CHANNEL="rpidatv"
@@ -240,7 +244,7 @@ else
 	else
 		VIDEO_WIDTH=720
 		VIDEO_HEIGHT=576
-	fi	
+	fi
 fi
 
 if [ "$BITRATE_VIDEO" -lt 300000 ]; then
@@ -249,15 +253,12 @@ else
 VIDEO_FPS=25
 fi
 
-
 sudo rm videoes
 sudo rm videots
 sudo rm netfifo
 mkfifo videoes
 mkfifo videots
 mkfifo netfifo
-
-
 
 echo "************************************"
 echo Bitrate TS $BITRATE_TS
@@ -358,6 +359,7 @@ case "$MODE_OUTPUT" in
 	"IP")
 		OUTPUT_FILE="" ;;
 	"DATVEXPRESS")
+                echo "set ptt tx" >> /tmp/expctrl
 		sudo nice -n -30 netcat -u -4 127.0.0.1 1314 < videots & ;;
 	*)
 		sudo  $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c $FECNUM"/"$FECDEN -f $FREQUENCY_OUT -p $GAIN -m $MODE -x $PIN_I -y $PIN_Q &;;
@@ -483,6 +485,7 @@ PORT=10000
     case "$MODE_OUTPUT" in
       "DATVEXPRESS")
         echo "set car on" >> /tmp/expctrl
+        echo "set ptt tx" >> /tmp/expctrl
       ;;
       *)
         # sudo $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c "carrier" -f $FREQUENCY_OUT -p $GAIN -m $MODE -x $PIN_I -y $PIN_Q &

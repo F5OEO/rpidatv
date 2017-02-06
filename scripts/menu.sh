@@ -475,7 +475,9 @@ if [ $? -eq 0 ]; then
       # Express already running
       sudo killall express_server  >/dev/null 2>/dev/null
     fi
-      # Start it from its own folder otherwise it doesnt read the config file
+      # Make sure that the Control file is not locked
+      sudo rm /tmp/expctrl >/dev/null 2>/dev/null
+      # Start Express from its own folder otherwise it doesnt read the config file
       cd /home/pi/express_server
       if (( $SYMBOLRATEK \< 999 )); then
         sudo nice -n -40 /home/pi/express_server/express_server -nb  >/dev/null 2>/dev/null &
@@ -1339,6 +1341,8 @@ if [ "$MODE_OUTPUT" == "DATVEXPRESS" ]; then
   else
     # Not running and needed, so start it
     echo "Starting the DATV Express Server.  Please wait."
+    # Make sure that the Control file is not locked
+    sudo rm /tmp/expctrl >/dev/null 2>/dev/null
     # From its own folder otherwise it doesn't read the config file
     cd /home/pi/express_server
     if (( $SYMBOLRATEK \< 999 )); then
