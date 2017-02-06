@@ -6,6 +6,7 @@ Minor stability improvements
 Updated to latest version of pi-sdn and suppressed error messages
 Implemented automated install of development versions if requested with -d and -s
 
+
 201701280
 Corrected a bug in the upgrade script that did not enable the new ADF4351 functionality
 

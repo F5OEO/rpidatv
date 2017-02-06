@@ -2,6 +2,7 @@
 
 # Updated by davecrump 201702021
 
+
 # Modified to overwrite ~/rpidatv/scripts and
 # ~/rpidatv/src, then compile
 # rpidatv, rpidatv gui avc2ts and adf4351
@@ -87,6 +88,7 @@ sudo make install
 
 #install adf4351
 cd /home/pi/rpidatv/src/adf4351
+touch adf4351.c
 make
 cp adf4351 ../../bin/
 cd /home/pi
