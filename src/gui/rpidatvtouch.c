@@ -472,9 +472,6 @@ void SelectSR(int NoButton)  // Symbol Rate
   sprintf(Value,"%d",SR);
   printf("************** Set SR = %s\n",Value);
   SetConfigParam(PATH_CONFIG,Param,Value);
-
-  // Kill express_server in case SR has gone from nb to wb or vice versa
-  system("sudo killall express_server >/dev/null 2>/dev/null");
 }
 
 void SelectFec(int NoButton)  // FEC
