@@ -150,11 +150,7 @@ case "$MODE_OUTPUT" in
       # From its own folder otherwise it doesnt read the config file
       sudo rm /tmp/expctrl >/dev/null 2>/dev/null
       cd /home/pi/express_server
-      if (( $SYMBOLRATEK \< 999 )); then
-        sudo nice -n -40 /home/pi/express_server/express_server -nb  >/dev/null 2>/dev/null &
-      else
-        sudo nice -n -40 /home/pi/express_server/express_server  >/dev/null 2>/dev/null &
-      fi
+      sudo nice -n -40 /home/pi/express_server/express_server  >/dev/null 2>/dev/null &
       cd /home/pi
       sleep 5
     fi
@@ -181,10 +177,9 @@ case "$MODE_OUTPUT" in
       GAIN="30";
     fi
 
-    # Gain nees to be in range 6 - 100 step 2,
-    #  so translate from Windows levels of 0-47
-    GAINC=`echo - | awk '{print '$GAIN' * 2 +6}'`
-    echo "set level "$GAINC >> /tmp/expctrl
+    # Set Gain
+    echo "set level "$GAIN >> /tmp/expctrl
+
     # Make sure that carrier mode is off
     echo "set car off" >> /tmp/expctrl
   ;;
