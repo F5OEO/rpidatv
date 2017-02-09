@@ -154,7 +154,7 @@ sudo sed -i 's/^BLANK_TIME.*/BLANK_TIME=0/' config
 sudo sed -i 's/^POWERDOWN_TIME.*/POWERDOWN_TIME=0/' config
 cd /home/pi
 
-# Delete, download, amend, compile and install DATV Express-server (201702021)
+# Delete, download, compile and install DATV Express-server (201702021)
 
 if [ ! -f "/bin/netcat" ]; then
   sudo apt-get -y install netcat
@@ -169,10 +169,9 @@ unzip master.zip
 mv express_server-master express_server
 rm master.zip
 cd /home/pi/express_server
-sed -i 's/^     express_handle_events( 32 ).*/     express_handle_events( 1 );/' express.cpp
-sed -i 's/^set ptt tx.*/set ptt rx/' datvexpress.txt
 make
 sudo make install
+cd /home/pi
 
 # Update pi-sdn (201702020)
 rm -f /home/pi/pi-sdn
