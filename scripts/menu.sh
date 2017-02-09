@@ -471,6 +471,7 @@ if [ $? -eq 0 ]; then
   DTX1)	;;
 
   DATVEXPRESS)
+    echo "Starting the DATV Express Server.  Please wait."
     if pgrep -x "express_server" > /dev/null; then
       # Express already running
       sudo killall express_server  >/dev/null 2>/dev/null
@@ -479,11 +480,7 @@ if [ $? -eq 0 ]; then
       sudo rm /tmp/expctrl >/dev/null 2>/dev/null
       # Start Express from its own folder otherwise it doesnt read the config file
       cd /home/pi/express_server
-      if (( $SYMBOLRATEK \< 999 )); then
-        sudo nice -n -40 /home/pi/express_server/express_server -nb  >/dev/null 2>/dev/null &
-      else
-        sudo nice -n -40 /home/pi/express_server/express_server  >/dev/null 2>/dev/null &
-      fi
+      sudo nice -n -40 /home/pi/express_server/express_server  >/dev/null 2>/dev/null &
       cd /home/pi
       sleep 5
   ;;
@@ -506,8 +503,6 @@ do_symbolrate_setup()
   SYMBOLRATE=$(whiptail --inputbox "$StrOutputSymbolrateContext" 8 78 $SYMBOLRATE --title "$StrOutputSymbolrateTitle" 3>&1 1>&2 2>&3)
   if [ $? -eq 0 ]; then
     set_config_var symbolrate "$SYMBOLRATE" $CONFIGFILE
-    # Kill express server because it might need to restart in narrowband
-    sudo killall express_server  >/dev/null 2>/dev/null
   fi
 }
 
@@ -1345,11 +1340,7 @@ if [ "$MODE_OUTPUT" == "DATVEXPRESS" ]; then
     sudo rm /tmp/expctrl >/dev/null 2>/dev/null
     # From its own folder otherwise it doesn't read the config file
     cd /home/pi/express_server
-    if (( $SYMBOLRATEK \< 999 )); then
-      sudo nice -n -40 /home/pi/express_server/express_server -nb  >/dev/null 2>/dev/null &
-    else
-      sudo nice -n -40 /home/pi/express_server/express_server  >/dev/null 2>/dev/null &
-    fi
+    sudo nice -n -40 /home/pi/express_server/express_server  >/dev/null 2>/dev/null &
     cd /home/pi
     sleep 5                # Give it time to start
     reset                  # Clear message from screen

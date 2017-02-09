@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Updated by davecrump on 20170202
+# Updated by davecrump on 20170209
 
 # Update the package manager, then install the packages we need
 sudo dpkg --configure -a
@@ -149,7 +149,7 @@ cd /etc/kbd
 sudo sed -i 's/^BLANK_TIME.*/BLANK_TIME=0/' config
 sudo sed -i 's/^POWERDOWN_TIME.*/POWERDOWN_TIME=0/' config
 
-# Download, amend, compile and install DATV Express-server
+# Download, compile and install DATV Express-server
 
 cd /home/pi
 wget https://github.com/G4GUO/express_server/archive/master.zip
@@ -157,8 +157,6 @@ unzip master.zip
 mv express_server-master express_server
 rm master.zip
 cd /home/pi/express_server
-sed -i 's/^     express_handle_events( 32 ).*/     express_handle_events( 1 );/' express.cpp
-sed -i 's/^set ptt tx.*/set ptt rx/' datvexpress.txt
 make
 sudo make install
 

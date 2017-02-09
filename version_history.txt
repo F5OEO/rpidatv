@@ -1,3 +1,6 @@
+201702090
+Interim release to support updated DATV Express Server files.  Adds PTT Switching
+
 201702060
 Adds support for the DATV Express modulator.  See https://wiki.batc.tv/Controlling_a_DATVExpress
 Minor stability improvements
