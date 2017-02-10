@@ -378,7 +378,7 @@ do_output_setup_mode()
     "IQ" "$StrOutputSetupIQ" $Radio1 \
     "QPSKRF" "$StrOutputSetupRF" $Radio2 \
     "BATC" "$StrOutputSetupBATC" $Radio3 \
-    "STREAMER" "Other Streaming Facility" $Radio4 \
+    "STREAMER" "Stream to other Streaming Facility" $Radio4 \
     "DIGITHIN" "$StrOutputSetupDigithin" $Radio5 \
     "DTX1" "$StrOutputSetupDTX1" $Radio6 \
     "DATVEXPRESS" "$StrOutputSetupDATVExpress" $Radio7 \
@@ -1271,7 +1271,7 @@ do_set_express()
   if [ "$TESTPORT" -gt 0 ]; then
     Check1=ON
   fi
-  TESTPORT=$(whiptail --title "SET DATV EXPRESS PORTS FOR THE 71 MHz BAND" --checklist \
+  TESTPORT=$(whiptail --title "SET DATV EXPRESS PORTS FOR THE 2400 MHz BAND" --checklist \
     "Select or deselect the active ports using the spacebar" 20 78 4 \
     "Port A" "J6 Pin 5" $Check1 \
     "Port B" "J6 Pin 6" $Check2 \
