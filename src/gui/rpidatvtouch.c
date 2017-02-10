@@ -967,16 +967,17 @@ void waituntil(int w,int h,int endchar)
 static void
 terminate(int dummy)
 {
-	printf("Terminate\n");
-        char Commnd[255];
-        sprintf(Commnd,"stty echo");
-        system(Commnd);
-        sprintf(Commnd,"reset");
-        system(Commnd);
+  TransmitStop();
+  printf("Terminate\n");
+  char Commnd[255];
+  sprintf(Commnd,"stty echo");
+  system(Commnd);
+  sprintf(Commnd,"reset");
+  system(Commnd);
 
-	/*restoreterm();
-	finish();*/
-	exit(1);
+  /*restoreterm();
+  finish();*/
+  exit(1);
 }
 
 // main initializes the system and shows the picture. 

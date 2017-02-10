@@ -183,12 +183,15 @@ if [ -f /home/pi/.pi-sdn ]; then
   cp /home/pi/rpidatv/scripts/configs/text.pi-sdn /home/pi/.pi-sdn
 fi
 
-# Restore or update rpidatvconfig.txt for 201701020 and 201701270
-if ! grep -q adfref /home/pi/rpidatvconfig.txt; then
+# Restore or update rpidatvconfig.txt for
+# 201701020 201701270 201702100 
+if ! grep -q expports0 /home/pi/rpidatvconfig.txt; then
   # File needs updating
+  printf "Adding new entries to user's rpidatvconfig.txt\n"
   source /home/pi/rpidatv/scripts/copy_config.sh
 else
   # File is correct format
+  printf "Copying user's rpidatvconfig.txt for use unchanged\n"
   cp -f -r /home/pi/rpidatvconfig.txt /home/pi/rpidatv/scripts/rpidatvconfig.txt
 fi
 rm -f /home/pi/rpidatvconfig.txt

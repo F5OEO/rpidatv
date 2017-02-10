@@ -332,150 +332,122 @@ fi
 }
 
 
-do_output_setup_mode() {
-MODE_OUTPUT=$(get_config_var modeoutput $CONFIGFILE)
-case "$MODE_OUTPUT" in
-	IQ) 
-	Radio1=ON
-	Radio2=OFF
-	Radio3=OFF
-	Radio4=OFF
-	Radio5=OFF
-	Radio6=OFF
-	Radio7=OFF
-	;;
-	QPSKRF)
-	Radio1=OFF
-	Radio2=ON
-	Radio3=OFF
-	Radio4=OFF
-	Radio5=OFF
-	Radio6=OFF
-	Radio7=OFF
-	;;
-	BATC)
-	Radio1=OFF
-	Radio2=OFF
-	Radio3=ON
-	Radio4=OFF
-	Radio5=OFF
-	Radio6=OFF
-	Radio7=OFF
-	;;
-	DIGITHIN)
-	Radio1=OFF
-	Radio2=OFF
-	Radio3=OFF
-	Radio4=ON
-	Radio5=OFF
-	Radio6=OFF
-	Radio7=OFF
-	;;
-	DTX1)
-	Radio1=OFF
-	Radio2=OFF
-	Radio3=OFF
-	Radio4=OFF
-	Radio5=ON
-	Radio6=OFF
-	Radio7=OFF
-	;;
-	DATVEXPRESS)
-	Radio1=OFF
-	Radio2=OFF
-	Radio3=OFF
-	Radio4=OFF
-	Radio5=OFF
-	Radio6=ON
-	Radio7=OFF
-	;;
-	IP)
-	Radio1=OFF
-	Radio2=OFF
-	Radio3=OFF
-	Radio4=OFF
-	Radio5=OFF
-	Radio6=OFF
-	Radio7=ON
-	;;
-	*)
-	Radio1=ON
-	Radio2=OFF
-	Radio3=OFF
-	Radio4=OFF
-	Radio5=OFF
-	Radio6=OFF
-	Radio7=OFF
-esac
-
-choutput=$(whiptail --title "$StrOutputSetupTitle" --radiolist \
-		"$StrOutputSetupContext" 20 78 8 \
-		"IQ" "$StrOutputSetupIQ" $Radio1 \
-		"QPSKRF" "$StrOutputSetupRF" $Radio2 \
-		"BATC" "$StrOutputSetupBATC" $Radio3 \
-		"DIGITHIN" "$StrOutputSetupDigithin" $Radio4 \
- 		"DTX1" "$StrOutputSetupDTX1" $Radio5 \
-		"DATVEXPRESS" "$StrOutputSetupDATVExpress" $Radio6 \
-	 	"IP" "$StrOutputSetupIP" $Radio7 3>&2 2>&1 1>&3)
-if [ $? -eq 0 ]; then
-  case "$choutput" in
-  IQ)
-				PIN_I=$(get_config_var gpio_i $CONFIGFILE)
-				PIN_I=$(whiptail --inputbox "$StrPIN_IContext" 8 78 $PIN_I --title "$StrPIN_ITitle" 3>&1 1>&2 2>&3)
-			if [ $? -eq 0 ]; then
-				set_config_var gpio_i "$PIN_I" $CONFIGFILE
-			fi
-				PIN_Q=$(get_config_var gpio_q $CONFIGFILE)
-				PIN_Q=$(whiptail --inputbox "$StrPIN_QContext" 8 78 $PIN_Q --title "$StrPIN_QTitle" 3>&1 1>&2 2>&3)
-			if [ $? -eq 0 ]; then
-				set_config_var gpio_q "$PIN_Q" $CONFIGFILE
-			fi
-				;;
+do_output_setup_mode()
+{
+  MODE_OUTPUT=$(get_config_var modeoutput $CONFIGFILE)
+  Radio1=OFF
+  Radio2=OFF
+  Radio3=OFF
+  Radio4=OFF
+  Radio5=OFF
+  Radio6=OFF
+  Radio7=OFF
+  Radio8=OFF
+  case "$MODE_OUTPUT" in
+  IQ) 
+    Radio1=ON
+  ;;
   QPSKRF)
-			FREQ_OUTPUT=$(get_config_var freqoutput $CONFIGFILE)
-			##FREQ=$(whiptail --inputbox "$StrOutputRFFreqContext" 8 78 $FREQ_OUTPUT --title "$StrOutputRFFreqTitle" 3>&1 1>&2 2>&3)
-			##if [ $? -eq 0 ]; then
-			##	set_config_var freqoutput "$FREQ" $CONFIGFILE
-			##fi
-			GAIN_OUTPUT=$(get_config_var rfpower $CONFIGFILE)
-			GAIN=$(whiptail --inputbox "$StrOutputRFGainContext" 8 78 $GAIN_OUTPUT --title "$StrOutputRFGainTitle" 3>&1 1>&2 2>&3)
-			if [ $? -eq 0 ]; then
-				set_config_var rfpower "$GAIN" $CONFIGFILE
-			fi
-		    ;;
+    Radio2=ON
+  ;;
   BATC)
-			BATC_OUTPUT=$(get_config_var batcoutput $CONFIGFILE)
-			ADRESS=$(whiptail --inputbox "$StrOutputBATCContext" 8 78 $BATC_OUTPUT --title "$StrOutputBATCTitle" 3>&1 1>&2 2>&3)
-			if [ $? -eq 0 ]; then
-				set_config_var batcoutput "$ADRESS" $CONFIGFILE
-			fi
-			;;
+    Radio3=ON
+  ;;
+  STREAMER)
+    Radio4=ON
+  ;;
   DIGITHIN)
-			PIN_I=$(get_config_var gpio_i $CONFIGFILE)
-				PIN_I=$(whiptail --inputbox "$StrPIN_IContext" 8 78 $PIN_I --title "$StrPIN_ITitle" 3>&1 1>&2 2>&3)
-			if [ $? -eq 0 ]; then
-				set_config_var gpio_i "$PIN_I" $CONFIGFILE
-			fi
-				PIN_Q=$(get_config_var gpio_q $CONFIGFILE)
-				PIN_Q=$(whiptail --inputbox "$StrPIN_QContext" 8 78 $PIN_Q --title "$StrPIN_QTitle" 3>&1 1>&2 2>&3)
-			if [ $? -eq 0 ]; then
-				set_config_var gpio_q "$PIN_Q" $CONFIGFILE
-			fi
-			FREQ_OUTPUT=$(get_config_var freqoutput $CONFIGFILE)
-			FREQ=$(whiptail --inputbox "$StrOutputRFFreqContext" 8 78 $FREQ_OUTPUT --title "$StrOutputRFFreqTitle" 3>&1 1>&2 2>&3)
-			if [ $? -eq 0 ]; then
-				set_config_var freqoutput "$FREQ" $CONFIGFILE
-			fi
-		        sudo ./si570 -f $FREQ -m off
-			;;
-  DTX1)	;;
-
+    Radio5=ON
+  ;;
+  DTX1)
+    Radio6=ON
+  ;;
   DATVEXPRESS)
-    echo "Starting the DATV Express Server.  Please wait."
-    if pgrep -x "express_server" > /dev/null; then
-      # Express already running
-      sudo killall express_server  >/dev/null 2>/dev/null
-    fi
+    Radio7=ON
+  ;;
+  IP)
+    Radio8=ON
+  ;;
+  *)
+    Radio9=ON
+  ;;
+  esac
+
+  choutput=$(whiptail --title "$StrOutputSetupTitle" --radiolist \
+    "$StrOutputSetupContext" 20 78 9 \
+    "IQ" "$StrOutputSetupIQ" $Radio1 \
+    "QPSKRF" "$StrOutputSetupRF" $Radio2 \
+    "BATC" "$StrOutputSetupBATC" $Radio3 \
+    "STREAMER" "Other Streaming Facility" $Radio4 \
+    "DIGITHIN" "$StrOutputSetupDigithin" $Radio5 \
+    "DTX1" "$StrOutputSetupDTX1" $Radio6 \
+    "DATVEXPRESS" "$StrOutputSetupDATVExpress" $Radio7 \
+    "IP" "$StrOutputSetupIP" $Radio8 3>&2 2>&1 1>&3)
+
+  if [ $? -eq 0 ]; then
+    case "$choutput" in
+    IQ)
+      PIN_I=$(get_config_var gpio_i $CONFIGFILE)
+      PIN_I=$(whiptail --inputbox "$StrPIN_IContext" 8 78 $PIN_I --title "$StrPIN_ITitle" 3>&1 1>&2 2>&3)
+      if [ $? -eq 0 ]; then
+        set_config_var gpio_i "$PIN_I" $CONFIGFILE
+      fi
+      PIN_Q=$(get_config_var gpio_q $CONFIGFILE)
+      PIN_Q=$(whiptail --inputbox "$StrPIN_QContext" 8 78 $PIN_Q --title "$StrPIN_QTitle" 3>&1 1>&2 2>&3)
+      if [ $? -eq 0 ]; then
+        set_config_var gpio_q "$PIN_Q" $CONFIGFILE
+      fi
+    ;;
+    QPSKRF)
+      FREQ_OUTPUT=$(get_config_var freqoutput $CONFIGFILE)
+      GAIN_OUTPUT=$(get_config_var rfpower $CONFIGFILE)
+      GAIN=$(whiptail --inputbox "$StrOutputRFGainContext" 8 78 $GAIN_OUTPUT --title "$StrOutputRFGainTitle" 3>&1 1>&2 2>&3)
+      if [ $? -eq 0 ]; then
+        set_config_var rfpower "$GAIN" $CONFIGFILE
+      fi
+    ;;
+    BATC)
+      BATC_OUTPUT=$(get_config_var batcoutput $CONFIGFILE)
+      ADRESS=$(whiptail --inputbox "$StrOutputBATCContext" 8 78 $BATC_OUTPUT --title "$StrOutputBATCTitle" 3>&1 1>&2 2>&3)
+      if [ $? -eq 0 ]; then
+        set_config_var batcoutput "$ADRESS" $CONFIGFILE
+      fi
+    ;;
+    STREAMER)
+      whiptail --title "Not implemented yet" --msgbox "Not Implemented yet.  Please press enter to continue" 8 78
+      STREAM_URL=$(get_config_var streamurl $CONFIGFILE)
+      STREAM=$(whiptail --inputbox "Enter the stream URL" 8 78 $STREAM_URL --title "Enter other Stream Details" 3>&1 1>&2 2>&3)
+      if [ $? -eq 0 ]; then
+        set_config_var streamurl "$STREAM" $CONFIGFILE
+      fi
+      STREAM_KEY=$(get_config_var streamkey $CONFIGFILE)
+      STREAMK=$(whiptail --inputbox "Enter the stream key" 8 78 $STREAM_KEY --title "Enter other Stream Details" 3>&1 1>&2 2>&3)
+      if [ $? -eq 0 ]; then
+        set_config_var streamkey "$STREAMK" $CONFIGFILE
+      fi
+    ;;
+    DIGITHIN)
+      PIN_I=$(get_config_var gpio_i $CONFIGFILE)
+      PIN_I=$(whiptail --inputbox "$StrPIN_IContext" 8 78 $PIN_I --title "$StrPIN_ITitle" 3>&1 1>&2 2>&3)
+      if [ $? -eq 0 ]; then
+        set_config_var gpio_i "$PIN_I" $CONFIGFILE
+      fi
+      PIN_Q=$(get_config_var gpio_q $CONFIGFILE)
+      PIN_Q=$(whiptail --inputbox "$StrPIN_QContext" 8 78 $PIN_Q --title "$StrPIN_QTitle" 3>&1 1>&2 2>&3)
+      if [ $? -eq 0 ]; then
+        set_config_var gpio_q "$PIN_Q" $CONFIGFILE
+      fi
+      FREQ_OUTPUT=$(get_config_var freqoutput $CONFIGFILE)
+      sudo ./si570 -f $FREQ_OUTPUT -m off
+    ;;
+    DTX1)	;;
+
+    DATVEXPRESS)
+      echo "Starting the DATV Express Server.  Please wait."
+      if pgrep -x "express_server" > /dev/null; then
+        # Express already running
+        sudo killall express_server  >/dev/null 2>/dev/null
+      fi
       # Make sure that the Control file is not locked
       sudo rm /tmp/expctrl >/dev/null 2>/dev/null
       # Start Express from its own folder otherwise it doesnt read the config file
@@ -483,18 +455,19 @@ if [ $? -eq 0 ]; then
       sudo nice -n -40 /home/pi/express_server/express_server  >/dev/null 2>/dev/null &
       cd /home/pi
       sleep 5
-  ;;
-		    IP)
-			UDPOUTADDR=$(get_config_var udpoutaddr $CONFIGFILE)
-
-		    UDPOUTADDR=$(whiptail --inputbox "$StrOutputSetupIPTSOUTName" 8 78 $UDPOUTADDR --title "$StrOutputSetupIPTSOUTTitle" 3>&1 1>&2 2>&3)
-		    if [ $? -eq 0 ]; then
-			set_config_var udpoutaddr "$UDPOUTADDR" $CONFIGFILE
-		    fi
-		    ;;
-  esac
-  set_config_var modeoutput "$choutput" $CONFIGFILE
-fi
+      # Set the ports
+      $PATHSCRIPT"/ctlfilter.sh"
+    ;;
+    IP)
+      UDPOUTADDR=$(get_config_var udpoutaddr $CONFIGFILE)
+      UDPOUTADDR=$(whiptail --inputbox "$StrOutputSetupIPTSOUTName" 8 78 $UDPOUTADDR --title "$StrOutputSetupIPTSOUTTitle" 3>&1 1>&2 2>&3)
+      if [ $? -eq 0 ]; then
+        set_config_var udpoutaddr "$UDPOUTADDR" $CONFIGFILE
+      fi
+    ;;
+    esac
+    set_config_var modeoutput "$choutput" $CONFIGFILE
+  fi
 }
 
 do_symbolrate_setup()
@@ -587,7 +560,7 @@ FREQ_OUTPUT=$(get_config_var freqoutput $CONFIGFILE)
 FREQ=$(whiptail --inputbox "$StrOutputRFFreqContext" 8 78 $FREQ_OUTPUT --title "$StrOutputRFFreqTitle" 3>&1 1>&2 2>&3)
 if [ $? -eq 0 ]; then
   set_config_var freqoutput "$FREQ" $CONFIGFILE
-  $PATHSCRIPT"/ctlfilter.sh" ## Refresh the band switching
+  $PATHSCRIPT"/ctlfilter.sh" ## Refresh the band and port switching
 fi
 }
 
@@ -992,6 +965,42 @@ do_presets()
 
 }
 
+do_preset_SRs()
+{
+  whiptail --title "Not implemented yet" --msgbox "Not Implemented yet.  Please press enter to continue" 8 78
+
+  PSR1=$(get_config_var psr1 $CONFIGFILE)
+  PSR1=$(whiptail --inputbox "Enter Preset Symbol Rate 1 in KS/s" 8 78 $PSR1 --title "SET TOUCHSCREEN PRESETS" 3>&1 1>&2 2>&3)
+  if [ $? -eq 0 ]; then
+    set_config_var psr1 "$PSR1" $CONFIGFILE
+  fi
+
+  PSR2=$(get_config_var psr2 $CONFIGFILE)
+  PSR2=$(whiptail --inputbox "Enter Preset Symbol Rate 2 in KS/s" 8 78 $PSR2 --title "SET TOUCHSCREEN PRESETS" 3>&1 1>&2 2>&3)
+  if [ $? -eq 0 ]; then
+    set_config_var psr2 "$PSR2" $CONFIGFILE
+  fi
+
+  PSR3=$(get_config_var psr3 $CONFIGFILE)
+  PSR3=$(whiptail --inputbox "Enter Preset Symbol Rate 3 in KS/s" 8 78 $PSR3 --title "SET TOUCHSCREEN PRESETS" 3>&1 1>&2 2>&3)
+  if [ $? -eq 0 ]; then
+    set_config_var psr3 "$PSR3" $CONFIGFILE
+  fi
+
+  PSR4=$(get_config_var psr4 $CONFIGFILE)
+  PSR4=$(whiptail --inputbox "Enter Preset Symbol Rate 4 in KS/s" 8 78 $PSR4 --title "SET TOUCHSCREEN PRESETS" 3>&1 1>&2 2>&3)
+  if [ $? -eq 0 ]; then
+    set_config_var psr4 "$PSR4" $CONFIGFILE
+  fi
+
+  PSR5=$(get_config_var psr5 $CONFIGFILE)
+  PSR5=$(whiptail --inputbox "Enter Preset Symbol Rate 5 in KS/s" 8 78 $PSR5 --title "SET TOUCHSCREEN PRESETS" 3>&1 1>&2 2>&3)
+  if [ $? -eq 0 ]; then
+    set_config_var psr5 "$PSR5" $CONFIGFILE
+  fi
+}
+
+
 do_4351_ref()
 {
   ADFREF=$(get_config_var adfref $CONFIGFILE)
@@ -1041,10 +1050,98 @@ do_set_express()
     set_config_var explevel0 "$EXPLEVEL0" $CONFIGFILE
   fi
 
+  Check1=OFF
+  Check2=OFF
+  Check3=OFF
+  Check4=OFF
+  EXPPORTS0=$(get_config_var expports0 $CONFIGFILE)
+  TESTPORT=$EXPPORTS0
+  if [ "$TESTPORT" -gt 7 ]; then
+    Check4=ON
+    TESTPORT=$[$TESTPORT-8]
+  fi
+  if [ "$TESTPORT" -gt 3 ]; then
+    Check3=ON
+    TESTPORT=$[$TESTPORT-4]
+  fi
+  if [ "$TESTPORT" -gt 1 ]; then
+    Check2=ON
+    TESTPORT=$[$TESTPORT-2]
+  fi
+  if [ "$TESTPORT" -gt 0 ]; then
+    Check1=ON
+  fi
+  TESTPORT=$(whiptail --title "SET DATV EXPRESS PORTS FOR THE 71 MHz BAND" --checklist \
+    "Select or deselect the active ports using the spacebar" 20 78 4 \
+    "Port A" "J6 Pin 5" $Check1 \
+    "Port B" "J6 Pin 6" $Check2 \
+    "Port C" "J6 Pin 7" $Check3 \
+    "Port D" "J6 Pin 10" $Check4 3>&1 1>&2 2>&3)
+  if [ $? -eq 0 ]; then
+    EXPPORTS0=0
+    if (echo $TESTPORT | grep -q A); then
+      EXPPORTS0=1
+    fi
+    if (echo $TESTPORT | grep -q B); then
+      EXPPORTS0=$[$EXPPORTS0+2]
+    fi
+    if (echo $TESTPORT | grep -q C); then
+      EXPPORTS0=$[$EXPPORTS0+4]
+    fi
+    if (echo $TESTPORT | grep -q D); then
+      EXPPORTS0=$[$EXPPORTS0+8]
+    fi
+    set_config_var expports0 "$EXPPORTS0" $CONFIGFILE
+  fi
+
   EXPLEVEL1=$(get_config_var explevel1 $CONFIGFILE)
   EXPLEVEL1=$(whiptail --inputbox "Enter 0 to 47" 8 78 $EXPLEVEL1 --title "SET DATV EXPRESS OUTPUT LEVEL FOR THE 146 MHz BAND" 3>&1 1>&2 2>&3)
   if [ $? -eq 0 ]; then
     set_config_var explevel1 "$EXPLEVEL1" $CONFIGFILE
+  fi
+
+  Check1=OFF
+  Check2=OFF
+  Check3=OFF
+  Check4=OFF
+  EXPPORTS1=$(get_config_var expports1 $CONFIGFILE)
+  TESTPORT=$EXPPORTS1
+  if [ "$TESTPORT" -gt 7 ]; then
+    Check4=ON
+    TESTPORT=$[$TESTPORT-8]
+  fi
+  if [ "$TESTPORT" -gt 3 ]; then
+    Check3=ON
+    TESTPORT=$[$TESTPORT-4]
+  fi
+  if [ "$TESTPORT" -gt 1 ]; then
+    Check2=ON
+    TESTPORT=$[$TESTPORT-2]
+  fi
+  if [ "$TESTPORT" -gt 0 ]; then
+    Check1=ON
+  fi
+  TESTPORT=$(whiptail --title "SET DATV EXPRESS PORTS FOR THE 146 MHz BAND" --checklist \
+    "Select or deselect the active ports using the spacebar" 20 78 4 \
+    "Port A" "J6 Pin 5" $Check1 \
+    "Port B" "J6 Pin 6" $Check2 \
+    "Port C" "J6 Pin 7" $Check3 \
+    "Port D" "J6 Pin 10" $Check4 3>&1 1>&2 2>&3)
+  if [ $? -eq 0 ]; then
+    EXPPORTS1=0
+    if (echo $TESTPORT | grep -q A); then
+      EXPPORTS1=1
+    fi
+    if (echo $TESTPORT | grep -q B); then
+      EXPPORTS1=$[$EXPPORTS1+2]
+    fi
+    if (echo $TESTPORT | grep -q C); then
+      EXPPORTS1=$[$EXPPORTS1+4]
+    fi
+    if (echo $TESTPORT | grep -q D); then
+      EXPPORTS1=$[$EXPPORTS1+8]
+    fi
+    set_config_var expports1 "$EXPPORTS1" $CONFIGFILE
   fi
 
   EXPLEVEL2=$(get_config_var explevel2 $CONFIGFILE)
@@ -1053,10 +1150,148 @@ do_set_express()
     set_config_var explevel2 "$EXPLEVEL2" $CONFIGFILE
   fi
 
+  Check1=OFF
+  Check2=OFF
+  Check3=OFF
+  Check4=OFF
+  EXPPORTS2=$(get_config_var expports2 $CONFIGFILE)
+  TESTPORT=$EXPPORTS2
+  if [ "$TESTPORT" -gt 7 ]; then
+    Check4=ON
+    TESTPORT=$[$TESTPORT-8]
+  fi
+  if [ "$TESTPORT" -gt 3 ]; then
+    Check3=ON
+    TESTPORT=$[$TESTPORT-4]
+  fi
+  if [ "$TESTPORT" -gt 1 ]; then
+    Check2=ON
+    TESTPORT=$[$TESTPORT-2]
+  fi
+  if [ "$TESTPORT" -gt 0 ]; then
+    Check1=ON
+  fi
+  TESTPORT=$(whiptail --title "SET DATV EXPRESS PORTS FOR THE 437 MHz BAND" --checklist \
+    "Select or deselect the active ports using the spacebar" 20 78 4 \
+    "Port A" "J6 Pin 5" $Check1 \
+    "Port B" "J6 Pin 6" $Check2 \
+    "Port C" "J6 Pin 7" $Check3 \
+    "Port D" "J6 Pin 10" $Check4 3>&1 1>&2 2>&3)
+  if [ $? -eq 0 ]; then
+    EXPPORTS2=0
+    if (echo $TESTPORT | grep -q A); then
+      EXPPORTS2=1
+    fi
+    if (echo $TESTPORT | grep -q B); then
+      EXPPORTS2=$[$EXPPORTS2+2]
+    fi
+    if (echo $TESTPORT | grep -q C); then
+      EXPPORTS2=$[$EXPPORTS2+4]
+    fi
+    if (echo $TESTPORT | grep -q D); then
+      EXPPORTS2=$[$EXPPORTS2+8]
+    fi
+    set_config_var expports2 "$EXPPORTS2" $CONFIGFILE
+  fi
+
   EXPLEVEL3=$(get_config_var explevel3 $CONFIGFILE)
   EXPLEVEL3=$(whiptail --inputbox "Enter 0 to 47" 8 78 $EXPLEVEL3 --title "SET DATV EXPRESS OUTPUT LEVEL FOR THE 1255 MHz BAND" 3>&1 1>&2 2>&3)
   if [ $? -eq 0 ]; then
     set_config_var explevel3 "$EXPLEVEL3" $CONFIGFILE
+  fi
+
+  Check1=OFF
+  Check2=OFF
+  Check3=OFF
+  Check4=OFF
+  EXPPORTS3=$(get_config_var expports3 $CONFIGFILE)
+  TESTPORT=$EXPPORTS3
+  if [ "$TESTPORT" -gt 7 ]; then
+    Check4=ON
+    TESTPORT=$[$TESTPORT-8]
+  fi
+  if [ "$TESTPORT" -gt 3 ]; then
+    Check3=ON
+    TESTPORT=$[$TESTPORT-4]
+  fi
+  if [ "$TESTPORT" -gt 1 ]; then
+    Check2=ON
+    TESTPORT=$[$TESTPORT-2]
+  fi
+  if [ "$TESTPORT" -gt 0 ]; then
+    Check1=ON
+  fi
+  TESTPORT=$(whiptail --title "SET DATV EXPRESS PORTS FOR THE 1255 MHz BAND" --checklist \
+    "Select or deselect the active ports using the spacebar" 20 78 4 \
+    "Port A" "J6 Pin 5" $Check1 \
+    "Port B" "J6 Pin 6" $Check2 \
+    "Port C" "J6 Pin 7" $Check3 \
+    "Port D" "J6 Pin 10" $Check4 3>&1 1>&2 2>&3)
+  if [ $? -eq 0 ]; then
+    EXPPORTS3=0
+    if (echo $TESTPORT | grep -q A); then
+      EXPPORTS3=1
+    fi
+    if (echo $TESTPORT | grep -q B); then
+      EXPPORTS3=$[$EXPPORTS3+2]
+    fi
+    if (echo $TESTPORT | grep -q C); then
+      EXPPORTS3=$[$EXPPORTS3+4]
+    fi
+    if (echo $TESTPORT | grep -q D); then
+      EXPPORTS3=$[$EXPPORTS3+8]
+    fi
+    set_config_var expports3 "$EXPPORTS3" $CONFIGFILE
+  fi
+
+  EXPLEVEL4=$(get_config_var explevel4 $CONFIGFILE)
+  EXPLEVEL4=$(whiptail --inputbox "Enter 0 to 47" 8 78 $EXPLEVEL3 --title "SET DATV EXPRESS OUTPUT LEVEL FOR THE 2400 MHz BAND" 3>&1 1>&2 2>&3)
+  if [ $? -eq 0 ]; then
+    set_config_var explevel4 "$EXPLEVEL4" $CONFIGFILE
+  fi
+
+  Check1=OFF
+  Check2=OFF
+  Check3=OFF
+  Check4=OFF
+  EXPPORTS4=$(get_config_var expports4 $CONFIGFILE)
+  TESTPORT=$EXPPORTS4
+  if [ "$TESTPORT" -gt 7 ]; then
+    Check4=ON
+    TESTPORT=$[$TESTPORT-8]
+  fi
+  if [ "$TESTPORT" -gt 3 ]; then
+    Check3=ON
+    TESTPORT=$[$TESTPORT-4]
+  fi
+  if [ "$TESTPORT" -gt 1 ]; then
+    Check2=ON
+    TESTPORT=$[$TESTPORT-2]
+  fi
+  if [ "$TESTPORT" -gt 0 ]; then
+    Check1=ON
+  fi
+  TESTPORT=$(whiptail --title "SET DATV EXPRESS PORTS FOR THE 71 MHz BAND" --checklist \
+    "Select or deselect the active ports using the spacebar" 20 78 4 \
+    "Port A" "J6 Pin 5" $Check1 \
+    "Port B" "J6 Pin 6" $Check2 \
+    "Port C" "J6 Pin 7" $Check3 \
+    "Port D" "J6 Pin 10" $Check4 3>&1 1>&2 2>&3)
+  if [ $? -eq 0 ]; then
+    EXPPORTS4=0
+    if (echo $TESTPORT | grep -q A); then
+      EXPPORTS4=1
+    fi
+    if (echo $TESTPORT | grep -q B); then
+      EXPPORTS4=$[$EXPPORTS4+2]
+    fi
+    if (echo $TESTPORT | grep -q C); then
+      EXPPORTS4=$[$EXPPORTS4+4]
+    fi
+    if (echo $TESTPORT | grep -q D); then
+      EXPPORTS4=$[$EXPPORTS4+8]
+    fi
+    set_config_var expports4 "$EXPPORTS4" $CONFIGFILE
   fi
 }
 
@@ -1173,25 +1408,27 @@ menuchoice=$(whiptail --title "$StrSystemTitle" --menu "$StrSystemContext" 16 78
 
 do_system_setup_2()
 {
-menuchoice=$(whiptail --title "$StrSystemTitle" --menu "$StrSystemContext" 16 78 9 \
-    "1 Set Presets" "For Touchscreen"  \
-    "2 ADF4351 Ref Freq" "Set ADF4351 Reference Freq and Cal" \
-    "3 ADF4351 Levels" "Set ADF4351 Levels for Each Band" \
-    "4 SD Card Info" "Show SD Card Information"  \
-    "5 DATV Express" "Configure Advanced DATV Express Settings" \
-    "6 Contest Numbers" "Set Contest Numbers for each band" \
-    "7 Viewfinder" "Disable or Enable Viewfinder on Touchscreen" \
-    "8 Beta Software" "Choose whether to use experimental software" \
+menuchoice=$(whiptail --title "$StrSystemTitle" --menu "$StrSystemContext" 16 78 10 \
+    "1 Set Presets" "For Touchscreen Frequencies"  \
+    "2 Set Presets" "For Touchscreen Symbol Rates"  \
+    "3 ADF4351 Ref Freq" "Set ADF4351 Reference Freq and Cal" \
+    "4 ADF4351 Levels" "Set ADF4351 Levels for Each Band" \
+    "5 SD Card Info" "Show SD Card Information"  \
+    "6 DATV Express" "Configure DATV Express Settings for each band" \
+    "7 Contest Numbers" "Set Contest Numbers for each band" \
+    "8 Viewfinder" "Disable or Enable Viewfinder on Touchscreen" \
+    "9 Beta Software" "Choose whether to use experimental software" \
     3>&2 2>&1 1>&3)
     case "$menuchoice" in
         1\ *) do_presets ;;
-        2\ *) do_4351_ref  ;;
-        3\ *) do_4351_levels ;;
-        4\ *) do_SD_info ;;
-        5\ *) do_set_express ;;
-        6\ *) do_numbers ;;
-        7\ *) do_vfinder ;;
-        8\ *) do_beta ;;
+        2\ *) do_preset_SRs ;;
+        3\ *) do_4351_ref  ;;
+        4\ *) do_4351_levels ;;
+        5\ *) do_SD_info ;;
+        6\ *) do_set_express ;;
+        7\ *) do_numbers ;;
+        8\ *) do_vfinder ;;
+        9\ *) do_beta ;;
       esac
 }
 
@@ -1304,7 +1541,7 @@ FREQ_OUTPUT=$(get_config_var freqoutput $CONFIGFILE)
 GAIN_OUTPUT=$(get_config_var rfpower $CONFIGFILE)
 let FECNUM=FEC
 let FECDEN=FEC+1
-INFO=$CALL":"$MODE_INPUT"-->"$MODE_OUTPUT"("$SYMBOLRATEK"KSymbol FEC "$FECNUM"/"$FECDEN") on "$FREQ_OUTPUT"Mhz Gain "$GAIN_OUTPUT
+INFO=$CALL":"$MODE_INPUT"-->"$MODE_OUTPUT"("$SYMBOLRATEK"KSymbol FEC "$FECNUM"/"$FECDEN") on "$FREQ_OUTPUT"Mhz"
 
 do_transmit
 }
@@ -1347,7 +1584,7 @@ if [ "$MODE_OUTPUT" == "DATVEXPRESS" ]; then
   fi
 fi
 
-# Set Band (and Filter) Switching
+# Set Band, Filter and Port Switching
 $PATHSCRIPT"/ctlfilter.sh"
 
 # Check whether to go straight to transmit or display the menu
@@ -1372,7 +1609,7 @@ while [ "$status" -eq 0 ]
     GAIN_OUTPUT=$(get_config_var rfpower $CONFIGFILE)
     let FECNUM=FEC
     let FECDEN=FEC+1
-    INFO=$CALL":"$MODE_INPUT"-->"$MODE_OUTPUT"("$SYMBOLRATEK"KSymbol FEC "$FECNUM"/"$FECDEN") on "$FREQ_OUTPUT"Mhz Gain "$GAIN_OUTPUT
+    INFO=$CALL":"$MODE_INPUT"-->"$MODE_OUTPUT"("$SYMBOLRATEK"KSymbol FEC "$FECNUM"/"$FECDEN") on "$FREQ_OUTPUT"Mhz"
 
     # Display main menu
 

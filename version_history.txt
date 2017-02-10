@@ -1,3 +1,7 @@
+201702100
+Adds DATV Express Port Switching.  Now full functionality.
+Tidies ctrl-c exit from gui to console
+
 201702090
 Interim release to support updated DATV Express Server files.  Adds PTT Switching
 
