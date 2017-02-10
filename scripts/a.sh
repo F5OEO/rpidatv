@@ -162,6 +162,8 @@ case "$MODE_OUTPUT" in
     echo "set freq "$FREQ_OUTPUTHZ >> /tmp/expctrl
     echo "set fec "$FECNUM"/"$FECDEN >> /tmp/expctrl
     echo "set srate "$SYMBOLRATE >> /tmp/expctrl
+    # Set the ports
+    $PATHSCRIPT"/ctlfilter.sh"
 
     # Set the output level based on the band
     INT_FREQ_OUTPUT=${FREQ_OUTPUT%.*}
@@ -171,8 +173,10 @@ case "$MODE_OUTPUT" in
       GAIN=$(get_config_var explevel1 $CONFIGFILE);
     elif (( $INT_FREQ_OUTPUT \< 950 )); then
       GAIN=$(get_config_var explevel2 $CONFIGFILE);
-    elif (( $INT_FREQ_OUTPUT \< 4400 )); then
+    elif (( $INT_FREQ_OUTPUT \< 2000 )); then
       GAIN=$(get_config_var explevel3 $CONFIGFILE);
+    elif (( $INT_FREQ_OUTPUT \< 4400 )); then
+      GAIN=$(get_config_var explevel4 $CONFIGFILE);
     else
       GAIN="30";
     fi
