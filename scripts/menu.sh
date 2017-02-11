@@ -1245,7 +1245,7 @@ do_set_express()
   fi
 
   EXPLEVEL4=$(get_config_var explevel4 $CONFIGFILE)
-  EXPLEVEL4=$(whiptail --inputbox "Enter 0 to 47" 8 78 $EXPLEVEL3 --title "SET DATV EXPRESS OUTPUT LEVEL FOR THE 2400 MHz BAND" 3>&1 1>&2 2>&3)
+  EXPLEVEL4=$(whiptail --inputbox "Enter 0 to 47" 8 78 $EXPLEVEL4 --title "SET DATV EXPRESS OUTPUT LEVEL FOR THE 2400 MHz BAND" 3>&1 1>&2 2>&3)
   if [ $? -eq 0 ]; then
     set_config_var explevel4 "$EXPLEVEL4" $CONFIGFILE
   fi

@@ -1,3 +1,7 @@
+201702110
+Bug fix for update of DATV Express
+Bug fix for Express levels in Menu
+
 201702100
 Adds DATV Express Port Switching.  Now full functionality.
 Tidies ctrl-c exit from gui to console
