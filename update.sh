@@ -168,6 +168,7 @@ cd /home/pi
 wget https://github.com/G4GUO/express_server/archive/master.zip -O master.zip
 sudo rm -f -r express_server-master
 unzip -o master.zip
+sudo rm -f -r express_server
 mv express_server-master express_server
 rm master.zip
 cd /home/pi/express_server
