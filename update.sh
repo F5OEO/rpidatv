@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Updated by davecrump 201702021
+# Updated by davecrump 201702110
 
 
 # Modified to overwrite ~/rpidatv/scripts and
@@ -163,9 +163,12 @@ fi
 sudo rm -f -r /lib/firmware/datvexpress
 sudo rm -f /usr/bin/express_server
 sudo rm -f /etc/udev/rules.d/10-datvexpress.rules
+sudo rm -f -r /home/pi/express_server-master
 cd /home/pi
 wget https://github.com/G4GUO/express_server/archive/master.zip -O master.zip
-unzip master.zip
+sudo rm -f -r express_server-master
+unzip -o master.zip
+sudo rm -f -r express_server
 mv express_server-master express_server
 rm master.zip
 cd /home/pi/express_server
