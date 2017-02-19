@@ -131,7 +131,7 @@ case "$MODE_OUTPUT" in
       MODE_INPUT="CAMMPEG-2"
     fi
     # Temporarily set optimum symbol rate for BATC Streamer
-    SYMBOLRATEK="500"
+    SYMBOLRATEK="400"
     let SYMBOLRATE=SYMBOLRATEK*1000
   ;;
 
@@ -142,7 +142,7 @@ case "$MODE_OUTPUT" in
     if [ "$MODE_INPUT" == "CAMH264" ]; then
       MODE_INPUT="CAMMPEG-2"
     # Temporarily set optimum symbol rate for another Streamer
-    SYMBOLRATEK="500"
+    SYMBOLRATEK="400"
     let SYMBOLRATE=SYMBOLRATEK*1000
     fi
   ;;
@@ -362,14 +362,14 @@ case "$MODE_INPUT" in
         ITS_OFFSET="-00:00:5.0"
         #sudo nice -n -30 $PATHRPI"/ffmpeg" -i videots -y $OUTPUT_STREAM &
         sudo nice -n -30 $PATHRPI"/ffmpeg" -i videots -y  -video_size 640x480\
-          -b:v 500k -maxrate 500k -bufsize 2048k $OUTPUT_BATC &
+          -b:v 500k -maxrate 700k -bufsize 2048k $OUTPUT_BATC &
         OUTPUT="videots"
       ;;
       "STREAMER")
         ITS_OFFSET="-00:00:5.0"
         #sudo nice -n -30 $PATHRPI"/ffmpeg" -i videots -y $OUTPUT_STREAM &
         sudo nice -n -30 $PATHRPI"/ffmpeg" -i videots -y  -video_size 640x480\
-          -b:v 500k -maxrate 500k -bufsize 2048k $OUTPUT_STREAM &
+          -b:v 500k -maxrate 700k -bufsize 2048k $OUTPUT_STREAM &
         OUTPUT="videots"
       ;;
       "IP")
