@@ -1,6 +1,8 @@
 #! /bin/bash
 # set -x #Uncomment for testing
 
+# Version 201702190
+
 ############# SET GLOBAL VARIABLES ####################
 
 PATHRPI="/home/pi/rpidatv/bin"
@@ -40,27 +42,26 @@ sudo killall tcanim >/dev/null 2>/dev/null
 # Kill netcat that night have been started for Express Srver
 sudo killall netcat >/dev/null 2>/dev/null
 sudo killall -9 netcat >/dev/null 2>/dev/null
-#---- Launch FBCP ----
-#sudo killall fbcp 
-#fbcp &
-# ---------------
-#sudo killall uv4l
+
+############ FUNCTION TO DETECT USB AUDIO DONGLE #############################
 
 detect_audio()
 {
-devicea="/proc/asound/card1"
-if [ -e "$devicea" ]; then
-	AUDIO_CARD=1
-else
-	AUDIO_CARD=0
-fi
+  devicea="/proc/asound/card1"
+  if [ -e "$devicea" ]; then
+    AUDIO_CARD=1
+  else
+    AUDIO_CARD=0
+  fi
 
-if [ "$AUDIO_CARD" == 1 ]; then
-	echo Audio Card present
-else
-	echo Audio Card Absent
-fi
+  if [ "$AUDIO_CARD" == 1 ]; then
+    echo Audio Card present
+  else
+    echo Audio Card Absent
+  fi
 }
+
+############ READ FROM rpidatvconfig.txt and Set PARAMETERS #######################
 
 MODE_INPUT=$(get_config_var modeinput $CONFIGFILE)
 TSVIDEOFILE=$(get_config_var tsvideofile $CONFIGFILE)
@@ -72,6 +73,11 @@ CHANNEL=$CALL"-rpidatv"
 FREQ_OUTPUT=$(get_config_var freqoutput $CONFIGFILE)
 BATC_OUTPUT=$(get_config_var batcoutput $CONFIGFILE)
 OUTPUT_BATC="-f flv rtmp://fms.batc.tv/live/"$BATC_OUTPUT"/"$BATC_OUTPUT
+
+STREAM_URL=$(get_config_var streamurl $CONFIGFILE)
+STREAM_KEY=$(get_config_var streamkey $CONFIGFILE)
+OUTPUT_STREAM="-f flv "$STREAM_URL"/"$STREAM_KEY
+
 MODE_OUTPUT=$(get_config_var modeoutput $CONFIGFILE)
 SYMBOLRATEK=$(get_config_var symbolrate $CONFIGFILE)
 GAIN=$(get_config_var rfpower $CONFIGFILE)
@@ -87,52 +93,71 @@ ANALOGCAMINPUT=$(get_config_var analogcaminput $CONFIGFILE)
 ANALOGCAMSTANDARD=$(get_config_var analogcamstandard $CONFIGFILE)
 VNCADDR=$(get_config_var vncaddr $CONFIGFILE)
 
-#v4l2-ctl --overlay=0
-
-
-
-detect_audio
+OUTPUT_IP=""
 
 let SYMBOLRATE=SYMBOLRATEK*1000
 FEC=$(get_config_var fec $CONFIGFILE)
 let FECNUM=FEC
 let FECDEN=FEC+1
 
-OUTPUT_IP=""
+#v4l2-ctl --overlay=0
+
+detect_audio
+
+######################### Pre-processing for each Output Mode ###############
 
 case "$MODE_OUTPUT" in
-	IP) 
-	FREQUENCY_OUT=0
-	OUTPUT_IP="-n"$UDPOUTADDR":10000"
-	#GAIN=0
-	;;
-	IQ) 
-	FREQUENCY_OUT=0
-	OUTPUT=videots
-	MODE=IQ
-	$PATHSCRIPT"/ctlfilter.sh"
-	$PATHSCRIPT"/ctlvco.sh"
-	#GAIN=0
-	;;
-	QPSKRF)
-	FREQUENCY_OUT=$FREQ_OUTPUT
-	OUTPUT=videots
-	MODE=RF
-	;;
-	BATC)
-	#MODE_INPUT=BATC
-	OUTPUT=$OUTPUT_BATC
-	;;
-	DIGITHIN) 
-	FREQUENCY_OUT=0
-	OUTPUT=videots
-	DIGITHIN_MODE=1
-	MODE=DIGITHIN
-        $PATHSCRIPT"/ctlfilter.sh"
-        $PATHSCRIPT"/ctlvco.sh"
- 	#GAIN=0
-	;;
-  DTX1) 
+
+  IQ)
+    FREQUENCY_OUT=0
+    OUTPUT=videots
+    MODE=IQ
+    $PATHSCRIPT"/ctlfilter.sh"
+    $PATHSCRIPT"/ctlvco.sh"
+    #GAIN=0
+  ;;
+
+  QPSKRF)
+    FREQUENCY_OUT=$FREQ_OUTPUT
+    OUTPUT=videots
+    MODE=RF
+  ;;
+
+  BATC)
+    # Set Output string "-f flv rtmp://fms.batc.tv/live/"$BATC_OUTPUT"/"$BATC_OUTPUT 
+    OUTPUT=$OUTPUT_BATC
+    # If CAMH264 is selected, temporarily select CAMMPEG-2
+    if [ "$MODE_INPUT" == "CAMH264" ]; then
+      MODE_INPUT="CAMMPEG-2"
+    fi
+    # Temporarily set optimum symbol rate for BATC Streamer
+    SYMBOLRATEK="500"
+    let SYMBOLRATE=SYMBOLRATEK*1000
+  ;;
+
+  STREAMER)
+    # Set Output string "-f flv "$STREAM_URL"/"$STREAM_KEY
+    OUTPUT=$OUTPUT_STREAM
+    # If CAMH264 is selected, temporarily select CAMMPEG-2
+    if [ "$MODE_INPUT" == "CAMH264" ]; then
+      MODE_INPUT="CAMMPEG-2"
+    # Temporarily set optimum symbol rate for another Streamer
+    SYMBOLRATEK="500"
+    let SYMBOLRATE=SYMBOLRATEK*1000
+    fi
+  ;;
+
+  DIGITHIN)
+    FREQUENCY_OUT=0
+    OUTPUT=videots
+    DIGITHIN_MODE=1
+    MODE=DIGITHIN
+    $PATHSCRIPT"/ctlfilter.sh"
+    $PATHSCRIPT"/ctlvco.sh"
+    #GAIN=0
+  ;;
+
+  DTX1)
     MODE=PARALLEL
     FREQUENCY_OUT=2
     OUTPUT=videots
@@ -187,6 +212,13 @@ case "$MODE_OUTPUT" in
     # Make sure that carrier mode is off
     echo "set car off" >> /tmp/expctrl
   ;;
+
+  IP)
+    FREQUENCY_OUT=0
+    OUTPUT_IP="-n"$UDPOUTADDR":10000"
+    #GAIN=0
+  ;;
+
 esac
 
 #CALL="F5OEO"
@@ -277,8 +309,11 @@ case "$MODE_INPUT" in
 
     case "$MODE_OUTPUT" in
       "BATC")
-        # sudo nice -n -30 $PATHRPI"/ffmpeg" -i videots -y $OUTPUT_BATC & 
-        echo > null
+        : # Do nothing
+        # sudo nice -n -30 $PATHRPI"/ffmpeg" -i videots -y $OUTPUT_BATC &
+      ;;
+      "STREAMER")
+        : # Do nothing
       ;;
       "IP")
         OUTPUT_FILE=""
@@ -317,15 +352,28 @@ case "$MODE_INPUT" in
     v4l2-ctl --set-fmt-overlay=left=0,top=0,width=$OVERLAY_VIDEO_WIDTH,height=$OVERLAY_VIDEO_HEIGHT
     v4l2-ctl -p $VIDEO_FPS
     let DELAY=(BITRATE_VIDEO*8)/10
+    # If sound arrives first, decrease the numeric number to delay it
+    # "-00:00:0.7" works well at SR1000 on IQ mode
+    # "-00:00:1.0" works well at SR2000 on IQ mode
+    ITS_OFFSET="-00:00:1.0"
 
     case "$MODE_OUTPUT" in
       "BATC")
-        # ffmpeg sends the stream directly to the BATC Server
-        echo > null
+        ITS_OFFSET="-00:00:5.0"
+        #sudo nice -n -30 $PATHRPI"/ffmpeg" -i videots -y $OUTPUT_STREAM &
+        sudo nice -n -30 $PATHRPI"/ffmpeg" -i videots -y  -video_size 640x480\
+          -b:v 500k -maxrate 500k -bufsize 2048k $OUTPUT_BATC &
+        OUTPUT="videots"
+      ;;
+      "STREAMER")
+        ITS_OFFSET="-00:00:5.0"
+        #sudo nice -n -30 $PATHRPI"/ffmpeg" -i videots -y $OUTPUT_STREAM &
+        sudo nice -n -30 $PATHRPI"/ffmpeg" -i videots -y  -video_size 640x480\
+          -b:v 500k -maxrate 500k -bufsize 2048k $OUTPUT_STREAM &
+        OUTPUT="videots"
       ;;
       "IP")
-        # ffmpeg sends the stream directly to the IP output
-        echo > null
+        : # Do nothing
       ;;
       "DATVEXPRESS")
         echo "set ptt tx" >> /tmp/expctrl
@@ -337,12 +385,32 @@ case "$MODE_INPUT" in
       ;;
     esac
 
+#    AUDIO_CARD=0
+
     if [ "$AUDIO_CARD" == 0 ]; then
       # ******************************* MPEG-2 VIDEO WITH BEEP ************************************
-      sudo $PATHRPI"/ffmpeg"  -loglevel $MODE_DEBUG -itsoffset -00:00:0.2 -analyzeduration 0 -probesize 2048  -fpsprobesize 0 -re -ac 1 -f lavfi -thread_queue_size 512 -i "sine=frequency=500:beep_factor=4:sample_rate=48000:duration=3600" -f v4l2 -framerate $VIDEO_FPS -video_size "$VIDEO_WIDTH"x"$VIDEO_HEIGHT" -i /dev/video0 -fflags nobuffer -vcodec mpeg2video -s "$VIDEO_WIDTH"x"$VIDEO_HEIGHT" -aspect 4:3 -b:v $BITRATE_VIDEO -minrate:v $BITRATE_VIDEO -maxrate:v  $BITRATE_VIDEO -f mpegts  -blocksize 1880 -strict experimental  -acodec mp2 -ab 64K -ar 48k -ac 1  -mpegts_original_network_id 1 -mpegts_transport_stream_id 1 -mpegts_service_id $SERVICEID -mpegts_pmt_start_pid $PIDPMT -mpegts_start_pid $PIDVIDEO -metadata service_provider=$CALL -metadata service_name=$CHANNEL -muxrate $BITRATE_TS -y $OUTPUT &
+      sudo $PATHRPI"/ffmpeg"  -loglevel $MODE_DEBUG -itsoffset -00:00:0.2\
+        -analyzeduration 0 -probesize 2048  -fpsprobesize 0 -re -ac 1 -f lavfi -thread_queue_size 512\
+        -i "sine=frequency=500:beep_factor=4:sample_rate=44100:duration=3600"\
+        -f v4l2 -framerate $VIDEO_FPS -video_size "$VIDEO_WIDTH"x"$VIDEO_HEIGHT"\
+        -i /dev/video0 -fflags nobuffer -vcodec mpeg2video -s "$VIDEO_WIDTH"x"$VIDEO_HEIGHT"\
+        -aspect 4:3 -b:v $BITRATE_VIDEO -minrate:v $BITRATE_VIDEO -maxrate:v  $BITRATE_VIDEO\
+        -f mpegts  -blocksize 1880 -strict experimental  -acodec mp2 -ab 64K -ar 44100 -ac 1\
+        -mpegts_original_network_id 1 -mpegts_transport_stream_id 1 -mpegts_service_id $SERVICEID\
+        -mpegts_pmt_start_pid $PIDPMT -mpegts_start_pid $PIDVIDEO -metadata service_provider=$CALL\
+        -metadata service_name=$CHANNEL -muxrate $BITRATE_TS -y $OUTPUT &
     else
       # ******************************* MPEG-2 VIDEO WITH AUDIO ************************************
-      sudo nice -n -30 arecord -f S16_LE -r 48000 -c 1 -M -D hw:1 |sudo nice -n -30 $PATHRPI"/ffmpeg" -loglevel $MODE_DEBUG -itsoffset -00:00:0.8 -analyzeduration 0 -probesize 2048  -fpsprobesize 0 -ac 1 -thread_queue_size 512 -i -  -f v4l2 -framerate $VIDEO_FPS -video_size "$VIDEO_WIDTH"x"$VIDEO_HEIGHT" -i /dev/video0 -fflags nobuffer -vcodec mpeg2video -s "$VIDEO_WIDTH"x"$VIDEO_HEIGHT" -aspect 4:3 -b:v $BITRATE_VIDEO -minrate:v $BITRATE_VIDEO -maxrate:v  $BITRATE_VIDEO -f mpegts  -blocksize 1880 -strict experimental  -acodec mp2 -ab 64K -ar 48k -ac 1 -mpegts_original_network_id 1 -mpegts_transport_stream_id 1 -mpegts_service_id $SERVICEID -mpegts_pmt_start_pid $PIDPMT -mpegts_start_pid $PIDVIDEO -metadata service_provider=$CALL -metadata service_name=$CHANNEL -muxrate $BITRATE_TS -y $OUTPUT &
+      sudo nice -n -30 arecord -f S16_LE -r 44100 -c 1 -M -D hw:1\
+        |sudo nice -n -30 $PATHRPI"/ffmpeg" -loglevel $MODE_DEBUG -itsoffset "$ITS_OFFSET"\
+        -analyzeduration 0 -probesize 2048  -fpsprobesize 0 -ac 1 -thread_queue_size 512\
+        -i -  -f v4l2 -framerate $VIDEO_FPS -video_size "$VIDEO_WIDTH"x"$VIDEO_HEIGHT"\
+        -i /dev/video0 -fflags nobuffer -vcodec mpeg2video -s "$VIDEO_WIDTH"x"$VIDEO_HEIGHT"\
+        -aspect 4:3 -b:v $BITRATE_VIDEO -minrate:v $BITRATE_VIDEO -maxrate:v  $BITRATE_VIDEO\
+        -f mpegts  -blocksize 1880 -strict experimental  -acodec mp2 -ab 64K -ar 44100 -ac 1\
+        -mpegts_original_network_id 1 -mpegts_transport_stream_id 1 -mpegts_service_id $SERVICEID\
+        -mpegts_pmt_start_pid $PIDPMT -mpegts_start_pid $PIDVIDEO -metadata service_provider=$CALL\
+        -metadata service_name=$CHANNEL -muxrate $BITRATE_TS -y $OUTPUT &
     fi
   ;;
 
@@ -397,33 +465,36 @@ $PATHRPI"/avc2ts" -b $BITRATE_VIDEO -m $BITRATE_TS -x $VIDEO_WIDTH -y $VIDEO_HEI
   #============================================ ANALOG =============================================================
   "ANALOGCAM")
 
-  if [ "$ANALOGCAMINPUT" != "-" ]; then
-    v4l2-ctl -d $ANALOGCAMNAME "--set-input="$ANALOGCAMINPUT
-  fi
+    if [ "$ANALOGCAMINPUT" != "-" ]; then
+      v4l2-ctl -d $ANALOGCAMNAME "--set-input="$ANALOGCAMINPUT
+    fi
+    if [ "$ANALOGCAMSTANDARD" != "-" ]; then
+      v4l2-ctl -d $ANALOGCAMNAME "--set-standard="$ANALOGCAMSTANDARD
+    fi
 
-  if [ "$ANALOGCAMSTANDARD" != "-" ]; then
-    v4l2-ctl -d $ANALOGCAMNAME "--set-standard="$ANALOGCAMSTANDARD
-  fi
+    sudo modprobe -r bcm2835_v4l2
 
-  sudo modprobe -r bcm2835_v4l2
-  case "$MODE_OUTPUT" in
-  "BATC")
-    sudo nice -n -30 $PATHRPI"/ffmpeg" -loglevel $MODE_DEBUG -i videots -y $OUTPUT_BATC & 
+    case "$MODE_OUTPUT" in
+      "BATC")
+#    sudo nice -n -30 $PATHRPI"/ffmpeg" -loglevel $MODE_DEBUG -i videots -y $OUTPUT_BATC & 
+        sudo nice -n 0 $PATHRPI"/ffmpeg" -i videots -y $OUTPUT_BATC &
+        OUTPUT_FILE="videots"
+      ;;
+      "IP")
+        OUTPUT_FILE=""
+      ;;
+      "DATVEXPRESS")
+        echo "set ptt tx" >> /tmp/expctrl
+        sudo nice -n -30 netcat -u -4 127.0.0.1 1314 < videots &
+      ;;
+      *)
+        sudo $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c $FECNUM"/"$FECDEN -f $FREQUENCY_OUT -p $GAIN -m $MODE -x $PIN_I -y $PIN_Q &
+      ;;
+    esac
+
+    $PATHRPI"/avc2ts" -b $BITRATE_VIDEO -m $BITRATE_TS -x $VIDEO_WIDTH -y $VIDEO_HEIGHT\
+      -f $VIDEO_FPS -i 100 $OUTPUT_FILE -t 2 -e $ANALOGCAMNAME -p $PIDPMT -s $CHANNEL $OUTPUT_IP &
   ;;
-  "IP")
-    OUTPUT_FILE=""
-  ;;
-  "DATVEXPRESS")
-    echo "set ptt tx" >> /tmp/expctrl
-    sudo nice -n -30 netcat -u -4 127.0.0.1 1314 < videots &
-  ;;
-  *)
-    sudo $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c $FECNUM"/"$FECDEN -f $FREQUENCY_OUT -p $GAIN -m $MODE -x $PIN_I -y $PIN_Q &;;
-  esac
-
-$PATHRPI"/avc2ts" -b $BITRATE_VIDEO -m $BITRATE_TS -x $VIDEO_WIDTH -y $VIDEO_HEIGHT -f $VIDEO_FPS -i 100 $OUTPUT_FILE -t 2 -e $ANALOGCAMNAME -p $PIDPMT -s $CHANNEL $OUTPUT_IP  &
-
-;;
 
 #============================================ DESKTOP =============================================================
 "DESKTOP")

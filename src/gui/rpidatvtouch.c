@@ -76,7 +76,7 @@ char ModeOutput[255];
 
 // Values to be stored in and read from rpidatvconfig.txt:
 
-int TabSR[5]= {125,333,1000,2000,4000};
+int TabSR[5]={125,333,1000,2000,4000};
 int TabFec[5]={1,2,3,5,7};
 char TabModeInput[5][255]={"CAMMPEG-2","CAMH264","PATERNAUDIO","ANALOGCAM","CARRIER"};
 char TabFreq[5][255]={"71","146.5","437","1249","1255"};
@@ -357,12 +357,12 @@ int getTouchScreenDetails(int *screenXmin,int *screenXmax,int *screenYmin,int *s
                                                         if ((k < 3) || abs[k]){
                                                                 printf("     %s %6d\n", absval[k], abs[k]);
                                                                 if (j == 0){
-                                                                        if (absval[k] == "Min  ") *screenXmin =  abs[k];
-                                                                        if (absval[k] == "Max  ") *screenXmax =  abs[k];
+                                                                        if ((strcmp(absval[k],"Min  ")==0)) *screenXmin =  abs[k];
+                                                                        if ((strcmp(absval[k],"Max  ")==0)) *screenXmax =  abs[k];
                                                                 }
                                                                 if (j == 1){
-                                                                        if (absval[k] == "Min  ") *screenYmin =  abs[k];
-                                                                        if (absval[k] == "Max  ") *screenYmax =  abs[k];
+                                                                        if ((strcmp(absval[k],"Min  ")==0)) *screenYmin =  abs[k];
+                                                                        if ((strcmp(absval[k],"Max  ")==0)) *screenYmax =  abs[k];
                                                                 }
                                                         }
                                                 }
@@ -501,20 +501,25 @@ void SelectPTT(int NoButton,int Status)  // TX/RX
 
 void TransmitStart()
 {
-	printf("Transmit Start\n");
+  printf("Transmit Start\n");
 
-	#define PATH_SCRIPT_A "sudo /home/pi/rpidatv/scripts/a.sh >/dev/null 2>/dev/null"
-	if((strcmp(ModeInput,TabModeInput[0])==0)||(strcmp(ModeInput,TabModeInput[1])==0)) //CAM
-	{
-		printf("DISPLAY OFF \n");
-		IsDisplayOn=0;
-		finish();
-
-		system("v4l2-ctl --overlay=1 >/dev/null 2>/dev/null");
-	}
-
-	system(PATH_SCRIPT_A);
-
+  char Param[255];
+  char Value[255];
+  #define PATH_SCRIPT_A "sudo /home/pi/rpidatv/scripts/a.sh >/dev/null 2>/dev/null"
+  // Check if camera selected
+  if((strcmp(ModeInput,TabModeInput[0])==0)||(strcmp(ModeInput,TabModeInput[1])==0))
+  {
+    // Start the viewfinder if required
+    strcpy(Param,"vfinder");
+    GetConfigParam(PATH_CONFIG,Param,Value);
+    if(strcmp(Value,"on")==0)
+    {
+      IsDisplayOn=0;
+      finish();
+      system("v4l2-ctl --overlay=1 >/dev/null 2>/dev/null");
+    }
+  }
+  system(PATH_SCRIPT_A);
 }
 
 void TransmitStop()
@@ -539,6 +544,7 @@ void TransmitStop()
     system(expressrx);
   }
 
+  // Kill netcat as used by DATV Express
   system("sudo killall netcat >/dev/null 2>/dev/null");
 
   // Kill the key processes as nicely as possible
@@ -546,6 +552,8 @@ void TransmitStop()
   system("sudo killall ffmpeg >/dev/null 2>/dev/null");
   system("sudo killall tcanim >/dev/null 2>/dev/null");
   system("sudo killall avc2ts >/dev/null 2>/dev/null");
+
+  // Turn the Viewfinder off
   system("v4l2-ctl --overlay=0 >/dev/null 2>/dev/null");
 
   // Then pause and make sure that avc2ts has really been stopped (needed at high SRs)
@@ -583,11 +591,12 @@ void *DisplayFFT(void * arg)
 
 	while(FinishedButton==0)
 	{
-		int Nbread; // value set later but not used
+		//int Nbread; // value set later but not used
 		//int log2_N=11; //FFT 1024 not used?
 		//int ret; // not used?
 
-		Nbread=fread( fftin,sizeof(fftwf_complex),FFT_SIZE,pFileIQ);
+		//Nbread=fread( fftin,sizeof(fftwf_complex),FFT_SIZE,pFileIQ);
+		fread( fftin,sizeof(fftwf_complex),FFT_SIZE,pFileIQ);
 		fftwf_execute( plan );
 
 		//printf("NbRead %d %d\n",Nbread,sizeof(struct GPU_FFT_COMPLEX));
