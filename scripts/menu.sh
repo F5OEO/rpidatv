@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Version 201702190
+
 ############ Set Environment Variables ###############
 
 PATHSCRIPT=/home/pi/rpidatv/scripts
@@ -359,17 +361,17 @@ do_output_setup_mode()
   DIGITHIN)
     Radio5=ON
   ;;
-  DTX1)
+#  DTX1)
+#    Radio6=ON
+#  ;;
+  DATVEXPRESS)
     Radio6=ON
   ;;
-  DATVEXPRESS)
+  IP)
     Radio7=ON
   ;;
-  IP)
-    Radio8=ON
-  ;;
   *)
-    Radio9=ON
+    Radio8=ON
   ;;
   esac
 
@@ -380,9 +382,8 @@ do_output_setup_mode()
     "BATC" "$StrOutputSetupBATC" $Radio3 \
     "STREAMER" "Stream to other Streaming Facility" $Radio4 \
     "DIGITHIN" "$StrOutputSetupDigithin" $Radio5 \
-    "DTX1" "$StrOutputSetupDTX1" $Radio6 \
-    "DATVEXPRESS" "$StrOutputSetupDATVExpress" $Radio7 \
-    "IP" "$StrOutputSetupIP" $Radio8 3>&2 2>&1 1>&3)
+    "DATVEXPRESS" "$StrOutputSetupDATVExpress" $Radio6 \
+    "IP" "$StrOutputSetupIP" $Radio7 3>&2 2>&1 1>&3)
 
   if [ $? -eq 0 ]; then
     case "$choutput" in
@@ -414,9 +415,9 @@ do_output_setup_mode()
       fi
     ;;
     STREAMER)
-      whiptail --title "Not implemented yet" --msgbox "Not Implemented yet.  Please press enter to continue" 8 78
       STREAM_URL=$(get_config_var streamurl $CONFIGFILE)
-      STREAM=$(whiptail --inputbox "Enter the stream URL" 8 78 $STREAM_URL --title "Enter other Stream Details" 3>&1 1>&2 2>&3)
+      STREAM=$(whiptail --inputbox "Enter the stream URL: rtmp://server.tld/folder" 8 78\
+        $STREAM_URL --title "Enter other Stream Details" 3>&1 1>&2 2>&3)
       if [ $? -eq 0 ]; then
         set_config_var streamurl "$STREAM" $CONFIGFILE
       fi
@@ -440,8 +441,8 @@ do_output_setup_mode()
       FREQ_OUTPUT=$(get_config_var freqoutput $CONFIGFILE)
       sudo ./si570 -f $FREQ_OUTPUT -m off
     ;;
-    DTX1)	;;
-
+    #DTX1)
+    #;;
     DATVEXPRESS)
       echo "Starting the DATV Express Server.  Please wait."
       if pgrep -x "express_server" > /dev/null; then
@@ -584,15 +585,15 @@ menuchoice=$(whiptail --title "$StrOutputTitle" --menu "$StrOutputContext" 16 78
 
 do_transmit() 
 {
-  # Call a.sh in a an additional process to start the transmitter
+  # Call a.sh in an additional process to start the transmitter
   $PATHSCRIPT"/a.sh" >/dev/null 2>/dev/null &
 
-  # do_status was called here
-
-  # Wait here transmitting until user presses a key
-
-  # Not sure about this
-  do_display_on
+  # Start the Viewfinder display if user sets it on
+  if [ "$V_FINDER" == "on" ]; then
+    do_display_on
+  else
+    do_display_off
+  fi
 
   # Wait here transmitting until user presses a key
   whiptail --title "$StrStatusTitle" --msgbox "$INFO" 8 78
@@ -899,6 +900,7 @@ do_EasyCap()
 
 do_audio_switch()
 {
+  whiptail --title "Not implemented yet" --msgbox "Not Implemented yet.  Please press enter to continue" 8 78
   AUDIO=$(get_config_var audio $CONFIGFILE)
   case "$AUDIO" in
   usb)
@@ -919,8 +921,6 @@ do_audio_switch()
   if [ $? -eq 0 ]; then                     ## If the selection has changed
     set_config_var audio "$AUDIO" $CONFIGFILE
   fi
-
-  whiptail --title "Not implemented yet" --msgbox "Not Implemented yet.  Please press enter to continue" 8 78
 }
 
 do_Update()
@@ -1326,10 +1326,8 @@ do_numbers()
 
 do_vfinder()
 {
-  whiptail --title "Not implemented yet" --msgbox "Not Implemented yet.  Please press enter to continue" 8 78
-
-  VFINDER=$(get_config_var vfinder $CONFIGFILE)
-  case "$VFINDER" in
+  V_FINDER=$(get_config_var vfinder $CONFIGFILE)
+  case "$V_FINDER" in
   on)
     Radio1=ON
     Radio2=OFF
@@ -1339,17 +1337,15 @@ do_vfinder()
     Radio2=ON
   esac
 
-  VFINDER=$(whiptail --title "SET VIEWFINDER ON OR OFF" --radiolist \
+  V_FINDER=$(whiptail --title "SET VIEWFINDER ON OR OFF" --radiolist \
     "Select one" 20 78 8 \
     "on" "Transmitted image displayed on Touchscreen" $Radio1 \
     "off" "Buttons displayed on touchscreen during transmit" $Radio2 \
     3>&2 2>&1 1>&3)
 
   if [ $? -eq 0 ]; then                     ## If the selection has changed
-    set_config_var vfinder "$VFINDER" $CONFIGFILE
+    set_config_var vfinder "$V_FINDER" $CONFIGFILE
   fi
-
-  whiptail --title "Not implemented yet" --msgbox "Not Implemented yet.  Please press enter to continue" 8 78
 }
 
 do_beta()
@@ -1376,8 +1372,6 @@ do_beta()
   if [ $? -eq 0 ]; then                     ## If the selection has changed
     set_config_var beta "$BETA" $CONFIGFILE
   fi
-
-  whiptail --title "Not implemented yet" --msgbox "Not Implemented yet.  Please press enter to continue" 8 78
 }
 
 do_system_setup()
@@ -1541,6 +1535,8 @@ FREQ_OUTPUT=$(get_config_var freqoutput $CONFIGFILE)
 GAIN_OUTPUT=$(get_config_var rfpower $CONFIGFILE)
 let FECNUM=FEC
 let FECDEN=FEC+1
+V_FINDER=$(get_config_var vfinder $CONFIGFILE)
+
 INFO=$CALL":"$MODE_INPUT"-->"$MODE_OUTPUT"("$SYMBOLRATEK"KSymbol FEC "$FECNUM"/"$FECDEN") on "$FREQ_OUTPUT"Mhz"
 
 do_transmit
@@ -1610,6 +1606,7 @@ while [ "$status" -eq 0 ]
     let FECNUM=FEC
     let FECDEN=FEC+1
     INFO=$CALL":"$MODE_INPUT"-->"$MODE_OUTPUT"("$SYMBOLRATEK"KSymbol FEC "$FECNUM"/"$FECDEN") on "$FREQ_OUTPUT"Mhz"
+    V_FINDER=$(get_config_var vfinder $CONFIGFILE)
 
     # Display main menu
 
