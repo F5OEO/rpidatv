@@ -1,3 +1,10 @@
+201702190
+Added streaming from PiCam with sound to BATC Streamer
+Added streaming from PiCam with sound to any other FMLE streamer
+Optimised MPEG-2 with sound from PiCam for IQ and DATV Express outputs
+Optimised H264 (no sound) from Analog for IQ and DATV Express outputs
+Added option to not display viewfinder on LCD (saves CPU capacity) 
+
 201702110
 Bug fix for update of DATV Express
 Bug fix for Express levels in Menu
