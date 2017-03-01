@@ -829,7 +829,7 @@ ret=fstat(fdts,&bufstat);
 			do
 			{
 				ioctl(fdts, FIONREAD, &n);
-				if(n<(BURST_MEM_SIZE)) {usleep(10000);}
+				if(n<(BURST_MEM_SIZE)) {usleep(2000);}
 			} 
 			while(n<(BURST_MEM_SIZE));
 		}
@@ -1262,7 +1262,7 @@ if(ModeIQ==2)
 	
 	if(FEC>0)
 	{
-		while(BufferAvailable()<(BIG_BUFFER_SIZE*5/10)) // 1/10 SECOND BUFFERING DEPEND ON SYMBOLRATE OR 80% BUFFERSIZE
+		while(BufferAvailable()<(BIG_BUFFER_SIZE*2/10)) // 1/10 SECOND BUFFERING DEPEND ON SYMBOLRATE OR 80% BUFFERSIZE
 		{
 			//printf("Init Filling Memory buffer %d\n",BufferAvailable());
 			//printf(".");
@@ -1388,8 +1388,22 @@ for (;;)
 				 printf("Underflow\n"); 
 			}
 			#endif
-			
+			#ifdef WITH_MEMORY_BUFFER
 			while (((free_slots>204*2*4)&&(BufferAvailable()>188*2))||(FEC==0)) //204Bytes*2(IQ)*4 paires/octet
+			#else
+			int ret;
+			struct stat bufstat;
+			ret=fstat(fdts,&bufstat);
+			if((FEC!=0)&&S_ISFIFO(bufstat.st_mode)) 
+			{
+				int n;
+				ioctl(fdts, FIONREAD, &n);
+				
+				if(n<free_slots*188*2/(204*8)) {continue;}
+			}	
+			
+			while (((free_slots>204*2*4))||(FEC==0)) //204Bytes*2(IQ)*4 paires/octet
+			#endif
 			{
 				
 				static uint32_t BuffAligned[256];
@@ -1611,7 +1625,7 @@ for (;;)
 				//SetUglyFrequency(TuneFrequency);
 				//TuneFrequency+=5000.0;
 				
-				printf("Memavailable %d/%d FreeSlot=%d/%d Bitrate : %f\n",BufferAvailable(),BIG_BUFFER_SIZE,free_slots_now,NUM_SAMPLES,(1000000.0*(free_slots_now-free_slots))/(float)time_difference);
+				printf("Memavailable %d/%d FreeSlot=%d/%d Bitrate : %f\n",BufferAvailable(),BIG_BUFFER_SIZE,free_slots_now,NUM_SAMPLES,(1000000.0*(free_slots_now-free_slots)*16)/(float)time_difference);
 			}
 			StatusCompteur++;
 				
@@ -1642,7 +1656,9 @@ for (;;)
 			if((Init==0)&&(free_slots > (NUM_SAMPLES*9/10))&&(BufferAvailable()<=188*8))
 			{
 				int k;
-				store_in_buffer_1880(PacketNULL);
+				//Fill with Null PAckets ?
+				//store_in_buffer_1880(PacketNULL);
+
 				/*while(BufferAvailable()<188*8) 
 						{
 							//printf("!");
@@ -1662,6 +1678,17 @@ for (;;)
 			#ifdef WITH_MEMORY_BUFFER
 			while ((free_slots > (204*8*2))&&((BufferAvailable()>=188*8)||(FEC==0))) //204Bytes*2(IQ)/32
 			#else
+			int ret;
+			struct stat bufstat;
+			ret=fstat(fdts,&bufstat);
+			if((FEC!=0)&&S_ISFIFO(bufstat.st_mode)) 
+			{
+				int n;
+				ioctl(fdts, FIONREAD, &n);
+				
+				if(n<free_slots*188/(204*2)) {printf("-");continue;}
+			}	
+			
 			while ((free_slots > (204*8*2))||(FEC==0)) //204Bytes*2(IQ)/32
 			#endif
 			{
@@ -1693,6 +1720,8 @@ for (;;)
 						{
 							#ifndef WITH_MEMORY_BUFFER
 							/*static*/ int ByteRead=0;
+							struct stat bufstat;
+							
 							if ((ByteRead=read(fdts,buff,188))!=188) // Read should be around 20us
 							{
 								printf("END OF FILE OR packet is not 188 long %d\n",ByteRead);
@@ -1791,8 +1820,8 @@ for (;;)
 					 
 					  //I32=TabIQTestI[NbSymbol%4];
 					  //Q32=TabIQTestQ[NbSymbol%4];
-						I32=0x55555555;
-					  	Q32=0x55555555;
+						I32=0xFFFFFFFF;
+					  	Q32=0x0;
 					}
 /*	
 					if(FEC<0)

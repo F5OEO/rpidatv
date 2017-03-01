@@ -32,10 +32,11 @@ EOF
 
 # ########################## SURE TO KILL ALL PROCESS ################
 sudo killall -9 ffmpeg >/dev/null 2>/dev/null
+sudo killall avc2ts >/dev/null 2>/dev/null
 sudo killall rpidatv >/dev/null 2>/dev/null
 sudo killall hello_encode.bin >/dev/null 2>/dev/null
 sudo killall h264yuv >/dev/null 2>/dev/null
-sudo killall -9 avc2ts >/dev/null 2>/dev/null
+
 #sudo killall express_server >/dev/null 2>/dev/null
 # Leave Express Server running
 sudo killall tcanim >/dev/null 2>/dev/null
@@ -330,7 +331,7 @@ case "$MODE_INPUT" in
 
     if [ "$AUDIO_CARD" == 0 ]; then
       # ******************************* H264 VIDEO, NO AUDIO ************************************
-      $PATHRPI"/avc2ts" -b $BITRATE_VIDEO -m $BITRATE_TS -x $VIDEO_WIDTH -y $VIDEO_HEIGHT -f $VIDEO_FPS -i 100 -p $PIDPMT -s $CHANNEL $OUTPUT_FILE $OUTPUT_IP > /dev/null &
+      $PATHRPI"/avc2ts" -b $BITRATE_VIDEO -m $BITRATE_TS -x $VIDEO_WIDTH -y $VIDEO_HEIGHT -f $VIDEO_FPS -i 100 -d 300 -p $PIDPMT -s $CHANNEL $OUTPUT_FILE $OUTPUT_IP > /dev/null &
     else
       # ******************************* H264 VIDEO WITH AUDIO (TODO) ************************************
       $PATHRPI"/avc2ts" -b $BITRATE_VIDEO -m $BITRATE_TS -x $VIDEO_WIDTH -y $VIDEO_HEIGHT -f $VIDEO_FPS -i 100 -p $PIDPMT -s $CHANNEL $OUTPUT_FILE $OUTPUT_IP  > /dev/null &
