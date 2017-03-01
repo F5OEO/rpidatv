@@ -1,8 +1,10 @@
+#!/bin/bash
+
 ########## ctlfilter.sh ############
 
-# Called by a.sh in IQ mode to switch in correct
+# Called by a.sh in IQ and DATVEXPRESS modes to switch in correct
 # Nyquist Filter and band switching
-# Written by Dave G8GKQ 26 Nov 16 and 4 Dec 16
+# Written by Dave G8GKQ 20170209
 
 # SR Outputs:
 
@@ -12,14 +14,23 @@
 # <550   011
 # <1100  100
 # <2200  101
-# >=2200 110 
- 
+# >=2200 110
+
 # Band Outputs:
 
 # <100   00  (71 MHz)
 # <250   01  (146.5 MHz)
 # <950   10  (437 MHz)
 # <4400  11  (1255 MHz)
+
+# DATV Express Switching
+
+# <100   0  (71 MHz)
+# <250   1  (146.5 MHz)
+# <950   2  (437 MHz)
+# <20000 3  (1255 MHz)
+# <4400  4  (2400 MHz
+
 
 # Non integer frequencies are rounded down
 
@@ -128,6 +139,30 @@ elif (( $INT_FREQ_OUTPUT \< 4400 )); then
 else
                 gpio -g write $band_bit0 0;
                 gpio -g write $band_bit1 0;
+fi
+
+################ If DATVEXPRESS in use, Set Ports ########
+
+MODE_OUTPUT=$(get_config_var modeoutput $CONFIGFILE)
+if [ $MODE_OUTPUT = "DATVEXPRESS" ]; then
+  if (( $INT_FREQ_OUTPUT \< 100 )); then
+    EXPPORTS0=$(get_config_var expports0 $CONFIGFILE)
+    echo "set port "$EXPPORTS0 >> /tmp/expctrl
+  elif (( $INT_FREQ_OUTPUT \< 250 )); then
+    EXPPORTS1=$(get_config_var expports1 $CONFIGFILE)
+    echo "set port "$EXPPORTS1 >> /tmp/expctrl
+  elif (( $INT_FREQ_OUTPUT \< 950 )); then
+    EXPPORTS2=$(get_config_var expports2 $CONFIGFILE)
+    echo "set port "$EXPPORTS2 >> /tmp/expctrl
+  elif (( $INT_FREQ_OUTPUT \< 2000 )); then
+    EXPPORTS3=$(get_config_var expports3 $CONFIGFILE)
+    echo "set port "$EXPPORTS3 >> /tmp/expctrl
+  elif (( $INT_FREQ_OUTPUT \< 4400 )); then
+    EXPPORTS4=$(get_config_var expports4 $CONFIGFILE)
+    echo "set port "$EXPPORTS4 >> /tmp/expctrl
+  else
+    echo "set port 0" >> /tmp/expctrl
+  fi
 fi
 
 ### End ###

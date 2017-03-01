@@ -1,7 +1,7 @@
 ########## ctlvco.sh ############
 
-# Called by a.sh in IQ mode to set ADF4351
-# vco to correct frequency
+# Called by a.sh in IQ mode to set ADF4351 vco 
+# to correct frequency with correct ref freq and level
 
 ############ Set Environment Variables ###############
 
@@ -26,13 +26,30 @@ end
 EOF
 }
 
-############### Read Frequency #########################
+########### Read Frequency and Ref Frequency ###############
 
 FREQM=$(get_config_var freqoutput $CONFIGFILE)
+FREQR=$(get_config_var adfref $CONFIGFILE)
+
+INT_FREQ_OUTPUT=${FREQM%.*}
+
+############### Switch Power based on Frequency ########
+
+if (( $INT_FREQ_OUTPUT \< 100 )); then
+  PWR=$(get_config_var adflevel0 $CONFIGFILE);
+elif (( $INT_FREQ_OUTPUT \< 250 )); then
+  PWR=$(get_config_var adflevel1 $CONFIGFILE);
+elif (( $INT_FREQ_OUTPUT \< 950 )); then
+  PWR=$(get_config_var adflevel2 $CONFIGFILE);
+elif (( $INT_FREQ_OUTPUT \< 4400 )); then
+  PWR=$(get_config_var adflevel3 $CONFIGFILE);
+else
+  PWR="0";
+fi
 
 ############### Call binary to set frequency ########
 
-sudo $PATHRPI"/adf4351" $FREQM
+sudo $PATHRPI"/adf4351" $FREQM $FREQR $PWR
 
 ### End ###
 

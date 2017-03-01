@@ -1,0 +1,72 @@
+201702190
+Added streaming from PiCam with sound to BATC Streamer
+Added streaming from PiCam with sound to any other FMLE streamer
+Optimised MPEG-2 with sound from PiCam for IQ and DATV Express outputs
+Optimised H264 (no sound) from Analog for IQ and DATV Express outputs
+Added option to not display viewfinder on LCD (saves CPU capacity) 
+
+201702110
+Bug fix for update of DATV Express
+Bug fix for Express levels in Menu
+
+201702100
+Adds DATV Express Port Switching.  Now full functionality.
+Tidies ctrl-c exit from gui to console
+
+201702090
+Interim release to support updated DATV Express Server files.  Adds PTT Switching
+
+201702060
+Adds support for the DATV Express modulator.  See https://wiki.batc.tv/Controlling_a_DATVExpress
+Minor stability improvements
+
+201702020
+Updated to latest version of pi-sdn and suppressed error messages
+Implemented automated install of development versions if requested with -d and -s
+
+
+201701280
+Corrected a bug in the upgrade script that did not enable the new ADF4351 functionality
+
+201701270
+Changed ADF4351 control so that the reference frequency and power for each 
+band could be set from the advanced setup menu.
+Ensured that band switching was activated at switch-on and frequency change.
+Corrected the carrier and null-test mode selections.
+Added more information about current selections to the top-level console menu
+Added more detail to the Advanced set-up menu selections in preparation for future functionality.
+
+20170123
+Added Advanced Setup Menu to console
+Added script to display Micro-SD Card Details including serial number
+Added Error-checking for the EasyCap input and standard parameters
+Deleted the text for fallback IP in /etc/dhcpcd.conf
+Changed Main Menu title bar to include version
+Clarified menu descriptions
+Check for update script now diagnoses basic connection problems
+
+201701190
+Reduced bit-bang delay to 10 us in adf4351.c
+Auto-killed fbi 1 second after all calls to it
+Killed transmit processes nicely and then with -9 in menu.sh and rpidatvtouch.c
+Simplified menu.sh by deleting do_status
+Loaded Waveshare touchscreen driver by default
+Adjusted touchscreen display and touch overlay for accuracy and appearance
+Added BATC SplashScreen to touchscreen Autoboot
+
+201701020
+Added parameters in rpidatvconfig.txt to select input and TV standard for Analog Cam
+Changes in menu.sh to store analog cam parameters
+Changes in a.sh set analog cam parameters
+
+201612310
+Added installation of fbi (frame buffer imager)
+Used fbi to blank screen behind received picture
+Added BATC logo when screen not in use.
+
+201612202
+Swapped TS File button offgui for Analog cam button
+added 125 button and removed 500 BUTTON
+
+201612201
+Swapped out test cards

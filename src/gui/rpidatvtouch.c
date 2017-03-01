@@ -72,12 +72,13 @@ int fec;
 int SR;
 char ModeInput[255];
 char freqtxt[255];
+char ModeOutput[255];
 
 // Values to be stored in and read from rpidatvconfig.txt:
 
-int TabSR[5]= {250,333,500,1000,2000};
+int TabSR[5]={125,333,1000,2000,4000};
 int TabFec[5]={1,2,3,5,7};
-char TabModeInput[5][255]={"CAMMPEG-2","CAMH264","PATERNAUDIO","FILETS","CARRIER"};
+char TabModeInput[5][255]={"CAMMPEG-2","CAMH264","PATERNAUDIO","ANALOGCAM","CARRIER"};
 char TabFreq[5][255]={"71","146.5","437","1249","1255"};
 
 int Inversed=0;//Display is inversed (Waveshare=1)
@@ -121,39 +122,50 @@ void GetConfigParam(char *PathConfigFile,char *Param, char *Value)
 
 }
 
+/***************************************************************************//**
+ * @brief sets the value of Param in PathConfigFile froma program variable
+ *        Used to store the configuration in rpidatvconfig.txt
+ *
+ * @param PatchConfigFile (str) the name of the configuration text file
+ * @param Param the string labeling the parameter
+ * @param Value the looked-up value of the parameter
+ *
+ * @return void
+*******************************************************************************/
+
 void SetConfigParam(char *PathConfigFile,char *Param,char *Value)
 {
-	char * line = NULL;
-	 size_t len = 0;
-	int read;
-	char BackupConfigName[255];
-	strcpy(BackupConfigName,PathConfigFile);
-	strcat(BackupConfigName,".bak");
-	//printf("Read %s\n",PathConfigFile);
-	 FILE *fp=fopen(PathConfigFile,"r");
-
-	 FILE *fw=fopen(BackupConfigName,"w+");
-	if(fp!=0)
-	{
-		while ((read = getline(&line, &len, fp)) != -1)
-		{
-		      	//printf("%s", line);
-			if(strncmp (line,Param,strlen(Param)) == 0)
-			{
-				fprintf(fw,"%s=%s\n",Param,Value);
-			}
-			else
-				fprintf(fw,line);
-			//strncpy(Value,line+strlen(Param)+1,strlen(line)-strlen(Param)-1-1/* pour retour chariot*/);
-	    	}
-	}
-	else
-		printf("Config file not found \n");
-	fclose(fp);
-	fclose(fw);
-	char Command[255];
-	sprintf(Command,"cp %s %s",BackupConfigName,PathConfigFile);
-	system(Command);
+  char * line = NULL;
+  size_t len = 0;
+  int read;
+  char Command[255];
+  char BackupConfigName[255];
+  strcpy(BackupConfigName,PathConfigFile);
+  strcat(BackupConfigName,".bak");
+  FILE *fp=fopen(PathConfigFile,"r");
+  FILE *fw=fopen(BackupConfigName,"w+");
+  if(fp!=0)
+  {
+    while ((read = getline(&line, &len, fp)) != -1)
+    {
+      if(strncmp (line,Param,strlen(Param)) == 0)
+      {
+        fprintf(fw,"%s=%s\n",Param,Value);
+      }
+      else
+        fprintf(fw,line);
+    }
+    fclose(fp);
+    fclose(fw);
+    sprintf(Command,"cp %s %s",BackupConfigName,PathConfigFile);
+    system(Command);
+  }
+  else
+  {
+    printf("Config file not found \n");
+    fclose(fp);
+    fclose(fw);
+  }
 }
 
 int mymillis()
@@ -165,21 +177,39 @@ int mymillis()
 
 int IsButtonPushed(int NbButton,int x,int y)
 {
-	int  scaledX, scaledY;
-	if(Inversed==0)
-	{
-		scaledX = x/scaleXvalue;
-        	scaledY = hscreen-y/scaleYvalue;
-	}
-	else
-	{
-		scaledX = wscreen-y/scaleXvalue; //FOR INVERSED TOUCSCREEN (AIW)
-		scaledY = hscreen-x/scaleYvalue;
-	}
-	//printf("x=%d y=%d scaledx %d scaledy %d\n",x,y,scaledX,scaledY);
-	int margin=10;  // was 20
-	if((scaledX<=(ButtonArray[NbButton].x+ButtonArray[NbButton].w-margin))&&(scaledX>=ButtonArray[NbButton].x+margin) &&
-	(scaledY<=(ButtonArray[NbButton].y+ButtonArray[NbButton].h-margin))&&(scaledY>=ButtonArray[NbButton].y+margin)
+  int  scaledX, scaledY;
+
+  // scaledx range approx 0 - 700
+  // scaledy range approx 0 - 480
+
+  // Adjust registration of touchscreen for Waveshare
+  int shiftX, shiftY;
+  double factorX, factorY;
+
+  shiftX=30; // move touch sensitive position left (-) or right (+).  Screen is 700 wide
+  shiftY=-5; // move touch sensitive positions up (-) or down (+).  Screen is 480 high
+
+  factorX=-0.4;  // expand (+) or contract (-) horizontal button space from RHS. Screen is 5.6875 wide
+  factorY=-0.3;  // expand or contract vertical button space.  Screen is 8.53125 high
+
+  // Switch axes for normal and waveshare displays
+  if(Inversed==0) //TonTec
+  {
+    scaledX = x/scaleXvalue;
+    scaledY = hscreen-y/scaleYvalue;
+  }
+  else //Waveshare (inversed)
+  {
+    scaledX = shiftX+wscreen-y/(scaleXvalue+factorX);
+    scaledY = shiftY+hscreen-x/(scaleYvalue+factorY);
+  }
+
+  // printf("x=%d y=%d scaledx %d scaledy %d sxv %f syv %f\n",x,y,scaledX,scaledY,scaleXvalue,scaleYvalue);
+
+  int margin=10;  // was 20
+
+  if((scaledX<=(ButtonArray[NbButton].x+ButtonArray[NbButton].w-margin))&&(scaledX>=ButtonArray[NbButton].x+margin) &&
+    (scaledY<=(ButtonArray[NbButton].y+ButtonArray[NbButton].h-margin))&&(scaledY>=ButtonArray[NbButton].y+margin)
 	/*&&(mymillis()-ButtonArray[NbButton].LastEventTime>TIME_ANTI_BOUNCE)*/)
 	{
 		ButtonArray[NbButton].LastEventTime=mymillis();
@@ -327,12 +357,12 @@ int getTouchScreenDetails(int *screenXmin,int *screenXmax,int *screenYmin,int *s
                                                         if ((k < 3) || abs[k]){
                                                                 printf("     %s %6d\n", absval[k], abs[k]);
                                                                 if (j == 0){
-                                                                        if (absval[k] == "Min  ") *screenXmin =  abs[k];
-                                                                        if (absval[k] == "Max  ") *screenXmax =  abs[k];
+                                                                        if ((strcmp(absval[k],"Min  ")==0)) *screenXmin =  abs[k];
+                                                                        if ((strcmp(absval[k],"Max  ")==0)) *screenXmax =  abs[k];
                                                                 }
                                                                 if (j == 1){
-                                                                        if (absval[k] == "Min  ") *screenYmin =  abs[k];
-                                                                        if (absval[k] == "Max  ") *screenYmax =  abs[k];
+                                                                        if ((strcmp(absval[k],"Min  ")==0)) *screenYmin =  abs[k];
+                                                                        if ((strcmp(absval[k],"Max  ")==0)) *screenYmax =  abs[k];
                                                                 }
                                                         }
                                                 }
@@ -425,18 +455,23 @@ void SelectFreq(int NoButton)  //Frequency
 	char Param[]="freqoutput";
         printf("************** Set Frequency = %s\n",freqtxt);
 	SetConfigParam(PATH_CONFIG,Param,freqtxt);
+
+  // Set the Band (and filter) Switching
+
+  system ("sudo /home/pi/rpidatv/scripts/ctlfilter.sh");
+
 }
 
 
 void SelectSR(int NoButton)  // Symbol Rate
 {
-	SelectInGroup(5,9,NoButton,1);
-	SR=TabSR[NoButton-5];
-	char Param[]="symbolrate";
-	char Value[255];
- 	sprintf(Value,"%d",SR);
-        printf("************** Set SR = %s\n",Value);
- 	SetConfigParam(PATH_CONFIG,Param,Value);
+  SelectInGroup(5,9,NoButton,1);
+  SR=TabSR[NoButton-5];
+  char Param[]="symbolrate";
+  char Value[255];
+  sprintf(Value,"%d",SR);
+  printf("************** Set SR = %s\n",Value);
+  SetConfigParam(PATH_CONFIG,Param,Value);
 }
 
 void SelectFec(int NoButton)  // FEC
@@ -466,38 +501,73 @@ void SelectPTT(int NoButton,int Status)  // TX/RX
 
 void TransmitStart()
 {
-	printf("Transmit Start\n");
+  printf("Transmit Start\n");
 
-	#define PATH_SCRIPT_A "sudo /home/pi/rpidatv/scripts/a.sh >/dev/null 2>/dev/null"
-	if((strcmp(ModeInput,TabModeInput[0])==0)||(strcmp(ModeInput,TabModeInput[1])==0)) //CAM
-	{
-		printf("DISPLAY OFF \n");
-		IsDisplayOn=0;
-		finish();
-
-		system("v4l2-ctl --overlay=1 >/dev/null 2>/dev/null");
-	}
-
-	system(PATH_SCRIPT_A);
-
+  char Param[255];
+  char Value[255];
+  #define PATH_SCRIPT_A "sudo /home/pi/rpidatv/scripts/a.sh >/dev/null 2>/dev/null"
+  // Check if camera selected
+  if((strcmp(ModeInput,TabModeInput[0])==0)||(strcmp(ModeInput,TabModeInput[1])==0))
+  {
+    // Start the viewfinder if required
+    strcpy(Param,"vfinder");
+    GetConfigParam(PATH_CONFIG,Param,Value);
+    if(strcmp(Value,"on")==0)
+    {
+      IsDisplayOn=0;
+      finish();
+      system("v4l2-ctl --overlay=1 >/dev/null 2>/dev/null");
+    }
+  }
+  system(PATH_SCRIPT_A);
 }
 
 void TransmitStop()
 {
-	printf("Transmit Stop\n");
-	system("sudo /home/pi/rpidatv/bin/adf4351 off");  // Turn the VCO off
-	system("sudo killall rpidatv >/dev/null 2>/dev/null");
-	system("sudo killall ffmpeg >/dev/null 2>/dev/null");
-	system("sudo killall tcanim >/dev/null 2>/dev/null");
-	system("sudo killall avc2ts >/dev/null 2>/dev/null");
-	system("v4l2-ctl --overlay=0 >/dev/null 2>/dev/null");
+  char Param[255];
+  char Value[255];
+  printf("Transmit Stop\n");
 
+  // Turn the VCO off
+  system("sudo /home/pi/rpidatv/bin/adf4351 off");
+
+  // Stop DATV Express transmitting
+  char expressrx[50];
+  strcpy(Param,"modeoutput");
+  GetConfigParam(PATH_CONFIG,Param,Value);
+  strcpy(ModeOutput,Value);
+  if(strcmp(ModeOutput,"DATVEXPRESS")==0)
+  {
+    strcpy( expressrx, "echo \"set ptt rx\" >> /tmp/expctrl" );
+    system(expressrx);
+    strcpy( expressrx, "echo \"set car off\" >> /tmp/expctrl" );
+    system(expressrx);
+  }
+
+  // Kill netcat as used by DATV Express
+  system("sudo killall netcat >/dev/null 2>/dev/null");
+
+  // Kill the key processes as nicely as possible
+  system("sudo killall rpidatv >/dev/null 2>/dev/null");
+  system("sudo killall ffmpeg >/dev/null 2>/dev/null");
+  system("sudo killall tcanim >/dev/null 2>/dev/null");
+  system("sudo killall avc2ts >/dev/null 2>/dev/null");
+
+  // Turn the Viewfinder off
+  system("v4l2-ctl --overlay=0 >/dev/null 2>/dev/null");
+
+  // Then pause and make sure that avc2ts has really been stopped (needed at high SRs)
+  usleep(1000);
+  system("sudo killall -9 avc2ts >/dev/null 2>/dev/null");
+
+  // And make sure rpidatv has been stopped (required for brief transmit selections)
+  system("sudo killall -9 rpidatv >/dev/null 2>/dev/null");
 }
 
 void coordpoint(VGfloat x, VGfloat y, VGfloat size, VGfloat pcolor[4]) {
-	setfill(pcolor);
-	Circle(x, y, size);
-	setfill(pcolor);
+  setfill(pcolor);
+  Circle(x, y, size);
+  setfill(pcolor);
 }
 
 	fftwf_complex *fftout=NULL;
@@ -515,17 +585,18 @@ void *DisplayFFT(void * arg)
 	fftwf_plan plan ;
 	plan = fftwf_plan_dft_1d(fft_size, fftin, fftout, FFTW_FORWARD, FFTW_ESTIMATE );
 
-	system("mkfifo fifo.iq");
+	system("mkfifo fifo.iq >/dev/null 2>/dev/null");
 	printf("Entering FFT thread\n");
 	pFileIQ = fopen("fifo.iq", "r");
 
 	while(FinishedButton==0)
 	{
-		int Nbread; // value set later but not used
+		//int Nbread; // value set later but not used
 		//int log2_N=11; //FFT 1024 not used?
 		//int ret; // not used?
 
-		Nbread=fread( fftin,sizeof(fftwf_complex),FFT_SIZE,pFileIQ);
+		//Nbread=fread( fftin,sizeof(fftwf_complex),FFT_SIZE,pFileIQ);
+		fread( fftin,sizeof(fftwf_complex),FFT_SIZE,pFileIQ);
 		fftwf_execute( plan );
 
 		//printf("NbRead %d %d\n",Nbread,sizeof(struct GPU_FFT_COMPLEX));
@@ -756,6 +827,10 @@ void ProcessLeandvb()
 	line=NULL;
     }
 printf("End Lean - Clean\n");
+
+system("sudo killall fbi");  // kill any previous images
+system("sudo fbi -T 1 -noverbose -a /home/pi/rpidatv/scripts/images/BATC_Black.png");  // Add logo image
+
 usleep(5000000); // Time to FFT end reading samples
    pthread_join(thfft, NULL);
 	//pclose(fp);
@@ -901,14 +976,17 @@ void waituntil(int w,int h,int endchar)
 static void
 terminate(int dummy)
 {
-	printf("Terminate\n");
-        char Commnd[255];
-        sprintf(Commnd,"stty echo");
-        system(Commnd);
+  TransmitStop();
+  printf("Terminate\n");
+  char Commnd[255];
+  sprintf(Commnd,"stty echo");
+  system(Commnd);
+  sprintf(Commnd,"reset");
+  system(Commnd);
 
-	/*restoreterm();
-	finish();*/
-	exit(1);
+  /*restoreterm();
+  finish();*/
+  exit(1);
 }
 
 // main initializes the system and shows the picture. 
@@ -946,6 +1024,10 @@ int main(int argc, char **argv) {
         if(strcmp(Value,"Waveshare")==0)
         	Inversed=1;
 
+// Set the Band (and filter) Switching
+
+  system ("sudo /home/pi/rpidatv/scripts/ctlfilter.sh");
+
 // Determine if ReceiveDirect 2nd argument 
 	if(argc>2)
 		ReceiveDirect=atoi(argv[2]);
@@ -977,7 +1059,8 @@ int main(int argc, char **argv) {
 	//printf ("Y Scale Factor = %f\n", scaleYvalue);
 
 // Define button grid
-	int wbuttonsize=wscreen/5;
+  // -25 keeps right hand side symmetrical with left hand side
+	int wbuttonsize=(wscreen-25)/5;
 	int hbuttonsize=hscreen/6;
 
 // Frequency
@@ -1017,9 +1100,9 @@ int main(int argc, char **argv) {
 
 	button=AddButton(0*wbuttonsize+20,0+hbuttonsize*1+20,wbuttonsize*0.9,hbuttonsize*0.9);
 	Col.r=0;Col.g=0;Col.b=128;
-	AddButtonStatus(button,"SR 250",&Col);
+	AddButtonStatus(button,"SR 125",&Col);
 	Col.r=0;Col.g=128;Col.b=0;
-	AddButtonStatus(button,"SR 250",&Col);
+	AddButtonStatus(button,"SR 125",&Col);
 
 	button=AddButton(1*wbuttonsize+20,hbuttonsize*1+20,wbuttonsize*0.9,hbuttonsize*0.9);
 	Col.r=0;Col.g=0;Col.b=128;
@@ -1029,21 +1112,21 @@ int main(int argc, char **argv) {
 
 	button=AddButton(2*wbuttonsize+20,hbuttonsize*1+20,wbuttonsize*0.9,hbuttonsize*0.9);
 	Col.r=0;Col.g=0;Col.b=128;
-	AddButtonStatus(button,"SR 500",&Col);
+	AddButtonStatus(button,"SR1000",&Col);
 	Col.r=0;Col.g=128;Col.b=0;
-	AddButtonStatus(button,"SR 500",&Col);
+	AddButtonStatus(button,"SR1000",&Col);
 
 	button=AddButton(3*wbuttonsize+20,hbuttonsize*1+20,wbuttonsize*0.9,hbuttonsize*0.9);
 	Col.r=0;Col.g=0;Col.b=128;
-	AddButtonStatus(button,"SR1000",&Col);
+	AddButtonStatus(button,"SR2000",&Col);
 	Col.r=0;Col.g=128;Col.b=0;
-	AddButtonStatus(button,"SR1000",&Col);
+	AddButtonStatus(button,"SR2000",&Col);
 
 	button=AddButton(4*wbuttonsize+20,hbuttonsize*1+20,wbuttonsize*0.9,hbuttonsize*0.9);
 	Col.r=0;Col.g=0;Col.b=128;
-	AddButtonStatus(button,"SR2000",&Col);
+	AddButtonStatus(button,"SR4000",&Col);
 	Col.r=0;Col.g=128;Col.b=0;
-	AddButtonStatus(button,"SR2000",&Col);
+	AddButtonStatus(button,"SR4000",&Col);
 
 // FEC
 
@@ -1103,9 +1186,9 @@ int main(int argc, char **argv) {
 
 	button=AddButton(3*wbuttonsize+20,hbuttonsize*3+20,wbuttonsize*0.9,hbuttonsize*0.9);
 	Col.r=0;Col.g=0;Col.b=128;
-	AddButtonStatus(button,"TS File",&Col);
+	AddButtonStatus(button,"Analog",&Col);
 	Col.r=0;Col.g=128;Col.b=0;
-	AddButtonStatus(button,"TSFile",&Col);
+	AddButtonStatus(button,"Analog",&Col);
 
 	button=AddButton(4*wbuttonsize+20,hbuttonsize*3+20,wbuttonsize*0.9,hbuttonsize*0.9);
 	Col.r=0;Col.g=0;Col.b=128;
@@ -1167,11 +1250,11 @@ int main(int argc, char **argv) {
 	printf("Value=%s %s\n",Value,"SR");
 	switch(SR)
 	{
-		case 250:SelectSR(5);break;
+		case 125:SelectSR(5);break;
 		case 333:SelectSR(6);break;
-		case 500:SelectSR(7);break;
-		case 1000:SelectSR(8);break;
-		case 2000:SelectSR(9);break;
+		case 1000:SelectSR(7);break;
+		case 2000:SelectSR(8);break;
+		case 4000:SelectSR(9);break;
 	}
 
 	// FEC
@@ -1195,26 +1278,30 @@ int main(int argc, char **argv) {
 	strcpy(Param,"modeinput");
 	GetConfigParam(PATH_CONFIG,Param,Value);
 	strcpy(ModeInput,Value);
-	printf("Value=%s %s\n",Value,"Input Mode"); //
+	printf("Value=%s %s\n",Value,"Input Mode");
+
+        if(strcmp(Value,"CAMMPEG-2")==0)
+        {
+            SelectSource(15,1);
+        }
 	if(strcmp(Value,"CAMH264")==0)
 	{
-	     SelectSource(16,1);
-	}
-	if(strcmp(Value,"CAMMPEG-2")==0)
-	{
-	 	SelectSource(15,1);
+	    SelectSource(16,1);
 	}
 	if(strcmp(Value,"PATERNAUDIO")==0)
 	{
-	 	SelectSource(17,1);
+	    SelectSource(17,1);
 	}
+        if(strcmp(Value,"ANALOGCAM")==0)
+        {
+            SelectSource(18,1);
+        }
 	if(strcmp(Value,"CARRIER")==0)
 	{
-		SelectSource(18,1);
+	    SelectSource(19,1);
 	}
 
 	UpdateWindow();
-
 
 	printf("Update Window\n");
 
