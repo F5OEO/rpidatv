@@ -335,6 +335,13 @@ case "$MODE_INPUT" in
     else
       # ******************************* H264 VIDEO WITH AUDIO (TODO) ************************************
       $PATHRPI"/avc2ts" -b $BITRATE_VIDEO -m $BITRATE_TS -x $VIDEO_WIDTH -y $VIDEO_HEIGHT -f $VIDEO_FPS -i 100 -p $PIDPMT -s $CHANNEL $OUTPUT_FILE $OUTPUT_IP  > /dev/null &
+rm /home/pi/rpidatv/scripts/output.aac	
+mkfifo /home/pi/rpidatv/scripts/output.aac
+amixer -c stk1160mixer sset Line unmute cap
+sudo killall arecord
+#For USB AUDIO
+ arecord -f S16_LE -r 48000 -N -M  -c 1 -D hw:1  |  fdkaac --raw --raw-channels 1 --raw-rate 48000 -p5 -b8 -f2  - -o /home/pi/rpidatv/scripts/output.aac	
+# arecord -f S16_LE -r 48000  -c 2 -D hw:1  |buffer|  fdkaac --raw --raw-channels 2 --raw-rate 48000 -p5 -b32 -f2  - -o /home/pi/rpidatv/scripts/output.aac &
     fi
   ;;
 
@@ -344,6 +351,8 @@ case "$MODE_INPUT" in
     #VIDEO_WIDTH=352
     #VIDEO_HEIGHT=288
     #VIDEO_FPS=25
+#ffmpeg is usually undeflow, takes margin on TS output
+let BITRATE_TS=SYMBOLRATE*2*188*FECNUM/204/FECDEN+10000	
     let OVERLAY_VIDEO_WIDTH=$VIDEO_WIDTH-64
     let OVERLAY_VIDEO_HEIGHT=$VIDEO_HEIGHT-64
     echo "Overlay width is $OVERLAY_VIDEO_WIDTH"
@@ -390,6 +399,8 @@ case "$MODE_INPUT" in
 
     if [ "$AUDIO_CARD" == 0 ]; then
       # ******************************* MPEG-2 VIDEO WITH BEEP ************************************
+	let BITRATE_VIDEO=(BITRATE_TS*75)/100-72000
+	let BITRATE_TS_BYTE=$BITRATE_TS/8
       sudo $PATHRPI"/ffmpeg"  -loglevel $MODE_DEBUG -itsoffset -00:00:0.2\
         -analyzeduration 0 -probesize 2048  -fpsprobesize 0 -re -ac 1 -f lavfi -thread_queue_size 512\
         -i "sine=frequency=500:beep_factor=4:sample_rate=44100:duration=3600"\
@@ -402,6 +413,8 @@ case "$MODE_INPUT" in
         -metadata service_name=$CHANNEL -muxrate $BITRATE_TS -y $OUTPUT &
     else
       # ******************************* MPEG-2 VIDEO WITH AUDIO ************************************
+		let BITRATE_VIDEO=(BITRATE_TS*75)/100-72000
+	let BITRATE_TS_BYTE=$BITRATE_TS/8
       sudo nice -n -30 arecord -f S16_LE -r 44100 -c 1 -M -D hw:1\
         |sudo nice -n -30 $PATHRPI"/ffmpeg" -loglevel $MODE_DEBUG -itsoffset "$ITS_OFFSET"\
         -analyzeduration 0 -probesize 2048  -fpsprobesize 0 -ac 1 -thread_queue_size 512\
