@@ -9,6 +9,8 @@ sudo apt-get update
 sudo apt-get -y install apt-transport-https git rpi-update
 sudo apt-get -y install cmake libusb-1.0-0-dev g++ libx11-dev buffer libjpeg-dev indent libfreetype6-dev ttf-dejavu-core bc usbmount fftw3-dev wiringpi libvncserver-dev
 sudo apt-get -y install fbi netcat
+#For AAC audio
+sudo apt-get -y install autoconf libtool
 
 # rpi-update to get latest firmware
 sudo rpi-update
@@ -132,6 +134,34 @@ cmake ..
 make
 sudo install fbcp /usr/local/bin/fbcp
 cd ../../
+
+#Get fdk-aac library
+cd /home/pi/
+wget https://github.com/tasanakorn/rpi-fbcp/archive/master.zip
+unzip master.zip
+mv fdk-aac-master fdk-aac
+rm master.zip
+
+#Compile fdk-aac livrary
+cd fdk-aac
+./autogen.sh
+./configure --enable-shared --enable-static
+make
+sudo make install
+sudo ldconfig
+
+#Get fdkaac command line
+cd /home/pi/
+wget https://github.com/nu774/fdkaac/archive/master.zip
+unzip master.zip
+mv fdkaac-master fdkaac
+rm master.zip
+#compile fdkaac command line
+cd fdkaac
+autoreconf -i
+./configure
+make
+sudo make install
 
 # Install Waveshare DTOVERLAY
 cd /home/pi/rpidatv/scripts/
