@@ -334,13 +334,14 @@ case "$MODE_INPUT" in
       $PATHRPI"/avc2ts" -b $BITRATE_VIDEO -m $BITRATE_TS -x $VIDEO_WIDTH -y $VIDEO_HEIGHT -f $VIDEO_FPS -i 100 -d 300 -p $PIDPMT -s $CHANNEL $OUTPUT_FILE $OUTPUT_IP > /dev/null &
     else
       # ******************************* H264 VIDEO WITH AUDIO (TODO) ************************************
+ let BITRATE_VIDEO=BITRATE_VIDEO-72000
       $PATHRPI"/avc2ts" -b $BITRATE_VIDEO -m $BITRATE_TS -x $VIDEO_WIDTH -y $VIDEO_HEIGHT -f $VIDEO_FPS -i 100 -p $PIDPMT -s $CHANNEL $OUTPUT_FILE $OUTPUT_IP  > /dev/null &
 rm /home/pi/rpidatv/scripts/output.aac	
 mkfifo /home/pi/rpidatv/scripts/output.aac
 amixer -c stk1160mixer sset Line unmute cap
 sudo killall arecord
 #For USB AUDIO
- arecord -f S16_LE -r 48000 -N -M  -c 1 -D hw:1  |  fdkaac --raw --raw-channels 1 --raw-rate 48000 -p5 -b8 -f2  - -o /home/pi/rpidatv/scripts/output.aac	
+ arecord -f S16_LE -r 48000 -N -M  -c 1 -D hw:1  |  fdkaac --raw --raw-channels 1 --raw-rate 48000 -p5 -b8 -f2  - -o /home/pi/rpidatv/scripts/output.aac &	
 # arecord -f S16_LE -r 48000  -c 2 -D hw:1  |buffer|  fdkaac --raw --raw-channels 2 --raw-rate 48000 -p5 -b32 -f2  - -o /home/pi/rpidatv/scripts/output.aac &
     fi
   ;;
