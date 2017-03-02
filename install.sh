@@ -137,7 +137,7 @@ cd ../../
 
 #Get fdk-aac library
 cd /home/pi/
-wget https://github.com/tasanakorn/rpi-fbcp/archive/master.zip
+wget https://github.com/mstorsjo/fdk-aac/archive/master.zip
 unzip master.zip
 mv fdk-aac-master fdk-aac
 rm master.zip
