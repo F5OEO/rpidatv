@@ -334,14 +334,14 @@ case "$MODE_INPUT" in
       $PATHRPI"/avc2ts" -b $BITRATE_VIDEO -m $BITRATE_TS -x $VIDEO_WIDTH -y $VIDEO_HEIGHT -f $VIDEO_FPS -i 100 -d 300 -p $PIDPMT -s $CHANNEL $OUTPUT_FILE $OUTPUT_IP > /dev/null &
     else
       # ******************************* H264 VIDEO WITH AUDIO (TODO) ************************************
- let BITRATE_VIDEO=BITRATE_VIDEO-72000
+ let BITRATE_VIDEO=BITRATE_VIDEO-32000
       $PATHRPI"/avc2ts" -b $BITRATE_VIDEO -m $BITRATE_TS -x $VIDEO_WIDTH -y $VIDEO_HEIGHT -f $VIDEO_FPS -i 100 -p $PIDPMT -s $CHANNEL $OUTPUT_FILE $OUTPUT_IP  > /dev/null &
 rm /home/pi/rpidatv/scripts/output.aac	
 mkfifo /home/pi/rpidatv/scripts/output.aac
 amixer -c stk1160mixer sset Line unmute cap
 sudo killall arecord
 #For USB AUDIO
- arecord -f S16_LE -r 48000 -N -M  -c 1 -D hw:1  |  fdkaac --raw --raw-channels 1 --raw-rate 48000 -p5 -b8 -f2  - -o /home/pi/rpidatv/scripts/output.aac &	
+ arecord -f S16_LE -r 48000 -N -M  -c 1 -D hw:1  |  fdkaac --raw --raw-channels 1 --raw-rate 48000 -p5 -b 24000 -f2  - -o $PATHSCRIPT"/output.aac" &	
 # arecord -f S16_LE -r 48000  -c 2 -D hw:1  |buffer|  fdkaac --raw --raw-channels 2 --raw-rate 48000 -p5 -b32 -f2  - -o /home/pi/rpidatv/scripts/output.aac &
     fi
   ;;
@@ -400,8 +400,8 @@ let BITRATE_TS=SYMBOLRATE*2*188*FECNUM/204/FECDEN+10000
 
     if [ "$AUDIO_CARD" == 0 ]; then
       # ******************************* MPEG-2 VIDEO WITH BEEP ************************************
-	let BITRATE_VIDEO=(BITRATE_TS*75)/100-72000
-	let BITRATE_TS_BYTE=$BITRATE_TS/8
+	let BITRATE_VIDEO=BITRATE_VIDEO-72000
+	
       sudo $PATHRPI"/ffmpeg"  -loglevel $MODE_DEBUG -itsoffset -00:00:0.2\
         -analyzeduration 0 -probesize 2048  -fpsprobesize 0 -re -ac 1 -f lavfi -thread_queue_size 512\
         -i "sine=frequency=500:beep_factor=4:sample_rate=44100:duration=3600"\
@@ -414,8 +414,8 @@ let BITRATE_TS=SYMBOLRATE*2*188*FECNUM/204/FECDEN+10000
         -metadata service_name=$CHANNEL -muxrate $BITRATE_TS -y $OUTPUT &
     else
       # ******************************* MPEG-2 VIDEO WITH AUDIO ************************************
-		let BITRATE_VIDEO=(BITRATE_TS*75)/100-72000
-	let BITRATE_TS_BYTE=$BITRATE_TS/8
+		let BITRATE_VIDEO=BITRATE_VIDEO-72000
+	
       sudo nice -n -30 arecord -f S16_LE -r 44100 -c 1 -M -D hw:1\
         |sudo nice -n -30 $PATHRPI"/ffmpeg" -loglevel $MODE_DEBUG -itsoffset "$ITS_OFFSET"\
         -analyzeduration 0 -probesize 2048  -fpsprobesize 0 -ac 1 -thread_queue_size 512\
@@ -447,10 +447,18 @@ case "$MODE_OUTPUT" in
 		sudo  $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c $FECNUM"/"$FECDEN -f $FREQUENCY_OUT -p $GAIN -m $MODE -x $PIN_I -y $PIN_Q &;;
 	esac
 
+let BITRATE_VIDEO=BITRATE_VIDEO-32000
 
 $PATHRPI"/avc2ts" -b $BITRATE_VIDEO -m $BITRATE_TS -x $VIDEO_WIDTH -y $VIDEO_HEIGHT -f $VIDEO_FPS -i 100 $OUTPUT_FILE -t 3 -p $PIDPMT -s $CHANNEL $OUTPUT_IP  &
 
 $PATHRPI"/tcanim" $PATERNFILE"/*10" "48" "72" "CQ" "CQ CQ CQ DE "$CALL" IN $LOCATOR - DATV $SYMBOLRATEK KS FEC "$FECNUM"/"$FECDEN &
+
+#need a way to loop audio file 
+
+# $PATHRPI"/ffmpeg" -re -i $PATHSCRIPT"/sounds/sw.wav" -f u16le -acodec pcm_s16le -ar 48000 -ac 1 - | fdkaac --raw --raw-channels 1 --raw-rate 48000 -p5 -b8 -f2  - -o $PATHSCRIPT"/output.aac" &	
+
+ $PATHRPI"/ffmpeg" -re -f lavfi -i "sine=frequency=500:beep_factor=4:sample_rate=48000:duration=3600" -f u16le -acodec pcm_s16le -ar 48000 -ac 1 - | fdkaac --raw --raw-channels 1 --raw-rate 48000 -p5 -b 24000 -m 0 -f2  - -o $PATHSCRIPT"/output.aac" &	
+
 
 ;;
 
@@ -528,6 +536,8 @@ case "$MODE_OUTPUT" in
 	esac
 
 $PATHRPI"/avc2ts" -b $BITRATE_VIDEO -m $BITRATE_TS -x $VIDEO_WIDTH -y $VIDEO_HEIGHT -f $VIDEO_FPS -i 100 $OUTPUT_FILE -t 3 -p $PIDPMT -s $CHANNEL $OUTPUT_IP &
+
+$PATHRPI"/ffmpeg" -re -f lavfi -i "sine=frequency=500:beep_factor=4:sample_rate=48000:duration=3600" -f u16le -acodec pcm_s16le -ar 48000 -ac 1 - | fdkaac --raw --raw-channels 1 --raw-rate 48000 -p5 -b 24000 -m 0 -f2  - -o $PATHSCRIPT"/output.aac" &	
 
 ;;
 
