@@ -514,9 +514,15 @@ $PATHRPI"/avc2ts" -b $BITRATE_VIDEO -m $BITRATE_TS -x $VIDEO_WIDTH -y $VIDEO_HEI
         sudo $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c $FECNUM"/"$FECDEN -f $FREQUENCY_OUT -p $GAIN -m $MODE -x $PIN_I -y $PIN_Q &
       ;;
     esac
+let BITRATE_VIDEO=BITRATE_VIDEO-32000
 
     $PATHRPI"/avc2ts" -b $BITRATE_VIDEO -m $BITRATE_TS -x $VIDEO_WIDTH -y $VIDEO_HEIGHT\
       -f $VIDEO_FPS -i 100 $OUTPUT_FILE -t 2 -e $ANALOGCAMNAME -p $PIDPMT -s $CHANNEL $OUTPUT_IP &
+
+#For audio of video capture
+amixer -c stk1160mixer sset Line unmute cap
+sudo killall arecord
+arecord -f S16_LE --buffer-size=192000 -r 48000 --buffer-size=20480 -c 2 -D hw:1  |  fdkaac -S -I --raw --raw-channels 2 --raw-rate 48000 -p5 -b 24000 -f2  - -o $PATHSCRIPT"/output.aac" &
   ;;
 
 #============================================ DESKTOP =============================================================
