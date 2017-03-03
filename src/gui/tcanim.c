@@ -20,7 +20,7 @@
 #include <fnmatch.h>
 #include <libgen.h>
 
-#define NUM_PARTICLES 		100
+#define NUM_PARTICLES 		5
 #define CYCLEFIELDS		0
 
 	int 			angle ;			
@@ -187,7 +187,7 @@ void draw(int w, int h) {
 			Rect (0,20,720,34) ;
 			Fill (255,255,255,1) ;
 			Text (w-frames*2,28,bannertext,SansTypeface,19) ;
-			frames+=20 ;
+			frames+=2 ;
 			temp = TextWidth (bannertext,SansTypeface,19) ;
 			if (temp - frames * 2 < -720)
 			{
@@ -325,7 +325,7 @@ int main(int argc, char **argv)
 	printf ("\n") ;
 
 	init (&w, &h);
-	//w = 720 ; h = 576 ;
+	w = 720 ; h = 576 ;
 	makeImage() ;	
 	Start (w,h) ;
 	vgSetPixels (0,0,save[0],0,0,w,h) ;
@@ -362,7 +362,7 @@ int main(int argc, char **argv)
 		particles[x].active = 1 ;		
 	}
 
-	usleep (1000000) ;
+	//usleep (1000000) ;
 
 	if (strlen(bannertext) > 0)
 	{
@@ -380,11 +380,11 @@ int main(int argc, char **argv)
 		counter2++ ;
 		draw(w, h);		
 		End() ;
-		usleep(400000);
+		usleep(40000);
 		cycles++ ;
 
 		namefields++ ;
-		if (namefields >= nameseconds * 5)
+		if (namefields >= nameseconds * 50)
 		{
 			nameindex++ ;
 			namefields = 0 ;
@@ -427,7 +427,7 @@ int main(int argc, char **argv)
 			i = 0;
 		}
 	}
-//	finish() ;
+	finish() ;
     }
 }
 
