@@ -90,7 +90,7 @@ extern uchar*	interleave 	(uchar* packetin) ;
 
 //F5OEO Variable
 uint32_t TabIQ[4]={0xCCCCCCCC,0x66666666,0x99999999,0x33333333};//0,-pi/2,pi/2,pi
-uint32_t TabIQTest[4]={0xCCCCCCCC,0xCCCCCCCC,0xCCCCCCCC,0xCCCCCCCC};//0,-pi/2,pi/2,pi
+uint32_t TabIQTest[4]={0xCCCCCCCC,0x0,0xCCCCCCCC,0x0};//0,-pi/2,pi/2,pi
 uint32_t TabIQTestI[4]={0x00110011,0x11111111,0x11111111,0x11111111};
 uint32_t TabIQTestQ[4]={0x01010101,0x00000000,0x00000000,0x00000000};
 int PinOutput[2]={18,19}; //Output signal I/Q on GPIO pin number 					  
@@ -222,7 +222,7 @@ void SetUglyFrequency(double Frequency)
 			for(harmonic=1;(harmonic<41);harmonic+=2)
 			{
 				//printf("->%lf harmonic %d\n",(Frequency/(double)harmonic),harmonic);
-				if((Frequency/(double)harmonic)<=(double)PLLFREQ_PWM/8.0) break;
+				if((Frequency/(double)harmonic)<=(double)PLLFREQ_PWM/(4.0*3)) break;
 			}
 			
 			harmonic-=2;
@@ -307,7 +307,7 @@ pwm_reg[PWM_CTL] = 0;
 		udelay(100);
 		pcm_reg[PCM_CS_A] |= 1<<4 | 1<<3;		// Clear FIFOs
 		udelay(100);
-		pcm_reg[PCM_DREQ_A] = 64<<24 | /*64<<8 |*/ 64<<8 ;		//TX Fifo PCM=64 DMA Req when one slot is free?
+		pcm_reg[PCM_DREQ_A] = 64<<24 | /*64<<8 |*/64<<8 ;		//TX Fifo PCM=64 DMA Req when one slot is free?
 		udelay(100);
 		pcm_reg[PCM_CS_A] |= 1<<9;			// Enable DMA
 		udelay(1000);
@@ -333,7 +333,7 @@ pwm_reg[PWM_CTL] = 0;
 		
 			// Write a frequency sample
 
-			cbp->info = BCM2708_DMA_NO_WIDE_BURSTS /* BCM2708_DMA_WAIT_RESP |BCM2708_DMA_D_DREQ | BCM2708_DMA_PER_MAP(5)*/;
+			cbp->info = BCM2708_DMA_NO_WIDE_BURSTS/* | BCM2708_DMA_WAIT_RESP |BCM2708_DMA_D_DREQ | BCM2708_DMA_PER_MAP(5)*/;
 			cbp->src = mem_virt_to_phys(ctl->sample + samplecnt);
 			cbp->dst = phys_pwm_fifo_addr;
 			cbp->length = 4;
@@ -345,7 +345,7 @@ pwm_reg[PWM_CTL] = 0;
 					
 			// Delay
 			
-			cbp->info =  BCM2708_DMA_SRC_IGNOR  |/* BCM2708_DMA_NO_WIDE_BURSTS | BCM2708_DMA_WAIT_RESP |*/ BCM2708_DMA_D_DREQ  | BCM2708_DMA_PER_MAP(2);
+			cbp->info =  BCM2708_DMA_SRC_IGNOR  | BCM2708_DMA_NO_WIDE_BURSTS | BCM2708_DMA_WAIT_RESP | BCM2708_DMA_D_DREQ  | BCM2708_DMA_PER_MAP(2);
 			cbp->src = mem_virt_to_phys(virtbase);
 			cbp->dst = phys_fifo_addr;//Delay with PCM
 			cbp->length = 4;
@@ -1483,6 +1483,8 @@ for (;;)
 
 			    	for(k=0;k<NbIQOutput;k++)
 				{
+					static int Count=0;
+					Count=(Count+1)%4;
 					for(i=3;i>=0;i--)
 					{
 						if(abs(FEC)>0)
@@ -1490,6 +1492,7 @@ for (;;)
 							if(FEC>0)
 							{	
 								ctl->sample[last_sample++]=TabIQ[(BuffIQ[k]>>(i*2))&0x3];
+								//ctl->sample[last_sample++]=TabIQTest[Count];
 							}
 							
 							else
@@ -1504,8 +1507,9 @@ for (;;)
 						}
 						else
 						{
+								
+							ctl->sample[last_sample++]=TabIQTest[Count];
 							
-							ctl->sample[last_sample++]=TabIQTest[0];
 						}	
 						if (last_sample == NUM_SAMPLES)	last_sample = 0;
 						NbSymbol++;
