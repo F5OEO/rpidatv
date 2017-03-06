@@ -341,8 +341,8 @@ mkfifo /home/pi/rpidatv/scripts/output.aac
 amixer -c stk1160mixer sset Line unmute cap
 sudo killall arecord
 #For USB AUDIO
- arecord -f S16_LE -r 48000 -N -M  -c 1 -D hw:1  |  fdkaac --raw --raw-channels 1 --raw-rate 48000 -p5 -b 24000 -f2  - -o $PATHSCRIPT"/output.aac" &	
-# arecord -f S16_LE -r 48000  -c 2 -D hw:1  |buffer|  fdkaac --raw --raw-channels 2 --raw-rate 48000 -p5 -b32 -f2  - -o /home/pi/rpidatv/scripts/output.aac &
+# arecord -f S16_LE -r 48000 -N -M  -c 1 -D hw:1  |  fdkaac --raw --raw-channels 1 --raw-rate 48000 -p5 -b 24000 -f2  - -o $PATHSCRIPT"/output.aac" &	
+arecord -f S16_LE --buffer-size=192000 -r 48000 --buffer-size=20480 -c 2 -D hw:1  |  fdkaac -S -I --raw --raw-channels 2 --raw-rate 48000 -p5 -b 24000 -f2  - -o $PATHSCRIPT"/output.aac" &
     fi
   ;;
 
@@ -459,6 +459,7 @@ $PATHRPI"/tcanim" $PATERNFILE"/*10" "48" "72" "CQ" "CQ CQ CQ DE "$CALL" IN $LOCA
 
  $PATHRPI"/ffmpeg" -re -f lavfi -i "sine=frequency=500:beep_factor=4:sample_rate=48000:duration=3600" -f u16le -acodec pcm_s16le -ar 48000 -ac 1 - | fdkaac --raw --raw-channels 1 --raw-rate 48000 -p5 -b 24000 -m 0 -f2  - -o $PATHSCRIPT"/output.aac" &	
 
+#arecord -f S16_LE --buffer-size=192000 -r 48000 --buffer-size=20480 -c 2 -D hw:1  |  fdkaac -S -I --raw --raw-channels 2 --raw-rate 48000 -p5 -b 24000 -f2  - -o $PATHSCRIPT"/output.aac" &
 
 ;;
 
@@ -522,7 +523,7 @@ let BITRATE_VIDEO=BITRATE_VIDEO-32000
 #For audio of video capture
 amixer -c stk1160mixer sset Line unmute cap
 sudo killall arecord
-arecord -f S16_LE --buffer-size=192000 -r 48000 --buffer-size=20480 -c 2 -D hw:1  |  fdkaac -S -I --raw --raw-channels 2 --raw-rate 48000 -p5 -b 24000 -f2  - -o $PATHSCRIPT"/output.aac" &
+taskset -c 1 arecord -f S16_LE --buffer-size=192000 -r 48000 --buffer-size=20480 -c 2 -D hw:1  | fdkaac -S -I --raw --raw-channels 2 --raw-rate 48000 -p5 -b 24000 -f2  - -o $PATHSCRIPT"/output.aac" &
   ;;
 
 #============================================ DESKTOP =============================================================
@@ -592,7 +593,7 @@ PORT=10000
         # sudo $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c "carrier" -f $FREQUENCY_OUT -p $GAIN -m $MODE -x $PIN_I -y $PIN_Q &
 
         # Temporary fix for swapped carrier and test modes:
-        sudo $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c "tesmode" -f $FREQUENCY_OUT -p $GAIN -m $MODE -x $PIN_I -y $PIN_Q &
+        sudo $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c "carrier" -f $FREQUENCY_OUT -p $GAIN -m $MODE -x $PIN_I -y $PIN_Q &
       ;;
     esac
   ;;
@@ -602,6 +603,6 @@ PORT=10000
     # sudo $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c "tesmode" -f $FREQUENCY_OUT -p $GAIN -m $MODE -x $PIN_I -y $PIN_Q &
 
     # Temporary fix for swapped carrier and test modes:
-    sudo $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c "carrier" -f $FREQUENCY_OUT -p $GAIN -m $MODE -x $PIN_I -y $PIN_Q &
+    sudo $PATHRPI"/rpidatv" -i videots -s $SYMBOLRATE_K -c "testmode" -f $FREQUENCY_OUT -p $GAIN -m $MODE -x $PIN_I -y $PIN_Q &
   ;;
 esac
